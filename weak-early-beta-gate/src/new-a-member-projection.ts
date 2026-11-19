@@ -1,7 +1,7 @@
-import type { MemberAdapters, ReadyPointer } from './new-a-member-services';
+import type { FundamentalSelector, MemberAdapters, ReadyPointer } from './new-a-member-services';
 
 type PartKind = 'history' | 'analytics' | 'chart';
-type ViewKind = PartKind | 'completed-history' | 'dashboard';
+type ViewKind = PartKind | 'completed-history' | 'dashboard' | 'fundamental';
 type Row = Record<string, unknown>;
 type Statement = { bind(...values: (string | number)[]): Statement; first<T>(): Promise<T | null> };
 type D1Session = { prepare(sql: string): Statement };
@@ -18,7 +18,10 @@ const maxManifestBytes = 65_536;
 const maxPartBytes = 196_608;
 const maxHistoryPages = 200;
 const maxDashboardRows = 1000;
-const viewKinds = new Set<ViewKind>(['history', 'completed-history', 'dashboard', 'analytics', 'chart']);
+const fundamentalLimit = 16_384;
+const fundamentalFields = ['材料インパクト', '事業概要', '足元材料', 'ファンダ要点', '注意点', '開示リンク', 'Sources'];
+const analysisTimestamp = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,9})?(?:Z|[+-]\d\d:\d\d)$/;
+const viewKinds = new Set<ViewKind>(['history', 'completed-history', 'dashboard', 'analytics', 'chart', 'fundamental']);
 const encoder = new TextEncoder();
 const activeManifest = `SELECT r.identity, r.digest, m.json
   FROM private_projection_ready r
@@ -29,6 +32,11 @@ const activePart = `SELECT p.json
   JOIN private_projection_ready r ON r.identity = p.identity AND r.singleton = 1
   WHERE p.identity = ? AND r.digest = ? AND p.kind = ? AND p.idx = ?
     AND length(CAST(p.json AS BLOB)) <= ?`;
+const activeFundamental = `SELECT f.json
+  FROM private_projection_fundamental f
+  JOIN private_projection_ready r ON r.identity = f.identity AND r.singleton = 1
+  WHERE f.identity = ? AND r.digest = ? AND f.sha256 = ?
+    AND length(CAST(f.json AS BLOB)) <= ?`;
 const activeMarker = 'SELECT identity, digest FROM private_projection_ready WHERE singleton = 1';
 
 function exactKeys(value: unknown, keys: string[]): value is Row {
@@ -76,7 +84,22 @@ function requireValid(ok: unknown): asserts ok {
   if (!ok) throw new Error('invalid_member_projection');
 }
 
-function validateRows(kind: ViewKind, rows: unknown[], through: string): void {
+function reportText(value: unknown, limit: number): value is string {
+  return typeof value === 'string' && !!value.trim() && encoder.encode(value).length <= limit;
+}
+
+function validateFundamental(report: unknown, lookup: FundamentalSelector): void {
+  requireValid(exactKeys(report, ['date', 'symbol', 'company_name', 'analysis_cutoff', 'fields'])
+    && report.date === lookup.date && report.symbol === lookup.symbol
+    && (report.company_name === null || reportText(report.company_name, 256))
+    && typeof report.analysis_cutoff === 'string' && analysisTimestamp.test(report.analysis_cutoff)
+    && Number.isFinite(Date.parse(report.analysis_cutoff))
+    && Array.isArray(report.fields) && report.fields.length === fundamentalFields.length
+    && report.fields.every((field, index) => exactKeys(field, ['label', 'text'])
+      && field.label === fundamentalFields[index] && reportText(field.text, 8192)));
+}
+
+function validateRows(kind: ViewKind, rows: unknown[], through: string, withReports: boolean): void {
   if (kind === 'analytics') requireValid(rows.length === 3);
   let previous: string | undefined;
   const seen = new Set<string>();
@@ -92,7 +115,9 @@ function validateRows(kind: ViewKind, rows: unknown[], through: string): void {
     } else if (kind === 'history' || kind === 'completed-history') {
       const completed = kind === 'completed-history';
       const keys = completed ? ['date', 'symbol', 'state', 'completed_on'] : ['date', 'symbol', 'state'];
-      requireValid(exactKeys(row, keys) && day(row.date) && row.date <= through
+      const validShape = exactKeys(row, keys)
+        || !completed && withReports && exactKeys(row, [...keys, 'fundamental_sha256']) && hash(row.fundamental_sha256);
+      requireValid(validShape && day(row.date) && row.date <= through
         && typeof row.symbol === 'string' && /^[0-9A-Z]{4}$/.test(row.symbol)
         && typeof row.state === 'string' && (completed
           ? completedStates.has(row.state) && day(row.completed_on) && row.completed_on >= row.date && row.completed_on <= through
@@ -135,7 +160,10 @@ function manifestPart(manifest: unknown, identity: string, view: ViewKind, index
   const keys = ['schema', 'audience', 'basis', 'source', 'parts'];
   const legacy = exactKeys(manifest, keys) && manifest.schema === 'NEW_A_SHARED_READONLY_VIEW_V1'
     && manifest.audience === 'EXISTING_DESIGNATED_DISCORD_ROLE';
-  const tiered = exactKeys(manifest, [...keys, 'history_layout']) && manifest.schema === 'NEW_A_SHARED_READONLY_VIEW_V2'
+  const withReports = exactKeys(manifest, [...keys, 'history_layout', 'fundamental_reports'])
+    && manifest.schema === 'NEW_A_SHARED_READONLY_VIEW_V3' && count(manifest.fundamental_reports)
+    && manifest.fundamental_reports > 0 && manifest.fundamental_reports <= maxHistoryPages * rowLimits.history;
+  const tiered = (withReports || exactKeys(manifest, [...keys, 'history_layout']) && manifest.schema === 'NEW_A_SHARED_READONLY_VIEW_V2')
     && manifest.audience === 'AUTHENTICATED_TIERED_DISCORD_VIEW';
   requireValid((legacy || tiered) && manifest.basis === 'SHARED_SIMULATION_DEFAULTS_NOT_OWNER_SETTINGS'
     && canonicalIdentity(manifest.source) === identity && Array.isArray(manifest.parts)
@@ -154,10 +182,11 @@ function manifestPart(manifest: unknown, identity: string, view: ViewKind, index
     completedPages = layout.completed_pages;
     dashboardIndex = premiumPages + completedPages;
   }
-  const kind = view === 'completed-history' || view === 'dashboard' ? 'history' : view;
+  const kind = view === 'completed-history' || view === 'dashboard' || view === 'fundamental' ? 'history' : view;
   const storedIndex = view === 'completed-history' ? index + premiumPages : view === 'dashboard' ? dashboardIndex : index;
-  const outsideView = tiered && (view === 'history' && index >= premiumPages
-    || view === 'completed-history' && index >= completedPages || view === 'dashboard' && index !== 0);
+  const outsideView = view === 'fundamental' && (!withReports || index >= premiumPages)
+    || tiered && (view === 'history' && index >= premiumPages
+      || view === 'completed-history' && index >= completedPages || view === 'dashboard' && index !== 0);
 
   const next: Record<PartKind, number> = { history: 0, analytics: 0, chart: 0 };
   let wanted: Descriptor | undefined;
@@ -177,9 +206,9 @@ function manifestPart(manifest: unknown, identity: string, view: ViewKind, index
     }
   }
   requireValid(next.analytics === 1 && next.chart === 3 && (!tiered || next.history === dashboardIndex + 1)
-    && (wanted || view === 'history' || view === 'completed-history'));
+    && (wanted || view === 'history' || view === 'completed-history' || view === 'fundamental'));
   const pages = view === 'completed-history' ? completedPages : tiered ? premiumPages : next.history;
-  return { wanted, kind, storedIndex, historyPages: Math.max(pages, 1) };
+  return { wanted, kind, storedIndex, historyPages: Math.max(pages, 1), withReports };
 }
 
 // The activation digest is the independently approved manifest hash. The canonical
@@ -188,10 +217,11 @@ export function createNewAMemberProjectionReader(
   db: ProjectionDatabase | undefined,
   readOfficialReady: () => Promise<ReadyPointer | null>,
 ): MemberAdapters['common'] {
-  return async (expected, kind, index) => {
+  return async (expected, kind, index, lookup) => {
     const identity = canonicalIdentity(expected);
     if (!db || typeof db.withSession !== 'function' || !identity || !count(index)
-      || !viewKinds.has(kind)) return null;
+      || !viewKinds.has(kind) || kind === 'fundamental' && (!lookup || !day(lookup.date)
+        || !/^[0-9A-Z]{4}$/.test(lookup.symbol))) return null;
     const source = JSON.parse(identity) as ReadyPointer;
     try {
       if (canonicalIdentity(await readOfficialReady()) !== identity) return null;
@@ -202,7 +232,8 @@ export function createNewAMemberProjectionReader(
         && typeof manifest.json === 'string');
       const manifestBytes = encoder.encode(manifest.json);
       requireValid(manifestBytes.byteLength <= maxManifestBytes && await sha256(manifestBytes) === manifest.digest);
-      const { wanted, kind: storedKind, storedIndex, historyPages } = manifestPart(JSON.parse(manifest.json), identity, kind, index);
+      const { wanted, kind: storedKind, storedIndex, historyPages, withReports } =
+        manifestPart(JSON.parse(manifest.json), identity, kind, index);
       let rows: unknown[] = [];
       if (wanted) {
         const part = await session.prepare(activePart).bind(identity, manifest.digest, storedKind, storedIndex, maxPartBytes)
@@ -214,9 +245,23 @@ export function createNewAMemberProjectionReader(
         requireValid(exactKeys(decoded, ['kind', 'index', 'rows']) && decoded.kind === storedKind
           && decoded.index === storedIndex && Array.isArray(decoded.rows) && decoded.rows.length === wanted.rows);
         rows = decoded.rows;
-        validateRows(kind, rows, source.as_of);
+        validateRows(kind === 'fundamental' ? 'history' : kind, rows, source.as_of, withReports);
         if (kind === 'completed-history') {
           rows = (rows as Row[]).map(({ date, symbol, state }) => ({ date, symbol, state }));
+        }
+      }
+      if (kind === 'fundamental' && lookup) {
+        const digest = (rows as Row[]).find(row => row.date === lookup.date && row.symbol === lookup.symbol)?.fundamental_sha256;
+        rows = [];
+        if (hash(digest)) {
+          const report = await session.prepare(activeFundamental).bind(identity, manifest.digest, digest, fundamentalLimit)
+            .first<{ json: unknown }>();
+          requireValid(report && typeof report.json === 'string');
+          const bytes = encoder.encode(report.json);
+          requireValid(bytes.length <= fundamentalLimit && await sha256(bytes) === digest);
+          const decoded: unknown = JSON.parse(report.json);
+          validateFundamental(decoded, lookup);
+          rows.push(decoded);
         }
       }
       // A new primary session is required here: the first session's bookmark alone

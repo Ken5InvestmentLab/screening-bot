@@ -14,6 +14,9 @@ const hash = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 const manifestLimit = 1024 * 1024;
 const partLimit = 196608;
 const historyPageSize = 100;
+const fundamentalLimit = 16_384;
+const fundamentalFields = ['材料インパクト', '事業概要', '足元材料', 'ファンダ要点', '注意点', '開示リンク', 'Sources'];
+const analysisTimestamp = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,9})?(?:Z|[+-]\d\d:\d\d)$/;
 const chartLimit = 3000;
 const sharedPreferences = Object.freeze({ ...DEFAULTS, price_cap_yen: null });
 const presets = [['defensive', 'defensive'], ['medium', 'balanced'], ['return_priority', 'profit']];
@@ -111,7 +114,12 @@ async function openVerifiedBundle(bundle, manifest) {
 
   const input = { ...manifest.input_header };
   for (const key of ['episodes', 'intents', 'watches']) input[key] = await collectParts(manifest.collections[key]);
-  for (const descriptor of manifest.collections.presentation) await readPart(descriptor);
+  const presentations = [];
+  for (const descriptor of manifest.collections.presentation) {
+    for (const row of await readPart(descriptor)) {
+      if (row?.fundamental?.auditStatus === 'pass') presentations.push(row);
+    }
+  }
   const current = assembleCurrent(await collectParts(manifest.collections.current_daily));
   if (current) {
     assert(current.schema === 'NEW_A_OWNER_DAILY_DISPLAY_V1' && current.as_of === manifest.as_of
@@ -146,6 +154,7 @@ async function openVerifiedBundle(bundle, manifest) {
   assert.equal(quotes.size, manifest.expected_quote_keys, 'Canonical quote key count mismatch');
   return {
     watches: input.watches,
+    presentations,
     calendar: input.calendar,
     current,
     runtime: createDatasetRuntime(input, {
@@ -199,6 +208,49 @@ function settlementEvidence(models, sharedScenarios, marketDays, asOf) {
     }
   }
   return closed;
+}
+
+function attachFundamentals(history, episodes, presentations) {
+  const byDetection = new Map();
+  for (const [key, watch] of episodes) {
+    const detection = watch.candidate_date + '|' + watch.symbol;
+    byDetection.set(detection, byDetection.has(detection) ? null : key);
+  }
+  const reports = new Map();
+  for (const row of presentations) {
+    const report = row.fundamental;
+    const detection = row.signalDate + '|' + row.symbol;
+    const episode = byDetection.get(detection);
+    if (typeof episode !== 'string' || row.identity !== episode || row.signalDate !== row.candidateDate
+      || row.identityStatus === 'PRELISTING_HISTORY_MAPPING_UNVERIFIED' || row.chartAllowed === false
+      || report.identity !== detection || report.symbol !== row.symbol || report.signalDate !== row.signalDate
+      || report.analysisCutoff !== row.analysisCutoff) continue;
+    assert(!reports.has(detection) && typeof report.analysisCutoff === 'string'
+      && analysisTimestamp.test(report.analysisCutoff) && Number.isFinite(Date.parse(report.analysisCutoff))
+      && Array.isArray(report.fields) && report.fields.length === fundamentalFields.length,
+      'Invalid verified member fundamental report');
+    const fields = report.fields.map((field, index) => {
+      assert(field?.label === fundamentalFields[index] && typeof field.text === 'string' && field.text.trim()
+        && Buffer.byteLength(field.text) <= 8192, 'Invalid verified member fundamental field');
+      return { label: field.label, text: field.text };
+    });
+    const company_name = row.nameStatus !== 'NAME_UNVERIFIED' && typeof row.companyName === 'string'
+      && row.companyName.trim() && Buffer.byteLength(row.companyName) <= 256 ? row.companyName : null;
+    const json = JSON.stringify({
+      date: row.signalDate, symbol: row.symbol, company_name, analysis_cutoff: report.analysisCutoff, fields,
+    });
+    assert(Buffer.byteLength(json) <= fundamentalLimit, 'Verified member fundamental report exceeds the storage limit');
+    reports.set(detection, { sha256: digest(json), json });
+  }
+  const fundamentals = [];
+  for (const row of history) {
+    const report = reports.get(row.date + '|' + row.symbol);
+    if (!report) continue;
+    row.fundamental_sha256 = report.sha256;
+    fundamentals.push(report);
+  }
+  assert(fundamentals.length === reports.size, 'Verified member fundamental report is outside Premium history');
+  return fundamentals;
 }
 
 function completedHistory(episodes, settlements, current, marketDays, asOf) {
@@ -308,8 +360,9 @@ async function prepareNewAMemberProjection({ bundle, readyProof, readyProofSha25
   const sourceManifestSha256 = digest(manifestRaw);
   const manifest = validateManifest(JSON.parse(manifestRaw));
   const source = readActiveEvidence(proofRaw, readyProofSha256, sourceManifestSha256, manifest);
-  const { runtime, watches, calendar, current } = await openVerifiedBundle(bundle, manifest);
+  const { runtime, watches, presentations, calendar, current } = await openVerifiedBundle(bundle, manifest);
   const { episodes, history } = safeHistory(watches, source.as_of);
+  const fundamentals = attachFundamentals(history, episodes, presentations);
   const marketDays = new Set(calendar);
   const options = { exitPolicy: OPEN_EXIT_POLICY };
   const fullModel = runtime.simulate(sharedPreferences, options);
@@ -345,20 +398,23 @@ async function prepareNewAMemberProjection({ bundle, readyProof, readyProofSha25
   }
   add('analytics', 0, analytics);
   const projection = {
-    schema: 'NEW_A_SHARED_READONLY_VIEW_V2',
+    schema: fundamentals.length ? 'NEW_A_SHARED_READONLY_VIEW_V3' : 'NEW_A_SHARED_READONLY_VIEW_V2',
     audience: 'AUTHENTICATED_TIERED_DISCORD_VIEW',
     basis: 'SHARED_SIMULATION_DEFAULTS_NOT_OWNER_SETTINGS',
     source,
     history_layout: { premium_pages, completed_pages },
     parts: parts.map(({ json, ...descriptor }) => descriptor),
+    ...(fundamentals.length ? { fundamental_reports: fundamentals.length } : {}),
   };
   const manifestJson = JSON.stringify(projection);
   assert(Buffer.byteLength(manifestJson) <= 65_536, 'Shared projection manifest exceeds the storage limit');
   return {
     manifestJson,
     parts,
+    fundamentals,
     receipt: {
-      schema: 'NEW_A_MEMBER_PROJECTION_OFFLINE_V2',
+      schema: fundamentals.length ? 'NEW_A_MEMBER_PROJECTION_OFFLINE_V3' : 'NEW_A_MEMBER_PROJECTION_OFFLINE_V2',
+      ...(fundamentals.length ? { fundamental_reports: fundamentals.length } : {}),
       source,
       source_manifest_sha256: sourceManifestSha256,
       owner_readback_sha256: readyProofSha256,
@@ -379,13 +435,16 @@ async function main(args) {
   } });
   assert(Object.values(values).length === 4 && Object.values(values).every(Boolean),
     'Required arguments: --bundle --ready-proof --ready-proof-sha256 --out');
-  const { manifestJson, parts, receipt } = await prepareNewAMemberProjection({
+  const { manifestJson, parts, fundamentals, receipt } = await prepareNewAMemberProjection({
     bundle: values.bundle, readyProof: values['ready-proof'], readyProofSha256: values['ready-proof-sha256'],
   });
   await fs.mkdir(values.out);
   await fs.writeFile(path.join(values.out, 'manifest.json'), manifestJson, { flag: 'wx' });
   for (const part of parts) {
     await fs.writeFile(path.join(values.out, part.kind + '-' + part.index + '.json'), part.json, { flag: 'wx' });
+  }
+  for (const report of fundamentals) {
+    await fs.writeFile(path.join(values.out, 'fundamental-' + report.sha256 + '.json'), report.json, { flag: 'wx' });
   }
   await fs.writeFile(path.join(values.out, 'receipt.json'), JSON.stringify(receipt, null, 2) + '\n', { flag: 'wx' });
 }

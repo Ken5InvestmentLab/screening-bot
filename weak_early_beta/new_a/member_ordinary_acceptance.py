@@ -14,12 +14,18 @@ import re
 from . import continuing_acceptance as ca
 from . import continuing_transition as transition
 from .files import atomic_write, digest, file_sha, private_root, read
-from .member_release_source_review import review_member_release_source
+from .member_release_source_review import (
+    INITIAL_REVIEW_SCHEMA, PRESENTATION_REVIEW_SCHEMA, review_member_release_source,
+)
 from .operational_admission import ORIGIN, checked_ci
 from .release_acceptance import checked_measurements
 
 
 APPLICATION_SCHEMA = ca.MEMBER_ORDINARY_APPLICATION_SCHEMA
+PREDECESSORS = {
+    ca.TRANSITION_APPLICATION_SCHEMA: ("transition.json", INITIAL_REVIEW_SCHEMA),
+    APPLICATION_SCHEMA: ("member-ordinary.json", PRESENTATION_REVIEW_SCHEMA),
+}
 DECISION = "CONTINUING_DAILY_WITH_DORMANT_DESIGNATED_MEMBER_VIEW"
 ORDINARY_DECISION = "CONTINUING_DAILY_WITH_NONOWNER_UNMEASURED"
 ROUTE = "/api/cloud/new-a-view/history.json"
@@ -48,6 +54,21 @@ def _app_folder(repo, application_id):
     return folder
 
 
+def _predecessor(repo, evidence):
+    folder = _app_folder(repo, evidence["application_id"])
+    completed = read(folder / "completed.json")
+    contract = PREDECESSORS.get(completed["schema"])
+    ca.require(contract is not None, "verified ordinary predecessor application required")
+    audit, review_schema = contract
+    return folder / audit, review_schema
+
+
+def _check_successor_policy(source_review, baseline, deployment):
+    if source_review["schema"] == PRESENTATION_REVIEW_SCHEMA:
+        ca.require(deployment["policy_sha256"] == baseline["policy_sha256"],
+                   "presentation successor changes the approved live owner policy")
+
+
 def _header(operating_repo, candidate_repo, plan):
     previous, repo = Path(operating_repo).resolve(), Path(candidate_repo).resolve()
     ca.require(not (repo.is_relative_to(previous) or previous.is_relative_to(repo)),
@@ -56,9 +77,7 @@ def _header(operating_repo, candidate_repo, plan):
     ca.require(baseline is not None, "verified operating ordinary predecessor required")
     previous_activation = read(_activation(previous))
     owner = previous_activation["owner_acceptance"]
-    completed = read(_app_folder(previous, owner["application_id"]) / "completed.json")
-    ca.require(completed["schema"] == ca.TRANSITION_APPLICATION_SCHEMA,
-               "existing finite-to-ordinary predecessor application required")
+    _, review_schema = _predecessor(previous, owner)
     source = ca.head(repo)
     target = ca.target(repo)
     ca.require(plan.get("decision") == DECISION and plan.get("scope") == ca.SCOPE
@@ -76,7 +95,7 @@ def _header(operating_repo, candidate_repo, plan):
     _, old = ca.load_reference(previous, owner["continuing_acceptance"], "records")
     source_review = review_member_release_source(repo, baseline["source_commit"], source)
     ca.require(source_review["member_support_configured"] is True
-               and source_review == plan.get("source_review"),
+               and source_review["schema"] == review_schema and source_review == plan.get("source_review"),
                "reviewed member capability must match the exact candidate source")
     return repo, baseline, old, source_review
 
@@ -169,6 +188,7 @@ def _prepare(operating_repo, candidate_repo, plan, *, primary_reader, ordinary_d
     source, target = plan["source_commit"], plan["target"]
     pins, row = _normal_evidence(source, target, source_review["member_database_id"],
                                  ci, deployment, policy, ca.now(), live=True)
+    _check_successor_policy(source_review, baseline, pins)
     raw = _private_http_observations({kind: raw_reader(kind) for kind in ca.PATHS})
     measurements = checked_measurements(plan, measurement_reader, raw.__getitem__, deployment)
     _check_http_boundary(measurements, raw, pins, ca.now())
@@ -221,24 +241,26 @@ def verify_application(repo, record, grant, current_path, folder, completed, cla
     before, current = read(archived), read(current_path)
     old_evidence = before["owner_acceptance"]
     baseline = audit["predecessor"]
+    previous_audit, review_schema = _predecessor(repo, old_evidence)
     ca.require(before.get("operational_admission") is None and baseline["activation_sha256"] == file_sha(archived)
-               and completed["previous_acceptance"] == old_evidence["continuing_acceptance"]
-               and read(_app_folder(repo, old_evidence["application_id"]) / "completed.json")["schema"]
-               == ca.TRANSITION_APPLICATION_SCHEMA, "completed member ordinary predecessor differs")
+               and completed["previous_acceptance"] == old_evidence["continuing_acceptance"],
+               "completed member ordinary predecessor differs")
     old = ca.validate_evidence(old_evidence, repo, _activation_path=archived,
                                _historical_source=baseline["source_commit"], _historical_git_sources=True,
                                _seen=seen)
-    old_deployment = read(_app_folder(repo, old_evidence["application_id"]) / "transition.json")["deployment"]
+    old_deployment = read(previous_audit)["deployment"]
     ca.require(baseline["source_commit"] == old["source_commit"] and baseline["worker"] == record["target"]["service"]
                and baseline["database"] == record["target"]["database_name"] and old["target"] == record["target"]
                and all(baseline[key] == old_deployment[key] for key in RELEASE_KEYS),
                "archived ordinary Worker release differs")
     source_review = review_member_release_source(repo, old["source_commit"], record["source_commit"])
-    ca.require(source_review["member_support_configured"] is True and source_review == audit["source_review"],
+    ca.require(source_review["member_support_configured"] is True
+               and source_review["schema"] == review_schema and source_review == audit["source_review"],
                "completed member source review differs")
     applied_at = ca.timestamp(completed["applied_at"])
     pins, row = _normal_evidence(record["source_commit"], record["target"], source_review["member_database_id"],
                                  audit["ci"], audit["deployment"], audit["member_policy"], applied_at, live=False)
+    _check_successor_policy(source_review, baseline, pins)
     raw = audit["http_observations"]
     measurements = record["measurements"]
     measurement_check = {**record, "measurements": {

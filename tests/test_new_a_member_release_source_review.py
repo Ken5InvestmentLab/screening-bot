@@ -1,5 +1,9 @@
 import copy
+import hashlib
 import json
+from pathlib import Path
+import subprocess
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -54,6 +58,8 @@ class MemberReleaseSourceReviewTest(unittest.TestCase):
         self.assertTrue(result["owner_only_gate_preserved"])
         self.assertFalse(result["member_support_configured"])
         self.assertEqual(result["candidate_source"], AFTER)
+        self.assertEqual(result["schema"], "NEW_A_MEMBER_RELEASE_SOURCE_REVIEW_V1")
+        self.assertEqual(result["reviewed_diff_sha256"], hashlib.sha256(b"test patch").hexdigest())
 
     def test_refuses_any_additional_owner_or_auth_change(self):
         self.source_after = NEW_ENTRY.replace(b"ownerOnlyContents", b"memberContents")
@@ -72,3 +78,72 @@ class MemberReleaseSourceReviewTest(unittest.TestCase):
         self.new_config["d1_databases"][0]["database_id"] = "different"
         with self.assertRaisesRegex(ValueError, "D1 binding"):
             self.inspect()
+
+
+class PresentationSuccessorReviewTest(unittest.TestCase):
+    def setUp(self):
+        temp = tempfile.TemporaryDirectory(prefix="new-a-member-presentation-")
+        self.addCleanup(temp.cleanup)
+        self.repo = Path(temp.name)
+        self.git("init", "-q")
+        self.git("config", "core.autocrlf", "false")
+        for path in review.acceptance.AUTH_FILES:
+            self.write(path, path.encode())
+        self.config = {
+            "name": review.acceptance.SERVICE, "d1_databases": [review.MEMBER_BINDING],
+            "vars": {"CLOUD_MEMBER_VIEW_ENABLED": "true", "DISCORD_ALLOWED_ROLE_IDS": "fixed"}, "env": {},
+        }
+        self.write(review.CONFIG, json.dumps(self.config).encode())
+        self.write(review.PRESENTATION, b"original presentation " + review._PURCHASE_LABEL + b"\n")
+        self.prepare_path = "weak_early_beta/new_a/member_ordinary_acceptance.py"
+        self.write(self.prepare_path, b"original approval\n")
+        self.baseline = self.commit("Approved member baseline")
+
+    def write(self, name, data):
+        path = self.repo / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+
+    def git(self, *args):
+        return subprocess.check_output(
+            ["git", "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+             "-c", "commit.gpgsign=false", *args], cwd=self.repo,
+        ).decode().strip()
+
+    def commit(self, title):
+        self.git("add", "-A")
+        self.git("commit", "-qm", title)
+        return self.git("rev-parse", "HEAD")
+
+    def purchase_copy(self):
+        self.write(review.PRESENTATION, b"original presentation " + review._NEW_PURCHASE_LABEL + b"\n")
+
+    def test_exact_purchase_text_and_maintainer_changes_use_full_index_scope(self):
+        self.purchase_copy()
+        self.write(self.prepare_path, b"reviewed recursive improvement\n")
+        candidate = self.commit("Presentation and scoped verifier")
+        result = review.review_member_release_source(self.repo, self.baseline, candidate)
+        self.assertEqual(result["schema"], review.PRESENTATION_REVIEW_SCHEMA)
+        self.assertTrue(result["member_support_configured"])
+        self.assertEqual(result["member_database_id"], review.MEMBER_BINDING["database_id"])
+        self.git("config", "core.abbrev", "19")
+        self.assertEqual(review.review_member_release_source(self.repo, self.baseline, candidate), result)
+        self.write(self.prepare_path, b"another reviewed improvement\n")
+        changed = self.commit("Different verifier bytes")
+        self.assertNotEqual(review.review_member_release_source(self.repo, self.baseline, changed)["reviewed_diff_sha256"],
+                            result["reviewed_diff_sha256"])
+
+    def test_rejects_other_paths_copy_and_auth_configuration(self):
+        for name, data, error in (
+            (review.ENTRY, b"other authentication", "authorization"),
+            (review.CONFIG, json.dumps({**self.config, "vars": {}}).encode(), "Worker configuration"),
+            (review.PRESENTATION, review._NEW_PURCHASE_LABEL + b" changed unrelated UI", "approved purchase label"),
+            ("other.txt", b"unexpected file", "mode or inventory"),
+        ):
+            with self.subTest(path=name):
+                self.git("reset", "--hard", self.baseline)
+                self.purchase_copy()
+                self.write(name, data)
+                candidate = self.commit("Rejected candidate")
+                with self.assertRaisesRegex(ValueError, error):
+                    review.review_member_release_source(self.repo, self.baseline, candidate)

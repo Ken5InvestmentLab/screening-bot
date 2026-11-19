@@ -12,6 +12,18 @@ from . import continuing_acceptance as acceptance
 
 CONFIG = "weak-early-beta-gate/wrangler.jsonc"
 ENTRY = "weak-early-beta-gate/src/index.ts"
+PRESENTATION = "weak-early-beta-gate/scripts/new-a-ui-source/assets/member-presentation.js"
+INITIAL_REVIEW_SCHEMA = "NEW_A_MEMBER_RELEASE_SOURCE_REVIEW_V1"
+PRESENTATION_REVIEW_SCHEMA = "NEW_A_MEMBER_PRESENTATION_SUCCESSOR_SOURCE_REVIEW_V1"
+_PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumのアクセス権を購入する</a>'.encode()
+_NEW_PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumアクセス権を購入する</a>'.encode()
+_PRESENTATION_SUCCESSOR_PATHS = frozenset({
+    PRESENTATION,
+    "weak_early_beta/new_a/member_release_source_review.py",
+    "weak_early_beta/new_a/member_ordinary_acceptance.py",
+    "tests/test_new_a_member_release_source_review.py",
+    "tests/test_new_a_member_ordinary_acceptance.py",
+})
 MEMBER_BINDING = {
     "binding": "CLOUD_MEMBER_DB",
     "database_name": "tentei-cloud-member-view",
@@ -31,8 +43,39 @@ def unique_replace(data, old, new):
     return data.replace(old, new)
 
 
+def _presentation_successor(repo, baseline, candidate):
+    raw = git(repo, "diff", "--raw", "--no-abbrev", "--no-renames", "-z", baseline, candidate, "--")
+    records = raw.split(b"\0")[:-1]
+    paths = set()
+    for metadata, path in zip(records[::2], records[1::2], strict=True):
+        fields = metadata.split()
+        if len(fields) != 5 or fields[:2] != [b":100644", b"100644"] or fields[-1] != b"M":
+            raise ValueError("Presentation successor changes an existing file mode or inventory")
+        paths.add(path.decode("utf-8"))
+    if PRESENTATION not in paths or not paths <= _PRESENTATION_SUCCESSOR_PATHS:
+        raise ValueError("Presentation successor changes paths outside the purchase-label scope")
+
+    former = git(repo, "show", f"{baseline}:{PRESENTATION}")
+    proposed = git(repo, "show", f"{candidate}:{PRESENTATION}")
+    if former.count(_PURCHASE_LABEL) != 1 or proposed != former.replace(_PURCHASE_LABEL, _NEW_PURCHASE_LABEL):
+        raise ValueError("Presentation successor changes more than the approved purchase label")
+
+    delta = git(repo, "diff", "--binary", "--full-index", "--no-renames", "--no-ext-diff", "--no-textconv",
+                "--no-color", "--src-prefix=a/", "--dst-prefix=b/", "--unified=3", "--diff-algorithm=myers",
+                "--no-indent-heuristic", baseline, candidate, "--")
+    return {
+        "schema": PRESENTATION_REVIEW_SCHEMA,
+        "accepted_owner_source": baseline,
+        "candidate_source": candidate,
+        "reviewed_diff_sha256": hashlib.sha256(delta).hexdigest(),
+        "member_database_id": MEMBER_BINDING["database_id"],
+        "member_support_configured": True,
+        "owner_only_gate_preserved": True,
+    }
+
+
 def review_member_release_source(repo, baseline, candidate):
-    """Review a proposed tree against the actual approved owner-only source."""
+    """Review initial member support or the exact presentation successor."""
     repo = Path(repo).resolve()
     if not all(re.fullmatch(r"[a-f0-9]{40}", value) for value in (baseline, candidate)) or baseline == candidate:
         raise ValueError("Distinct full commits required for member source review")
@@ -42,6 +85,18 @@ def review_member_release_source(repo, baseline, candidate):
     before = {name: git(repo, "show", f"{baseline}:{name}") for name in sorted(acceptance.AUTH_FILES)}
     after = {name: git(repo, "show", f"{candidate}:{name}") for name in sorted(acceptance.AUTH_FILES)}
     changed = [name for name in before if before[name] != after[name]]
+    baseline_config_bytes = git(repo, "show", f"{baseline}:{CONFIG}")
+    candidate_config_bytes = git(repo, "show", f"{candidate}:{CONFIG}")
+    common_config = json.loads(baseline_config_bytes)
+    prior_members = [db for db in common_config["d1_databases"] if db.get("binding") == "CLOUD_MEMBER_DB"]
+    if prior_members or "CLOUD_MEMBER_VIEW_ENABLED" in common_config["vars"]:
+        if changed:
+            raise ValueError("Presentation successor changes existing Discord or owner authorization source")
+        if (baseline_config_bytes != candidate_config_bytes or common_config.get("name") != acceptance.SERVICE
+                or common_config["vars"].get("CLOUD_MEMBER_VIEW_ENABLED") != "true" or prior_members != [MEMBER_BINDING]):
+            raise ValueError("Presentation successor changes the approved Worker configuration or member D1")
+        return _presentation_successor(repo, baseline, candidate)
+
     if changed != [ENTRY]:
         raise ValueError("Existing Discord or owner authorization code changed beyond the member fallback")
     expected = unique_replace(before[ENTRY], b"import { passiveObservationSink", (
@@ -68,8 +123,7 @@ def review_member_release_source(repo, baseline, candidate):
     if after[ENTRY] not in variants:
         raise ValueError("Member fallback changes more than the existing owner-denial branch")
 
-    common_config = json.loads(git(repo, "show", f"{baseline}:{CONFIG}"))
-    candidate_config = json.loads(git(repo, "show", f"{candidate}:{CONFIG}"))
+    candidate_config = json.loads(candidate_config_bytes)
     mode = candidate_config["vars"].pop("CLOUD_MEMBER_VIEW_ENABLED", None)
     databases = candidate_config["d1_databases"]
     member = [database for database in databases if database.get("binding") == "CLOUD_MEMBER_DB"]
@@ -88,7 +142,7 @@ def review_member_release_source(repo, baseline, candidate):
              "weak-early-beta-gate/member-migrations/0004_new_a_member_access_tiers.sql"]
     delta = git(repo, "diff", "--binary", baseline, candidate, "--", *paths)
     return {
-        "schema": "NEW_A_MEMBER_RELEASE_SOURCE_REVIEW_V1",
+        "schema": INITIAL_REVIEW_SCHEMA,
         "accepted_owner_source": baseline,
         "candidate_source": candidate,
         "reviewed_diff_sha256": hashlib.sha256(delta).hexdigest(),

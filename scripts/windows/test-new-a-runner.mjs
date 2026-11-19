@@ -9,6 +9,8 @@ import { isDeepStrictEqual } from 'node:util';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { verifyAcceptedWorker } from './weak-early-beta-daily-runner.mjs';
+import { capturePreProviderCacheFailure, repeatedPreProviderCacheFailure, verifyPreProviderCacheRecovery } from './new-a-pre-provider-cache-recovery.mjs';
+import { jstDay } from './weak-early-beta-run-journal.mjs';
 import taskRoute from './new-a-task-route.cjs';
 const HERE=path.dirname(fileURLToPath(import.meta.url)),ROOT=path.resolve(HERE,'../..');
 const source=fs.readFileSync(path.join(HERE,'weak-early-beta-daily-runner.mjs'),'utf8');
@@ -27,7 +29,7 @@ const ordinaryFixture = (head = 'f'.repeat(40)) => ({
  activation_sha256: '1'.repeat(64), build_input_sha256: '2'.repeat(64), policy_sha256: '3'.repeat(64),
  tag: 'cloud-deploy-transition-fixture', ci_run_id: 1234,
 });
-export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nativeInspector=null,dateOverride=null,detected=0,fundamentalOK=true,approvedWorker=null,failApprovedAt=null,noticeConfigured=false,noticeHost=null}={}){
+export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nativeInspector=null,dateOverride=null,detected=0,fundamentalOK=true,approvedWorker=null,failApprovedAt=null,noticeConfigured=false,noticeHost=null,detectFailure=null}={}){
  const {repo,runtime}=fixture(),today=dateOverride||'2026-11-13',head='f'.repeat(40),calls=[];let sent=false;
  const config={repoPath:repo,runtimeDir:runtime,nodePath:'FAKE_NODE_NO_EXEC',pythonPath:'FAKE_PYTHON_NO_EXEC',npmPath:'FAKE_NPM_NO_EXEC',ghPath:'FAKE_GH_NO_EXEC',date:today};
  const local=path.join(repo,'.cache/weak_early_beta/new-a-private');fs.mkdirSync(local,{recursive:true});
@@ -48,6 +50,8 @@ export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nati
   },drainFundamentalQueue:()=>{throw Error('FUNDAMENTAL_QUEUE_MUST_NOT_RUN');},assertHtmlImports:()=>{throw Error('FUNDAMENTAL_STATE_MUST_NOT_READ');},
   commitGeneratedChanges:()=>{throw Error('GENERATED_GIT_COMMIT_FORBIDDEN');},checkpointJpxRefresh:()=>{throw Error('OLD_TRACKED_JPX_COMMIT_FORBIDDEN');},
   networkFailureDetail:()=>null,waitForNetworkCapacity:async()=>({ok:true,synthetic:true}),waitInShortChunks:async()=>{},verifiedDetectionCache:async()=>({sha256:metadata.source_sha256}),
+  capturePreProviderCacheFailure:(runtime,result,sha)=>capturePreProviderCacheFailure(runtime,JSON.parse(JSON.stringify(result)),sha),
+  repeatedPreProviderCacheFailure, verifyPreProviderCacheRecovery,
   npmInvocation:()=>({exe:'FAKE_NPM_NO_EXEC',args:['run','check']}),requireRemoteHead:async()=>head,
   waitForTagWorkflow:async({headSha,tag,listRuns})=>{const runs=await listRuns();assert.equal(runs[0].headSha,headSha);assert.equal(runs[0].headBranch,tag);return runs[0];},verifyLiveWorker:async()=>({synthetic:true,healthOnly:true}),
   verifyAcceptedWorker:async(release,source)=>{
@@ -85,6 +89,8 @@ export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nati
    if(args.includes('is-business-day'))return{code:0,stdout:'{"business_day":true}',stderr:''};
    if(args.includes('system-log'))return{code:0,stdout:'{"synthetic":true}',stderr:''};
    if(args[1]==='weak_early_beta.cli'&&args[2]==='daily'){
+    const error=detectFailure?.(args,options);
+    if(error)throw error;
     assert(args.includes('--strategy')&&args[args.indexOf('--strategy')+1]==='new-a');write(path.join(local,'latest-run.json'),metadata);return{code:0,stdout:JSON.stringify(metadata),stderr:''};
    }
    if(args[1]==='weak_early_beta.cli'&&args[2]==='report'){assert(args.includes('new-a'));return{code:0,stdout:'{"data_free_frame":true}',stderr:''};}
@@ -147,6 +153,94 @@ test('Transition-approved daily work reuses the exact checked Worker before publ
  const sent=f.calls.findIndex(({args})=>args.includes('notify')&&!args.includes('--dry-run'));
  assert.equal(probes.length,4);
  assert(probes[0]<firstStarted&&probes[2]<publish&&publish<probes[3]&&probes[3]<sent);
+});
+
+function previousCacheOom(options) {
+  write(options.log + '.process.json', {
+    identity: 'CLOUD_CHILD_PROCESS_V1', pid: 2468, completedAt: new Date().toISOString(), status: 'exited', code: 1,
+  });
+  fs.writeFileSync(options.log + '.stderr', JSON.stringify({
+    identity: 'NEW_A_PRE_PROVIDER_CACHE_FAILURE_V1', phase: 'previous-cache-read', reason: 'memory',
+  }) + '\n');
+  return new Error('detect-1 failed; inspect bounded local logs');
+}
+
+async function preparePreProviderRecovery(options = {}) {
+  let attempt = 0;
+  const { repeatOom = false, ...fixtureOptions } = options;
+  const f = runnerFixture({ dateOverride: jstDay(), approvedWorker: ordinaryFixture(), ...fixtureOptions,
+    detectFailure(args, childOptions) {
+      assert(args.includes('--refresh-live'));
+      return ++attempt === 1 || repeatOom ? previousCacheOom(childOptions) : null;
+    },
+  });
+  const prior = await f.run();
+  assert.equal(prior.stage, 'detection');
+  const key = prior.startedAt.replace(/[^0-9TZ-]/g, '');
+  const receipt = path.join(f.runtime, `recovery-input-${key}.json`);
+  write(receipt, prior);
+  const claim = path.join(f.runtime, `recovery-${key}.json`);
+  write(claim, { invocation: '2026-11-19T09-00-00-000Z-00000000-0000-4000-8000-000000000019',
+    priorStartedAt: prior.startedAt, preProviderSourceSha256: 'c'.repeat(64) });
+  return { f, prior, async resume() {
+    const before = f.calls.length;
+    await f.context.runnerMain(path.join(f.repo, 'synthetic-daily-config.json'), { resumeReceipt: receipt });
+    const resumed = JSON.parse(fs.readFileSync(path.join(f.runtime, 'daily-latest.json'), 'utf8'));
+    return { resumed, calls: f.calls.slice(before) };
+  } };
+}
+
+test('verified pre-provider OOM continues the original run with one first live acquisition', async () => {
+  const { f, prior, resume } = await preparePreProviderRecovery({ noticeConfigured: true });
+  assert.equal(prior.preProviderCacheFailure.schema, 'CLOUD_ORDINARY_PRE_PROVIDER_FAILURE_V1');
+  assert.equal(prior.preProviderCacheFailure.sourceSha256, 'c'.repeat(64));
+  assert.deepEqual(prior.systemLogEvents, ['started', 'error']);
+  assert(!f.calls.some(({ args }) => args.includes('publish') || args.includes('notify')));
+  const { resumed, calls } = await resume();
+  assert.equal(resumed.ok, true);
+  assert.equal(resumed.originalRunId, prior.startedAt);
+  assert.deepEqual(resumed.preProviderRecovery, prior.preProviderCacheFailure);
+  assert.equal(calls.filter(({ args }) => args.includes('--refresh-live')).length, 1);
+  assert(!calls.some(({ args }) => args.includes('weak_early_beta.new_a.native_recovery') || args.includes('started')));
+  assert(!calls.some(({ args }) => args.includes('weak_early_beta.new_a.owner_notice_host')));
+});
+
+test('pre-provider recovery deduplicates a repeated OOM but still reports a new publication failure', async () => {
+  const repeated = await preparePreProviderRecovery({ repeatOom: true });
+  const duplicate = await repeated.resume();
+  assert.equal(duplicate.resumed.ok, false);
+  assert.equal(duplicate.resumed.stage, 'detection');
+  assert.equal(duplicate.resumed.preProviderCacheFailure, undefined);
+  assert(!duplicate.calls.some(({ args }) => args.includes('system-log') && args.includes('error')));
+
+  const downstream = await preparePreProviderRecovery({ gateAccepted: false });
+  const different = await downstream.resume();
+  assert.equal(different.resumed.ok, false);
+  assert.equal(different.resumed.stage, 'private-data-publication');
+  assert(different.calls.some(({ args }) => args.includes('system-log') && args.includes('error')));
+});
+
+test('a stale pre-provider handoff cannot reacquire after another run updates the latest receipt', async () => {
+  const { f, prior, resume } = await preparePreProviderRecovery();
+  const observed = { ...prior, startedAt: 'other-run', originalRunId: prior.startedAt };
+  const filesystem = Object.create(fs);
+  filesystem.writeFileSync = (file, ...args) => {
+    fs.writeFileSync(file, ...args);
+    if (file === path.join(f.runtime, 'daily.lock')) write(path.join(f.runtime, 'daily-latest.json'), observed);
+  };
+  f.context.fs = filesystem;
+  const { resumed, calls } = await resume();
+  assert.deepEqual(resumed, observed);
+  assert.equal(calls.length, 0);
+});
+
+test('a missing optional memory-failure fingerprint does not block direct ordinary acquisition', async () => {
+  const f = runnerFixture({ approvedWorker: ordinaryFixture() });
+  f.context.verifiedDetectionCache = async () => { throw new Error('unavailable optional source fingerprint'); };
+  const result = await f.run();
+  assert.equal(result.ok, true);
+  assert.equal(result.preProviderCacheFailure, undefined);
+  assert.equal(f.calls.filter(({ args }) => args.includes('--refresh-live')).length, 1);
 });
 
 const stagingPath = (runtime, result) => path.join(runtime,`daily-${result.startedAt.replace(/[:.]/g,'-')}`,'owner-notices-staging.json');

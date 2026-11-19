@@ -42,8 +42,15 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def read_daily_csv(path: Path) -> pd.DataFrame:
+    # Pandas 2.3 otherwise consolidates same-dtype columns into a duplicate
+    # contiguous block while the parser's column arrays are still live.
+    with pd.option_context("mode.copy_on_write", True):
+        return pd.read_csv(path, parse_dates=["date"], dtype={"symbol": str})
+
+
 def read_daily(path: Path) -> pd.DataFrame:
-    frame = pd.read_csv(path, parse_dates=["date"], dtype={"symbol": str})
+    frame = read_daily_csv(path)
     for column in ("open", "high", "low", "close", "volume"):
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
     return normalize_daily(frame)

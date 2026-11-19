@@ -13,6 +13,7 @@ import { checkpointJpxRefresh } from './weak-early-beta-jpx-checkout.mjs';
 import { networkFailureDetail, waitForNetworkCapacity } from './weak-early-beta-network-guard.mjs';
 import { atomicJson, appendEvent, recoveryPlan, verifiedDetectionCache } from './weak-early-beta-run-journal.mjs';
 import { verifyPreflightReconciliation, consumePreflightReconciliation } from './preflight-reconciliation.mjs';
+import { capturePreProviderCacheFailure, repeatedPreProviderCacheFailure, verifyPreProviderCacheRecovery } from './new-a-pre-provider-cache-recovery.mjs';
 import taskRoute from './new-a-task-route.cjs';
 const { newATaskPlan } = taskRoute;
 
@@ -481,6 +482,10 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
   let preservePriorCompletion = false;
   let reconciliationAccepted = false;
   let approvedWorkerReadbackFailed = false;
+  const preProviderRequested = prior && Object.hasOwn(prior, 'preProviderCacheFailure');
+  let preProviderRecovery = null;
+  let preProviderAcquisitionStarted = false;
+  let preProviderFailureRepeated = false;
   const env = { ...process.env };
   loadDotEnv(env, path.join(repo, '.env'));
   loadDotEnv(env, path.join(repo, 'weak-early-beta-gate', '.env'));
@@ -584,6 +589,16 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     for (const other of ['exit-reminder-runner.lock', 'exit-reminder.lock']) {
       if (fs.existsSync(path.join(repo, '.cache', 'weak_early_beta', other))) throw new Error('another Cloud reminder lock exists');
     }
+    if (preProviderRequested) {
+      preservePriorCompletion = true;
+      if (delayedPlan || continuation) throw new Error('Pre-provider cache recovery is ordinary-only');
+      if (!isDeepStrictEqual(readJson(resultPath), prior)) {
+        throw new Error('Recovery receipt changed before acquiring the daily lock');
+      }
+      const currentCache = await verifiedDetectionCache(repo, today);
+      preProviderRecovery = verifyPreProviderCacheRecovery(runtime, prior, currentCache.sha256, resumeReceipt);
+      preservePriorCompletion = false;
+    }
     if(continuation){result.nativeAdmissionContinuation=consumeAdmissionContinuation(runtime,continuation,continuationInvocation,startedAt,process.pid);if(nativeDelayed){delayedExecuting=beginAdmissionExecution(config,result.nativeAdmissionContinuation,startedAt,process.pid,env);result.delayedRecovery=delayedExecuting;}}
     saveProgress('branch');
     await requireBranch();
@@ -629,6 +644,9 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     const initialActivation = fs.existsSync(activationFile) ? readJson(activationFile) : {};
     const approvedRelease = initialActivation.owner_acceptance?.application_id && !initialActivation.operational_admission
       ? await inspectApprovedRelease('approved-release-before-detection') : null;
+    if (preProviderRecovery && !approvedRelease) {
+      throw new Error('Pre-provider cache recovery requires current ordinary approval');
+    }
     if (approvedRelease !== null) {
       if (delayedPlan) throw new Error('Ordinary Cloud approval cannot be used for a delayed continuation');
       saveProgress('approved-worker-preflight');
@@ -647,9 +665,14 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     }
     saveProgress('detection');
     const cacheRecovery = prior ? await verifiedDetectionCache(repo, today) : null;
-    if (cacheRecovery) saveProgress('detection', { recoveryCache: cacheRecovery });
+    if (preProviderRecovery) {
+      if (cacheRecovery.sha256 !== preProviderRecovery.sourceSha256) throw new Error('Previous cache changed before first live recovery acquisition');
+      saveProgress('detection', { preProviderRecovery });
+    } else if (cacheRecovery) saveProgress('detection', { recoveryCache: cacheRecovery });
+    const firstCache = !prior && !delayedPlan && approvedRelease
+      ? await verifiedDetectionCache(repo, today).catch(() => null) : null;
     let nativeRecovery = null;
-    if (prior) {
+    if (prior && !preProviderRecovery) {
       const inspected = await requireOk(python, ['-m', 'weak_early_beta.new_a.native_recovery', repo, runtime,
         resumeReceipt, today, cacheRecovery.sha256, startedAt, String(process.pid)], {
         cwd: repo, env, log: path.join(runDir, 'native-source-recovery'), capture: true,
@@ -662,13 +685,23 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     for (let attempt = 1; attempt <= attempts; attempt += 1) {
       const acquisitionDirectory = path.join(runDir, `acquisition-${attempt}`);
       result.acquisitionEvidence ??= [];
-      result.acquisitionEvidence.push(delayedPlan ? {attempt,recovery:'verified-retained-parts',originalRunId:delayedPlan.original_run_id} : nativeRecovery ? {attempt,recovery:'verified-native-source-parts',...nativeRecovery} : prior ? { attempt, recovery: 'verified-cache-no-download', sourceSha256: cacheRecovery.sha256 } : { attempt, directory: acquisitionDirectory });
+      result.acquisitionEvidence.push(delayedPlan ? {attempt,recovery:'verified-retained-parts',originalRunId:delayedPlan.original_run_id} : nativeRecovery ? {attempt,recovery:'verified-native-source-parts',...nativeRecovery} : preProviderRecovery ? { attempt, directory: acquisitionDirectory, recovery: 'first-live-after-verified-cache-failure' } : prior ? { attempt, recovery: 'verified-cache-no-download', sourceSha256: cacheRecovery.sha256 } : { attempt, directory: acquisitionDirectory });
       saveProgress('detection', { acquisitionEvidence: result.acquisitionEvidence });
       const delayedFile=delayedExecuting?path.resolve(repo,delayedExecuting.path):null;
       const replayDirectory=delayedFile?path.join(path.dirname(delayedFile),'replay-acquisition'):null;
-      await requireOk(python, ['-m', 'weak_early_beta.cli', 'daily', '--strategy', 'new-a', ...(delayedPlan?['--as-of',today,'--retained-acquisition',replayDirectory,'--delayed-recovery',delayedFile]:nativeRecovery?['--as-of',today,'--retained-acquisition',nativeRecovery.directory]:prior?[]:['--refresh-live'])], {
-        cwd: repo, env: { ...env, PYTHONFAULTHANDLER: '1', CLOUD_DAILY_ACQUISITION_DIR: acquisitionDirectory }, log: path.join(runDir, `detect-${attempt}`),
-      });
+      if (preProviderRecovery) preProviderAcquisitionStarted = true;
+      try {
+        await requireOk(python, ['-m', 'weak_early_beta.cli', 'daily', '--strategy', 'new-a', ...(delayedPlan?['--as-of',today,'--retained-acquisition',replayDirectory,'--delayed-recovery',delayedFile]:nativeRecovery?['--as-of',today,'--retained-acquisition',nativeRecovery.directory]:prior&&!preProviderRecovery?[]:['--refresh-live'])], {
+          cwd: repo, env: { ...env, PYTHONFAULTHANDLER: '1', CLOUD_DAILY_ACQUISITION_DIR: acquisitionDirectory }, log: path.join(runDir, `detect-${attempt}`),
+        });
+      } catch (error) {
+        if (firstCache && attempt === 1) {
+          const proof = capturePreProviderCacheFailure(runtime, result, firstCache.sha256);
+          if (proof) result.preProviderCacheFailure = proof;
+        }
+        if (preProviderRecovery) preProviderFailureRepeated = repeatedPreProviderCacheFailure(runDir, result);
+        throw error;
+      }
       const receipt = readJson(path.join(repo, '.cache', 'weak_early_beta', 'new-a-private', 'latest-run.json'));
       if (receipt.strategy !== 'A_BASE' || receipt.entry !== 'new-a-verified-daily-v1') throw new Error('unexpected New A daily receipt');
       if (receipt.latest_session === today && (receipt.dry_run === true || receipt.detection_executed !== true)) throw new Error('isolated or unexecuted receipt cannot complete a live New A day');
@@ -777,7 +810,11 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     if (error.failureType) result.failureType = error.failureType;
     result.stage = stage;
     if (ownsLock && stage === 'detection') result.privateSourceCacheRetained = true;
-    if (!approvedWorkerReadbackFailed && (!reconciliationFile || reconciliationAccepted)) {
+    const priorErrorReported = preProviderRequested
+      && (prior.systemLogEvents?.includes('error') || prior.systemLogErrors?.includes('error'));
+    const suppressRecoveryError = preProviderRequested && (!preProviderRecovery
+      || (priorErrorReported && (!preProviderAcquisitionStarted || preProviderFailureRepeated)));
+    if (!approvedWorkerReadbackFailed && !suppressRecoveryError && (!reconciliationFile || reconciliationAccepted)) {
       await sendSystemLog('error', ['--stage', stage, '--detail', error.message]);
     }
     process.exitCode = 1;

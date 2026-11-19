@@ -5,7 +5,7 @@ const {pathToFileURL}=require('node:url');
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 async function inventory(dir,rel=''){const result={};for(const e of await fs.readdir(dir,{withFileTypes:true})){const name=path.posix.join(rel,e.name),p=path.join(dir,e.name);if(e.isDirectory())Object.assign(result,await inventory(p,name));else result[name]=sha(await fs.readFile(p));}return result;}
 async function fixture(t,fault){const root=await fs.mkdtemp(path.join(os.tmpdir(),'new-a-code-sync-'));t.after(async()=>{assert.equal(path.dirname(root),path.resolve(os.tmpdir()));assert(path.basename(root).startsWith('new-a-code-sync-'));await fs.rm(root,{recursive:true,force:true});});const gate=path.join(root,'weak-early-beta-gate'),scripts=path.join(gate,'scripts'),publicDir=path.join(gate,'public');await fs.mkdir(scripts,{recursive:true});await fs.mkdir(publicDir,{recursive:true});
- for(const name of ['sync-report.mjs','build-new-a-frame.mjs','verify-new-a-code-only.mjs','new-a-code-contract.json'])await fs.copyFile(path.join(sourceGate,'scripts',name),path.join(scripts,name));await fs.cp(path.join(sourceGate,'scripts/new-a-ui-source'),path.join(scripts,'new-a-ui-source'),{recursive:true});
+ for(const name of ['sync-report.mjs','build-new-a-frame.mjs','build-new-a-member-frame.mjs','verify-new-a-code-only.mjs','new-a-code-contract.json'])await fs.copyFile(path.join(sourceGate,'scripts',name),path.join(scripts,name));await fs.cp(path.join(sourceGate,'scripts/new-a-ui-source'),path.join(scripts,'new-a-ui-source'),{recursive:true});
  const contractFile=path.join(scripts,'new-a-code-contract.json'),contract=JSON.parse(await fs.readFile(contractFile,'utf8'));for(const asset of [...contract.staticAssets,...contract.compatibilityAssets]){const target=path.join(root,asset.source);await fs.mkdir(path.dirname(target),{recursive:true});await fs.copyFile(path.join(baseline,asset.source),target);}
  // These existing reports/private artifacts must never be opened or copied.
  await fs.writeFile(path.join(root,'reports/private.json'),'SYNTHETIC_PRIVATE_EVIDENCE_DO_NOT_PUBLISH');await fs.writeFile(path.join(root,'reports/weak_early_beta_data_full_latest_aaaaaaaaaaaaaaaa_0000.json'),'SYNTHETIC_PRIVATE_PRICE_BUNDLE');
@@ -14,7 +14,36 @@ async function fixture(t,fault){const root=await fs.mkdtemp(path.join(os.tmpdir(
  if(fault==='asset-date')await fs.appendFile(path.join(scripts,'new-a-ui-source/assets/finite-controller.js'),'\n// SYNTHETIC forbidden calendar literal 2001-02-03\n');
  if(fault==='size')await fs.appendFile(path.join(scripts,'new-a-ui-source/frame.html'),' '.repeat(128*1024));if(fault==='private-data')await fs.appendFile(path.join(scripts,'new-a-ui-source/frame.html'),'<table><tbody><tr data-date="synthetic-date"><td>private row</td></tr></tbody></table>');if(fault==='unknown-public')await fs.writeFile(path.join(publicDir,'keep.json'),'UNKNOWN_PRIVATE_PAYLOAD');
  await fs.writeFile(contractFile,JSON.stringify(contract));const before=await inventory(publicDir),result=spawnSync(process.execPath,[path.join(scripts,'sync-report.mjs')],{encoding:'utf8'});return {root,gate,publicDir,before,result,stale};}
-test('actual sync builds data-free frames and code assets without opening old price bundles/private evidence',async t=>{const f=await fixture(t);assert.equal(f.result.status,0,f.result.stderr);const files=await inventory(f.publicDir);assert.equal(Object.keys(files).length,37);assert(files['new-a-assets/initial-display.js']);assert(files['new-a-assets/owner-notifications.js']);assert(!files[f.stale]);assert(!files['private.json']);assert(!files['report-interactions.js']);for(const page of ['latest','analytics','silence','dive','shadow','fusion','balance','guide'])for(const suffix of['','_free']){const html=await fs.readFile(path.join(f.publicDir,`weak_early_beta_${page}${suffix}.html`),'utf8');assert(!html.includes('data-date='));assert(!html.includes('SYNTHETIC_PRIVATE'));assert(!html.includes('variants.bundle'));}const scan=spawnSync(process.execPath,[path.join(f.gate,'scripts/verify-new-a-code-only.mjs')],{encoding:'utf8'});assert.equal(scan.status,0,scan.stderr);});
+test('actual sync builds the exact data-free public inventory and a worker-only member frame', async t => {
+ const f = await fixture(t);
+ assert.equal(f.result.status, 0, f.result.stderr);
+ const files = await inventory(f.publicDir);
+ const pages = ['latest', 'analytics', 'silence', 'dive', 'shadow', 'fusion', 'balance', 'guide'];
+ const memberScripts = ['member-loader.js', 'member-presentation.js', 'member-settings.js'];
+ const scripts = [
+  'browser-transport.js', 'finite-controller.js', 'finite-dom.js', 'initial-display.js',
+  'owner-loader.js', 'owner-notifications.js', ...memberScripts,
+  'weak-early-beta-theme-init.js', 'weak-early-beta-scenarios.js', 'new-a-legacy-interactions.generated.js',
+  'presentation-adapter.generated.js', 'new-a-finite-worker.generated.js',
+ ];
+ const images = ['cloud-logo', 'coconala', 'discord', 'x'].flatMap(brand =>
+  ['dark', 'light'].map(theme => 'new-a-assets/report-assets/' + brand + '-' + theme + '.png'));
+ const frames = pages.flatMap(page => ['', '_free'].map(suffix => 'weak_early_beta_' + page + suffix + '.html'));
+ const expected = [
+  ...frames, 'weak-early-beta-push.js', 'weak-early-beta-service-worker.js',
+  ...scripts.map(name => 'new-a-assets/' + name), ...images,
+ ];
+ assert.deepEqual(Object.keys(files).sort(), expected.sort());
+ for (const name of frames) {
+  const html = await fs.readFile(path.join(f.publicDir, name), 'utf8');
+  assert.doesNotMatch(html, /data-date=|SYNTHETIC_PRIVATE|variants[.]bundle|member-loader[.]js/);
+ }
+ const memberFrame = await fs.readFile(path.join(f.gate, 'src/new-a-member-frame.generated.ts'), 'utf8');
+ for (const name of memberScripts) assert(memberFrame.includes('/new-a-assets/' + name), name);
+ assert.doesNotMatch(memberFrame, /owner-loader[.]js|\/auth\/guard[.]js|data-date=|SYNTHETIC_PRIVATE/);
+ const scan = spawnSync(process.execPath, [path.join(f.gate, 'scripts/verify-new-a-code-only.mjs')], {encoding: 'utf8'});
+ assert.equal(scan.status, 0, scan.stderr);
+});
 for(const fault of ['path','audience','metadata','key','size','private-data','asset-date','unknown-public'])test(`code-only sync refuses ${fault} before touching existing public assets`,async t=>{const f=await fixture(t,fault);assert.notEqual(f.result.status,0);assert.deepEqual(await inventory(f.publicDir),f.before);});
 test('same original calculator and shared finite Worker are code assets; private inputs stay outside sync',async t=>{const f=await fixture(t);assert.equal(f.result.status,0,f.result.stderr);const calculator=await fs.readFile(path.join(f.publicDir,'new-a-assets/weak-early-beta-scenarios.js'));assert.equal(calculator.toString('utf8'),(await fs.readFile(path.join(baseline,'reports/weak-early-beta-scenarios.js'),'utf8')).replace(/\r\n?/g,'\n'));const worker=await fs.readFile(path.join(f.publicDir,'new-a-assets/new-a-finite-worker.generated.js'),'utf8');assert(worker.includes('createDatasetRuntime'));assert(!worker.includes('SYNTHETIC_PRIVATE'));const first=await inventory(f.publicDir),again=spawnSync(process.execPath,[path.join(f.gate,'scripts/sync-report.mjs')],{encoding:'utf8'});assert.equal(again.status,0,again.stderr);assert.deepEqual(await inventory(f.publicDir),first);});
 test('generated owner frames use descriptive history and period labels',async t=>{
@@ -29,4 +58,26 @@ test('generated owner frames use descriptive history and period labels',async t=
  assert.match(settings,/<option value="all">全期間<\/option>/);
  assert.doesNotMatch(dashboard+settings,/>A<|>該当モード<|A検出の記録期間|新A/);
 });
-test('Windows CRLF and Git/Linux LF source checkouts produce identical code-only assets',async t=>{const f=await fixture(t);assert.equal(f.result.status,0,f.result.stderr);const before=await inventory(f.publicDir);async function normalize(dir){for(const e of await fs.readdir(dir,{withFileTypes:true})){const p=path.join(dir,e.name);if(e.isDirectory())await normalize(p);else if(/\.(?:js|mjs|cjs|html)$/.test(e.name))await fs.writeFile(p,(await fs.readFile(p,'utf8')).replace(/\r\n?/g,'\n'));}}await normalize(path.join(f.root,'reports'));await normalize(path.join(f.gate,'scripts/new-a-ui-source'));const r=spawnSync(process.execPath,[path.join(f.gate,'scripts/sync-report.mjs')],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);assert.deepEqual(await inventory(f.publicDir),before);});
+test('Windows CRLF and Git/Linux LF source checkouts produce identical code-only assets and member frames', async t => {
+ const f = await fixture(t);
+ assert.equal(f.result.status, 0, f.result.stderr);
+ const before = await inventory(f.publicDir);
+ const generated = path.join(f.gate, 'src/new-a-member-frame.generated.ts');
+ const memberFrame = await fs.readFile(generated);
+ async function normalize(dir) {
+  for (const e of await fs.readdir(dir, {withFileTypes: true})) {
+   const p = path.join(dir, e.name);
+   if (e.isDirectory()) await normalize(p);
+   else if (/\.(?:js|mjs|cjs|html)$/.test(e.name)) await fs.writeFile(p, (await fs.readFile(p, 'utf8')).replace(/\r\n?/g, '\n'));
+  }
+ }
+ const source = path.join(f.gate, 'scripts/new-a-ui-source');
+ await normalize(path.join(f.root, 'reports'));
+ await normalize(source);
+ const frame = path.join(source, 'frame.html');
+ await fs.writeFile(frame, (await fs.readFile(frame, 'utf8')).replace(/\n/g, '\r\n'));
+ const result = spawnSync(process.execPath, [path.join(f.gate, 'scripts/sync-report.mjs')], {encoding: 'utf8'});
+ assert.equal(result.status, 0, result.stderr);
+ assert.deepEqual(await inventory(f.publicDir), before);
+ assert.deepEqual(await fs.readFile(generated), memberFrame);
+});

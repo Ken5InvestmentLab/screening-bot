@@ -1,3 +1,4 @@
+import {memberRouteCandidate} from './new-a-role-integration';
 import { passiveObservationSink } from './owner-observation-d1';
 import {isNewAPath,newACloudRoute,protectedReply,newAEarlyRefusal,isCompatibilityAsset,compatibilityCodeResponse} from "./new-a-cloud";
 // The OAuth/session/role implementation remains byte-identical in the synced
@@ -52,7 +53,7 @@ export default {
   },
   async fetch(request: SharedRequest, env: CloudEnv, ctx?: ExecutionContext): Promise<Response> {
     const denied = await ownerOnlyGate(request, env);
-    if (denied) return denied;
+    if (denied) return (await memberRouteCandidate(request, env, denied)) ?? denied;
     const pathname = new URL(request.url).pathname;
     if (pathname === '/healthz' && new URL(request.url).searchParams.has('new_a_probe')) return operationalReadback(request, env, operationalBuild);
     // Existing ownerOnlyGate has already run. Reuse the existing fresh-role identity.

@@ -1,0 +1,143 @@
+export type RoleEnv = {
+  CLOUD_OWNER_ONLY_ENABLED?: string;
+  CLOUD_MEMBER_VIEW_ENABLED?: string;
+  CLOUD_MEMBER_STAGE_ORIGIN?: string;
+  PUBLIC_BASE_URL?: string;
+  DISCORD_GUILD_ID?: string;
+  DISCORD_ALLOWED_ROLE_IDS?: string;
+  SESSION_SECRET?: string;
+};
+
+export type RoleIdentity = {
+  subject?: string;
+  reason?: string;
+  discord_authorized?: boolean;
+};
+
+export type RoleServices = {
+  identity: (request: Request) => Promise<RoleIdentity>;
+  document: (request: Request, subject: string) => Promise<Response>;
+  aggregate: (request: Request, subject: string) => Promise<Response>;
+  preferences: (request: Request, subject: string) => Promise<Response>;
+  asset: (request: Request) => Promise<Response>;
+};
+
+const productionOrigin = 'https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev';
+const documents = new Set([
+  '/', '/report', '/index.html',
+  '/weak_early_beta_latest.html', '/weak_early_beta_analytics.html', '/weak_early_beta_settings.html',
+]);
+const aggregates = new Map([
+  ['/api/cloud/new-a-view/history.json', 'page'],
+  ['/api/cloud/new-a-view/analytics.json', null],
+  ['/api/cloud/new-a-view/chart.json', 'preset'],
+  ['/api/cloud/new-a-view/personal.json', null],
+]);
+const preferencesPath = '/api/cloud/new-a-view/preferences';
+const sessionPath = '/api/cloud/new-a-view/session';
+const memberSessionHeader = 'x-cloud-member-session';
+const assets = new Set([
+  '/new-a-assets/member-loader.js',
+  '/new-a-assets/member-presentation.js',
+  '/new-a-assets/member-settings.js',
+  '/new-a-assets/report-assets/cloud-logo-light.png',
+  '/new-a-assets/report-assets/cloud-logo-dark.png',
+]);
+for (const brand of ['discord', 'coconala', 'x']) {
+  for (const shade of ['dark', 'light']) assets.add('/new-a-assets/report-assets/' + brand + '-' + shade + '.png');
+}
+const privateHeaders = {
+  'cache-control': 'private, no-store',
+  vary: 'Cookie',
+  'x-content-type-options': 'nosniff',
+  'cross-origin-resource-policy': 'same-origin',
+};
+
+function reject(request: Request, status: number, error: string): Response {
+  return new Response(request.method === 'HEAD' ? null : JSON.stringify({ error }), {
+    status,
+    headers: { ...privateHeaders, 'content-type': 'application/json; charset=utf-8' },
+  });
+}
+
+function matchesMemberOrigin(url: URL, env: RoleEnv): boolean {
+  const stage = env.CLOUD_MEMBER_STAGE_ORIGIN;
+  if (!stage) return url.origin === productionOrigin;
+  return url.protocol === 'https:' && stage !== productionOrigin
+    && url.origin === stage && env.PUBLIC_BASE_URL === stage;
+}
+
+async function memberSessionTag(secret: string, subject: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const message = encoder.encode(JSON.stringify(['new-a-member-session-v1', subject]));
+  const tag = await crypto.subtle.sign('HMAC', key, message);
+  return Array.from(new Uint8Array(tag), value => value.toString(16).padStart(2, '0')).join('');
+}
+
+export async function roleFacade(
+  request: Request, env: RoleEnv, ownerDenial: Response | null, services: RoleServices | undefined,
+): Promise<Response | null> {
+  if (!ownerDenial || env.CLOUD_MEMBER_VIEW_ENABLED !== 'true') return ownerDenial;
+  const url = new URL(request.url);
+  const { pathname } = url;
+  const document = documents.has(pathname);
+  const aggregate = aggregates.has(pathname);
+  const preferences = pathname === preferencesPath;
+  const session = pathname === sessionPath;
+  const asset = assets.has(pathname);
+  if (!document && !aggregate && !preferences && !session && !asset) return ownerDenial;
+  if (ownerDenial.status !== 403) return ownerDenial;
+
+  if (env.CLOUD_OWNER_ONLY_ENABLED !== 'true' || env.DISCORD_GUILD_ID !== '1479418833352785944'
+    || env.DISCORD_ALLOWED_ROLE_IDS !== '1487089073385373828' || !services) {
+    return reject(request, 503, 'member_service_unavailable');
+  }
+  const methods = preferences ? ['GET', 'HEAD', 'PUT'] : ['GET', 'HEAD'];
+  if (!methods.includes(request.method)) return reject(request, 405, 'method_not_allowed');
+  if (!matchesMemberOrigin(url, env)) return reject(request, 403, 'origin_not_allowed');
+
+  const origin = request.headers.get('origin');
+  const topLevelDocument = document && request.headers.get('sec-fetch-mode') === 'navigate'
+    && request.headers.get('sec-fetch-dest') === 'document';
+  if ((origin && origin !== url.origin) || (request.headers.get('sec-fetch-site') === 'cross-site' && !topLevelDocument)) {
+    return reject(request, 403, 'cross_site');
+  }
+  if (!aggregate && url.search) return reject(request, 404, 'query_not_allowed');
+  if (aggregate) {
+    const key = aggregates.get(pathname);
+    const keys = [...url.searchParams.keys()];
+    if (keys.length > 1 || keys.some(value => value !== key)) return reject(request, 400, 'query_not_allowed');
+  }
+
+  try {
+    const identity = await services.identity(request);
+    if (!identity.subject || identity.reason) {
+      const loginRequired = identity.reason === 'login_required' || identity.reason === 'refresh_required';
+      if (loginRequired && topLevelDocument && request.method === 'GET') {
+        const location = '/auth/login?return_to=' + encodeURIComponent(pathname);
+        return new Response(null, { status: 302, headers: { ...privateHeaders, location } });
+      }
+      return reject(request, loginRequired ? 401 : 503, 'authentication_unavailable');
+    }
+    if (!/^\d{17,20}$/.test(identity.subject) || identity.discord_authorized !== true) {
+      return reject(request, 403, 'role_required');
+    }
+    const expectedSession = aggregate || preferences ? request.headers.get(memberSessionHeader) : null;
+    if (session || expectedSession !== null) {
+      if (!env.SESSION_SECRET) return reject(request, 503, 'member_service_unavailable');
+      const tag = await memberSessionTag(env.SESSION_SECRET, identity.subject);
+      if (session) return new Response(null, { status: 204, headers: { ...privateHeaders, [memberSessionHeader]: tag } });
+      if (expectedSession !== tag) return reject(request, 403, 'member_session_changed');
+    }
+    const handler = document ? services.document : preferences ? services.preferences
+      : aggregate ? services.aggregate : services.asset;
+    const response = await handler(request, identity.subject);
+    const headers = new Headers(response.headers);
+    for (const [key, value] of Object.entries(privateHeaders)) headers.set(key, value);
+    return new Response(request.method === 'HEAD' ? null : response.body, { status: response.status, headers });
+  } catch {
+    return reject(request, 503, 'member_service_unavailable');
+  }
+}

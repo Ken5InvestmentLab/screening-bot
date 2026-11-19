@@ -8,4 +8,5 @@ src/shared-report-gate.sha256
 # New-A source-only release: these remain local/CI build products.
 src/research-a/frame.generated.ts
 src/research-a/assets.generated.ts
+src/new-a-member-frame.generated.ts
 .cache/new-a/

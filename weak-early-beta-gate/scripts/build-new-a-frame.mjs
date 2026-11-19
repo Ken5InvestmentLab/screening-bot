@@ -1,5 +1,6 @@
 // Same data-free source is used by local and CI builds. No private/reports input.
 import fs from 'node:fs/promises';import path from 'node:path';import {fileURLToPath} from 'node:url';import assert from 'node:assert/strict';import {createHash} from 'node:crypto';import {patchLegacy} from './new-a-ui-source/patch-legacy-interactions.mjs';
+import {buildNewAMemberFrame} from './build-new-a-member-frame.mjs';
 const gate=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),source=path.join(gate,'scripts/new-a-ui-source'),out=path.join(gate,'public/new-a-assets');
 const flag=process.argv.indexOf('--baseline-root'),baseline=flag<0?path.resolve(gate,'..'):path.resolve(process.argv[flag+1]),contract=JSON.parse(await fs.readFile(path.join(gate,'scripts/new-a-code-contract.json'),'utf8'));
 const lf=text=>text.replace(/\r\n?/g,'\n'),assetBytes=(bytes,item)=>item.normalization==='LF_UTF8'?Buffer.from(lf(bytes.toString('utf8'))):bytes;
@@ -39,6 +40,7 @@ const generated='// Build-only data-free source. Do not commit generated files.\
  ' const initialThemeScript=initialTheme==="system"?\'<script src="/new-a-assets/initial-display.js"></script>\':"";\n'+
  ' return SHELL.replaceAll("{{INITIAL_THEME}}",initialTheme).replace("{{INITIAL_THEME_SCRIPT}}",initialThemeScript).replaceAll("{{TITLE}}",view==="home"?PAGES.latest:PAGES[key]).replaceAll("{{PAGE}}",view).replace("{{VIEW}}",VIEWS[view]+(path==="/weak_early_beta_latest.html"?OWNER_STATUS:"")).replace(\'class="nav-link" href="\'+selected+\'"\',\'class="nav-link active" aria-current="page" href="\'+selected+\'"\');\n'+
  '}\n';
+await buildNewAMemberFrame(gate, html);
 await fs.mkdir(path.join(gate,'src/research-a'),{recursive:true});await fs.writeFile(path.join(gate,'src/research-a/frame.generated.ts'),generated);
 const runtime=generated.replace(' as string[]','').replaceAll(' as Record<string,string>','').replace('path:string,context:{ownerAuthorized:boolean;roleAuthorized:boolean;current:boolean},theme:string="dark"):string','path,context,theme="dark")');await fs.mkdir(path.join(gate,'.cache/new-a'),{recursive:true});await fs.writeFile(path.join(gate,'.cache/new-a/frame.generated.mjs'),runtime);
 const names=[];async function copy(dir,rel=''){for(const entry of await fs.readdir(dir,{withFileTypes:true})){const r=path.posix.join(rel,entry.name),src=path.join(dir,entry.name);if(entry.isDirectory())await copy(src,r);else{assert(/^(?:[a-z0-9-]+\.js|report-assets\/[a-z0-9-]+\.png)$/.test(r),'Unexpected asset');const to=path.join(out,r);await fs.mkdir(path.dirname(to),{recursive:true});await fs.writeFile(to,lf(await fs.readFile(src,'utf8')));names.push(r);}}}await copy(path.join(source,'assets'));

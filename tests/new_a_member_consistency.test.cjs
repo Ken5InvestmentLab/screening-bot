@@ -91,25 +91,48 @@ test('pointer changes during reads and missing signing configuration never retur
 const assets = path.join(gate, 'scripts/new-a-ui-source/assets');
 const loader = fs.readFileSync(path.join(assets, 'member-loader.js'), 'utf8');
 const settings = fs.readFileSync(path.join(assets, 'member-settings.js'), 'utf8');
+const presenter = { module: { exports:{} }, TextEncoder };
+vm.runInNewContext(fs.readFileSync(path.join(assets, 'member-presentation.js'), 'utf8'), presenter);
+const { fundamentalItem, fundamentalMarkup } = presenter.module.exports;
 const initialToken = 'a'.repeat(64);
 const nextToken = 'b'.repeat(64);
 const initialSession = 'c'.repeat(64);
 const nextSession = 'd'.repeat(64);
 const flush = () => new Promise(resolve => setImmediate(resolve));
-function element() {
+function element(type) {
   let content = '';
-  return {
+  const node = {
+    type,
     hidden: false,
     innerHTML: '',
     children: [],
+    attributes: {},
+    isConnected: true,
     get textContent() { return content; },
     set textContent(value) { content = value; this.children = []; },
     events: {},
-    append(...children) { this.children.push(...children); },
+    append(...children) {
+      this.children.push(...children);
+      for (const child of children) if (child && typeof child === 'object') child.parent = this;
+    },
     replaceChildren(...children) { this.innerHTML = ''; this.children = children; },
-    setAttribute() {},
+    setAttribute(name, value) { this.attributes[name] = value; },
+    removeAttribute(name) { delete this.attributes[name]; },
+    contains(node) { return this.children.includes(node); },
+    remove() {
+      this.isConnected = false;
+      if (this.parent) this.parent.children = this.parent.children.filter(child => child !== this);
+    },
+    focus() { this.focused = true; },
     addEventListener(type, handler) { this.events[type] = handler; },
   };
+  if (type === 'dialog') {
+    const close = element('button');
+    node.querySelector = () => close;
+    node.showModal = () => { node.open = true; };
+    node.close = () => { node.open = false; node.events.close(); };
+  }
+  return node;
 }
 function browser(options = {}) {
   let access = 204;
@@ -140,6 +163,7 @@ function browser(options = {}) {
       view: ({ access }) => access === 'premium' ? 'synthetic-private-content' : 'synthetic-closed-history',
       lockedPage: mode => 'synthetic-premium-lock-' + mode,
       freeHome: () => 'synthetic-premium-purchase',
+      fundamentalItem, fundamentalMarkup,
     },
     fetch: async (route, init) => {
       const url = new URL(route, 'https://example.invalid');
@@ -175,6 +199,96 @@ function browser(options = {}) {
     setSession(value) { session = value; },
   };
 }
+
+const availableAnalysis = { date: '2026-11-18', symbol: '234A', state: 'EXPIRED', has_fundamental: true };
+const analysisItem = '1.2026-11-18.234A';
+const analysis = {
+  date: availableAnalysis.date, symbol: availableAnalysis.symbol, as_of: day, generation: initialToken,
+  company_name: '合成の銘柄', analysis_cutoff: '2026-11-18T16:15:00+09:00',
+  fields: ['材料インパクト','事業概要','足元材料','ファンダ要点','注意点','開示リンク','Sources']
+    .map(label => ({ label, text: '検証済み分析' })),
+};
+function analysisBrowser(options = {}) {
+  const view = browser({ ...options, read: (name, url, init) => {
+    if (name === 'history.json') return Response.json({ as_of: day, generation: initialToken, pages: 3,
+      page: Number(url.searchParams.get('page')), rows: [availableAnalysis] });
+    return options.read?.(name, url, init);
+  } });
+  const content = view.nodes['member-content'];
+  const button = element('button');
+  button.dataset = { memberFundamental: analysisItem };
+  button.closest = () => button;
+  return { ...view, content, button, click() { content.append(button); content.events.click({ target: button }); },
+    dialog: () => content.children.find(child => child.type === 'dialog') };
+}
+
+test('fundamental dialog lazily uses the exact history page, session and generation', async () => {
+  const view = analysisBrowser({ read: name => name === 'fundamental.json' ? Response.json(analysis) : null });
+  await flush();
+  assert.equal(view.requests.some(request => request.name === 'fundamental.json'), false);
+  view.click();
+  await flush();
+  const fetched = view.requests.find(request => request.name === 'fundamental.json');
+  assert.equal(fetched.url.searchParams.get('item'), analysisItem);
+  assert.equal(fetched.init.headers['x-cloud-member-session'], initialSession);
+  assert.equal(fetched.init.headers['x-cloud-generation'], initialToken);
+  assert.equal(view.dialog().open, true);
+  assert.match(view.dialog().innerHTML, /検証済み分析/);
+  view.dialog().close();
+  assert.equal(view.dialog(), undefined);
+  assert.equal(view.button.focused, true);
+  view.click();
+  await flush();
+  assert.equal(view.dialog().open, true);
+  view.setTier('free');
+  view.poll();
+  await flush();
+  assert.equal(view.dialog(), undefined);
+
+  const free = analysisBrowser({ tier: 'free' });
+  await flush();
+  free.click();
+  await flush();
+  assert.equal(free.requests.some(request => request.name === 'fundamental.json'), false);
+});
+
+test('page or role change aborts an in-flight report and prevents a late response from opening it', async () => {
+  for (const changed of ['page','role']) {
+    let deliver;
+    const pending = new Promise(resolve => { deliver = resolve; });
+    const view = analysisBrowser({ read: name => name === 'fundamental.json' ? pending : null });
+    await flush();
+    view.click();
+    await flush();
+    const fetch = view.requests.find(request => request.name === 'fundamental.json');
+    if (changed === 'page') view.content.children[0].children[1].events.click();
+    else { view.setTier('free'); view.poll(); }
+    await flush();
+    assert.equal(fetch.init.signal.aborted, true);
+    deliver(Response.json(analysis));
+    await flush();
+    assert.equal(view.dialog(), undefined);
+  }
+});
+
+test('404 removes an unavailable row action and a mismatched generation clears current member data', async () => {
+  const missing = analysisBrowser({ read: name => name === 'fundamental.json' ? new Response(null,{status:404}) : null });
+  await flush();
+  missing.click();
+  await flush();
+  assert.equal(missing.button.isConnected, false);
+  assert.equal(missing.dialog(), undefined);
+  assert.equal(missing.content.innerHTML, 'synthetic-private-content');
+
+  const newer = analysisBrowser({ read: name => name === 'fundamental.json'
+    ? Response.json({ ...analysis,generation:nextToken }) : null });
+  await flush();
+  newer.click();
+  await flush();
+  assert.equal(newer.dialog(), undefined);
+  assert.equal(newer.content.innerHTML, '');
+  assert.match(newer.nodes['member-state'].textContent, /データが更新/);
+});
 
 test('free dashboard and paid direct pages never request Premium data or settings', async () => {
   const free = browser({ tier: 'free' });

@@ -24,11 +24,16 @@
       error.requiresLogin = requiresLogin(response);
       throw error;
     }
-    if (!response.ok) throw Error(unavailable);
+    if (!response.ok) {
+      const error = Error(unavailable);
+      error.missing = response.status === 404;
+      throw error;
+    }
     return response.json();
   }
   g.NewAMemberTransport = {
     history: (page, options) => read('history.json?page=' + page, options),
+    fundamental: (item, options) => read('fundamental.json?item=' + encodeURIComponent(item), options),
     dashboard: options => read('dashboard.json', options),
     analytics: options => read('analytics.json', options),
     chart: (preset, options) => read('chart.json?preset=' + encodeURIComponent(preset), options),
@@ -47,6 +52,8 @@
   let memberAccess = null;
   let attempt;
   let accessCheck;
+  let fundamentalPage = null;
+  let openFundamental = null;
 
   function updateNavigation() {
     for (const link of document.querySelectorAll('[data-member-premium-nav]')) {
@@ -55,6 +62,7 @@
   }
 
   function clearDisplay(message, reauthenticate = false) {
+    clearFundamentalPage();
     attempt?.abort();
     attempt = undefined;
     snapshot = null;
@@ -74,7 +82,10 @@
   }
 
   async function verifyAccess(hideUntilChecked = false) {
-    if (hideUntilChecked) out.hidden = true;
+    if (hideUntilChecked) {
+      dismissFundamental();
+      out.hidden = true;
+    }
     if (accessCheck) return accessCheck;
     const check = (async () => {
       try {
@@ -118,6 +129,78 @@
     out.append(nav);
   }
 
+  function dismissFundamental(restoreFocus = false) {
+    const current = openFundamental;
+    if (!current) return;
+    openFundamental = null;
+    current.controller.abort();
+    current.button.removeAttribute('aria-busy');
+    current.button.setAttribute('aria-expanded', 'false');
+    if (current.dialog?.open) current.dialog.close();
+    current.dialog?.remove();
+    if (restoreFocus && current.button.isConnected) current.button.focus();
+  }
+
+  function clearFundamentalPage() {
+    fundamentalPage = null;
+    dismissFundamental();
+  }
+
+  async function showFundamental(button) {
+    const scope = fundamentalPage;
+    const item = button.dataset.memberFundamental;
+    const row = scope?.rows.get(item);
+    if (!row || memberAccess !== 'premium' || openFundamental?.button === button) return;
+    dismissFundamental();
+    const controller = new AbortController();
+    const current = { controller, button, dialog: null };
+    openFundamental = current;
+    const active = () => openFundamental === current && fundamentalPage === scope && button.isConnected
+      && memberAccess === 'premium' && scope.generation === snapshot && scope.session === memberSession;
+    button.setAttribute('aria-busy', 'true');
+    try {
+      const report = await g.NewAMemberTransport.fundamental(item, {
+        signal: controller.signal, generation: scope.generation, session: scope.session,
+      });
+      if (!active()) return;
+      if (report?.generation !== scope.generation || report?.as_of !== scope.asOf) throw Error(changed);
+      const markup = g.NewAMemberPresentation.fundamentalMarkup(report, {
+        date: row.date, symbol: row.symbol, asOf: scope.asOf, generation: scope.generation,
+      });
+      if (!markup) throw Error(unavailable);
+      if (!await verifyAccess() || !active()) return;
+      const dialog = document.createElement('dialog');
+      current.dialog = dialog;
+      dialog.className = 'fundamental-detail';
+      dialog.setAttribute('aria-label', 'ファンダ分析の詳細');
+      dialog.innerHTML = markup;
+      dialog.querySelector('.fundamental-close').addEventListener('click', () => dialog.close());
+      dialog.addEventListener('click', event => {
+        if (event.target === dialog) dialog.close();
+      });
+      dialog.addEventListener('close', () => {
+        if (openFundamental === current) dismissFundamental(true);
+      });
+      out.append(dialog);
+      dialog.showModal();
+      button.removeAttribute('aria-busy');
+      button.setAttribute('aria-expanded', 'true');
+    } catch (error) {
+      if (!active()) return;
+      if (error.message === changed || error.message === accessDenied) {
+        clearDisplay(error.message, error.requiresLogin);
+        return;
+      }
+      dismissFundamental();
+      if (error.missing) {
+        scope.rows.delete(item);
+        button.remove();
+      } else {
+        status.textContent = unavailable;
+      }
+    }
+  }
+
   function prepareSettings() {
     if (typeof g.mountMemberSettings === 'function') return;
     // A role can be restored while a previously locked settings page is open.
@@ -131,6 +214,7 @@
   }
 
   async function load({ restorePresetFocus = false } = {}) {
+    clearFundamentalPage();
     attempt?.abort();
     const controller = new AbortController();
     attempt = controller;
@@ -182,6 +266,16 @@
       if (!await verifyAccess() || !active()) return;
 
       snapshot = source.generation;
+      const historyPage = !free && history?.page === page && history.as_of === source.as_of ? page : undefined;
+      if (historyPage !== undefined) {
+        const rows = new Map();
+        for (const row of history.rows) {
+          if (row.has_fundamental !== true) continue;
+          const item = g.NewAMemberPresentation.fundamentalItem(historyPage, row);
+          if (item) rows.set(item, row);
+        }
+        fundamentalPage = { rows, asOf: source.as_of, generation: snapshot, session: memberSession };
+      }
       out.innerHTML = g.NewAMemberPresentation.view({
         mode,
         access: memberAccess,
@@ -189,6 +283,7 @@
         presets: summary?.presets,
         selected,
         rows: history?.rows ?? [],
+        historyPage,
         chartRows: chart?.rows,
         personal: personal?.metrics,
         dashboard,
@@ -221,12 +316,22 @@
     }
   }
 
+  out.addEventListener('click', event => {
+    const button = event.target.closest?.('[data-member-fundamental]');
+    if (button && out.contains(button)) showFundamental(button);
+  });
   retry.addEventListener('click', load);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') verifyAccess(true);
-    else out.hidden = true;
+    else {
+      dismissFundamental();
+      out.hidden = true;
+    }
   });
-  g.addEventListener('pagehide', () => { out.hidden = true; });
+  g.addEventListener('pagehide', () => {
+    dismissFundamental();
+    out.hidden = true;
+  });
   g.addEventListener('pageshow', event => {
     if (event.persisted) verifyAccess(true);
   });

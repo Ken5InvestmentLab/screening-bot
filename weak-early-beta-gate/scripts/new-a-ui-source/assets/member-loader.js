@@ -5,6 +5,7 @@
   const accessDenied = 'アクセス権を確認してください';
   const unavailable = '現在読み込めません';
   const changed = 'データが更新されました。再試行してください。';
+  const presets = new Set(['defensive', 'medium', 'return_priority']);
   const isToken = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
   const requiresLogin = response => response.type === 'opaqueredirect' || response.status === 401;
   const denied = response => requiresLogin(response) || response.status === 403;
@@ -129,7 +130,7 @@
     });
   }
 
-  async function load() {
+  async function load({ restorePresetFocus = false } = {}) {
     attempt?.abort();
     const controller = new AbortController();
     attempt = controller;
@@ -193,10 +194,17 @@
         dashboard,
       });
       status.textContent = free ? '' : '共通データ ' + source.as_of;
-      document.getElementById('member-preset')?.addEventListener('change', event => {
-        selected = event.target.value;
-        load();
+      const preset = document.getElementById('member-preset');
+      preset?.addEventListener('change', event => {
+        const { value } = event.target;
+        if (!presets.has(value) || value === selected) return;
+        selected = value;
+        load({ restorePresetFocus: event.target === document.activeElement });
       });
+      if (restorePresetFocus && document.activeElement === document.body) {
+        const activePreset = mode === 'home' ? preset?.querySelector('input:checked') : preset;
+        activePreset?.focus();
+      }
       if (history) addPagination(history.pages);
     } catch (error) {
       if (!active()) return;

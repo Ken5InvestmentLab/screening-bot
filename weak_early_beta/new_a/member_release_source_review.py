@@ -46,7 +46,13 @@ _TIMING_GUIDE_DELTA = (
     b"completed on or before the latest published session. The current session's action cards and active "
     b"monitoring are Premium only, including their API and pagination metadata.",
 )
-_TIMING_SUCCESSOR_PATHS = _SUCCESSOR_REVIEW_PATHS | set(_COMPLETED_TIMING_DELTAS) | {
+_MEMBER_DASHBOARD_PATHS = {
+    PRESENTATION,
+    "weak-early-beta-gate/scripts/build-new-a-member-frame.mjs",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/member-loader.js",
+    "tests/new_a_role_presentation_candidate.test.cjs",
+}
+_TIMING_SUCCESSOR_PATHS = _SUCCESSOR_REVIEW_PATHS | set(_COMPLETED_TIMING_DELTAS) | _MEMBER_DASHBOARD_PATHS | {
     _TIMING_GUIDE,
     "tests/new_a_member_projection_preparation.test.cjs",
     "tests/new_a_member_projection.test.cjs",
@@ -98,6 +104,8 @@ def _check_completed_timing_successor(repo, baseline, candidate, paths):
         raise ValueError("Completed-history successor differs from the approved source scope")
     if git(repo, "show", f"{baseline}:{PRESENTATION}").count(_NEW_PURCHASE_LABEL) != 1:
         raise ValueError("Completed-history successor requires the approved member purchase label")
+    if PRESENTATION in paths and git(repo, "show", f"{candidate}:{PRESENTATION}").count(_NEW_PURCHASE_LABEL) != 1:
+        raise ValueError("Member dashboard changes the approved purchase link or label")
     deltas = dict(_COMPLETED_TIMING_DELTAS)
     if _TIMING_GUIDE in paths:
         deltas[_TIMING_GUIDE] = (_TIMING_GUIDE_DELTA,)
@@ -113,7 +121,7 @@ def _check_completed_timing_successor(repo, baseline, candidate, paths):
 
 def _member_successor(repo, baseline, candidate):
     paths = _successor_paths(repo, baseline, candidate)
-    if PRESENTATION in paths:
+    if PRESENTATION in paths and not _COMPLETED_TIMING_DELTAS.keys() & paths:
         _check_presentation_successor(repo, baseline, candidate, paths)
         schema = PRESENTATION_REVIEW_SCHEMA
     else:

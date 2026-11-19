@@ -156,6 +156,8 @@ class PresentationSuccessorReviewTest(unittest.TestCase):
         inclusive = {path: b"\n".join(after for _, after in edits) for path, edits in deltas.items()}
         for path, contents in old.items():
             self.write(path, contents)
+        loader = "weak-early-beta-gate/scripts/new-a-ui-source/assets/member-loader.js"
+        self.write(loader, b"original member loader")
         baseline = self.commit("Approved purchase copy and strict completion cutoff")
         for path, contents in inclusive.items():
             self.write(path, contents)
@@ -164,6 +166,19 @@ class PresentationSuccessorReviewTest(unittest.TestCase):
         self.assertEqual(result["schema"], review.COMPLETED_TIMING_REVIEW_SCHEMA)
         self.git("config", "core.abbrev", "17")
         self.assertEqual(review.review_member_release_source(self.repo, baseline, candidate), result)
+
+        self.write(review.PRESENTATION, b"dashboard cards " + review._NEW_PURCHASE_LABEL)
+        self.write(loader, b"dashboard level controls")
+        layout = self.commit("Review the dashboard and inclusive cutoff together")
+        layout_result = review.review_member_release_source(self.repo, baseline, layout)
+        self.assertEqual(layout_result["schema"], review.COMPLETED_TIMING_REVIEW_SCHEMA)
+        self.assertNotEqual(layout_result["reviewed_diff_sha256"], result["reviewed_diff_sha256"])
+
+        self.write(review.PRESENTATION, b"dashboard cards " + review._PURCHASE_LABEL)
+        renamed = self.commit("Undo the approved purchase copy")
+        with self.assertRaisesRegex(ValueError, "approved purchase link or label"):
+            review.review_member_release_source(self.repo, baseline, renamed)
+        self.write(review.PRESENTATION, b"dashboard cards " + review._NEW_PURCHASE_LABEL)
 
         publisher = "weak_early_beta/new_a/member_publisher.py"
         self.write(publisher, old[publisher])

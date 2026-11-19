@@ -13,7 +13,9 @@ from weak_early_beta.new_a import continuing_acceptance as ca
 from weak_early_beta.new_a import continuing_transition as transition
 from weak_early_beta.new_a import member_ordinary_acceptance as member
 from weak_early_beta.new_a.files import atomic_write, digest, file_sha, private_root, read
-from weak_early_beta.new_a.member_release_source_review import MEMBER_BINDING, PRESENTATION_REVIEW_SCHEMA
+from weak_early_beta.new_a.member_release_source_review import (
+    COMPLETED_TIMING_REVIEW_SCHEMA, MEMBER_BINDING, PRESENTATION_REVIEW_SCHEMA,
+)
 
 
 class MemberOrdinaryAcceptanceTests(unittest.TestCase):
@@ -61,6 +63,7 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
         previous = read(self.original)['owner_acceptance']['continuing_acceptance']
         _, self.old = ca.load_reference(self.operating, previous, 'records')
 
+        self.source_reviews = {}
         self.source_review = dict(schema='NEW_A_MEMBER_RELEASE_SOURCE_REVIEW_V1',
                                   accepted_owner_source=self.old_source, candidate_source=self.source,
                                   reviewed_diff_sha256='1' * 64, member_database_id=MEMBER_BINDING['database_id'],
@@ -193,15 +196,16 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
             transition.ordinary_runtime_release(self.repo)
 
 
-    def prepare_successor(self):
+    def prepare_successor(self, schema=PRESENTATION_REVIEW_SCHEMA):
         prior_result = self.apply(self.issue())
         legacy_review = copy.deepcopy(self.source_review)
+        self.source_reviews[legacy_review['accepted_owner_source'], legacy_review['candidate_source']] = legacy_review
         prior = transition.ordinary_runtime_release(self.repo)
         prior_acceptance = read(self.root / 'activation.json')['owner_acceptance']['continuing_acceptance']
         prior_audit = ca.root(self.repo) / 'applications' / Path(prior_result['grant']['path']).stem / 'member-ordinary.json'
         self.operating, self.original = self.repo, self.root / 'activation.json'
         self.before = self.original.read_bytes()
-        temp = tempfile.TemporaryDirectory(prefix='new-a-member-ordinary-presentation-')
+        temp = tempfile.TemporaryDirectory(prefix='new-a-member-ordinary-successor-')
         self.addCleanup(temp.cleanup)
         self.repo = Path(temp.name) / 'repo'
         self.git(self.operating, 'clone', '-q', '--no-hardlinks', str(self.operating), str(self.repo))
@@ -217,8 +221,10 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
         self.now += datetime.timedelta(minutes=1)
         self.observed = (self.now - datetime.timedelta(seconds=5)).isoformat()
         self.deployed = (self.now - datetime.timedelta(seconds=15)).isoformat()
-        self.version, self.deployment_id = '00000000-0000-4000-8000-000000000037', '00000000-0000-4000-8000-000000000038'
-        self.ci.update(source_commit=self.source, version_id=self.version, build_input_sha256='a' * 64, run_id=326)
+        step = self.ci['run_id'] + 1
+        self.version = f'00000000-0000-4000-8000-{step:012d}'
+        self.deployment_id = f'00000000-0000-4000-9000-{step:012d}'
+        self.ci.update(source_commit=self.source, version_id=self.version, build_input_sha256=digest(step), run_id=step)
         self.deployment.update(source_commit=self.source, version_id=self.version, deployment_id=self.deployment_id,
                                observed_at=self.observed, deployed_at=self.deployed, policy_sha256=prior['policy_sha256'],
                                build_input_sha256=self.ci['build_input_sha256'], ci_run_id=self.ci['run_id'])
@@ -229,13 +235,12 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
                                            observed_at=self.observed, deployment_version_id=self.version)
             self.raw[kind].update(source_commit=self.source, version_id=self.version,
                                   observed_at=self.observed, deployment_id=self.deployment_id)
-        self.source_review = {**legacy_review, 'schema': PRESENTATION_REVIEW_SCHEMA,
+        self.source_review = {**legacy_review, 'schema': schema,
                               'accepted_owner_source': self.old_source, 'candidate_source': self.source,
-                              'reviewed_diff_sha256': 'b' * 64}
-        reviews = {(item['accepted_owner_source'], item['candidate_source']): item
-                   for item in (legacy_review, self.source_review)}
+                              'reviewed_diff_sha256': digest([self.old_source, self.source])}
+        self.source_reviews[self.old_source, self.source] = self.source_review
         patcher = patch.object(member, 'review_member_release_source',
-                               lambda _repo, before, after: copy.deepcopy(reviews[before, after]))
+                               lambda _repo, before, after: copy.deepcopy(self.source_reviews[before, after]))
         patcher.start()
         self.addCleanup(patcher.stop)
         _, self.old = ca.load_reference(self.operating, prior_acceptance, 'records')
@@ -268,5 +273,26 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
         archived_copy = self.repo / prior_audit.relative_to(self.operating)
         self.assertEqual(archived_copy.read_bytes(), archived_bytes)
         archived_copy.write_bytes(archived_bytes + b'\n')
+        with self.assertRaisesRegex(ValueError, 'completed member ordinary audit'):
+            transition.ordinary_runtime_release(self.repo)
+
+
+    def test_completed_timing_successor_verifies_both_member_predecessors(self):
+        _, older_audit = self.prepare_successor()
+        older_repo = self.operating
+        prior, prior_audit = self.prepare_successor(COMPLETED_TIMING_REVIEW_SCHEMA)
+        snapshot = prior_audit.read_bytes()
+        with self.assertRaisesRegex(ValueError, 'approved live owner policy'):
+            member.prepare(self.operating, self.repo, self.plan, **self.readers(
+                deployment_reader=lambda: {**self.deployment, 'policy_sha256': 'f' * 64}))
+        result = self.apply(self.issue())
+        self.assertEqual(prior, transition.ordinary_runtime_release(self.operating))
+        self.assertEqual(snapshot, prior_audit.read_bytes())
+        live = transition.ordinary_runtime_release(self.repo)
+        self.assertEqual(live['activation_sha256'], result['after_sha256'])
+        self.assertEqual(live['source_commit'], self.source)
+
+        archived_older = self.repo / older_audit.relative_to(older_repo)
+        archived_older.write_bytes(archived_older.read_bytes() + b'\n')
         with self.assertRaisesRegex(ValueError, 'completed member ordinary audit'):
             transition.ordinary_runtime_release(self.repo)

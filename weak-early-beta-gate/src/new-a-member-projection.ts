@@ -95,7 +95,7 @@ function validateRows(kind: ViewKind, rows: unknown[], through: string): void {
       requireValid(exactKeys(row, keys) && day(row.date) && row.date <= through
         && typeof row.symbol === 'string' && /^[0-9A-Z]{4}$/.test(row.symbol)
         && typeof row.state === 'string' && (completed
-          ? completedStates.has(row.state) && day(row.completed_on) && row.completed_on >= row.date && row.completed_on < through
+          ? completedStates.has(row.state) && day(row.completed_on) && row.completed_on >= row.date && row.completed_on <= through
           : states.has(row.state)));
       const key = row.date + '|' + row.symbol;
       requireValid((previous === undefined || previous >= row.date) && !seen.has(key));

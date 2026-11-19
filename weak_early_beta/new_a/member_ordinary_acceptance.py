@@ -15,16 +15,16 @@ from . import continuing_acceptance as ca
 from . import continuing_transition as transition
 from .files import atomic_write, digest, file_sha, private_root, read
 from .member_release_source_review import (
-    INITIAL_REVIEW_SCHEMA, PRESENTATION_REVIEW_SCHEMA, review_member_release_source,
+    COMPLETED_TIMING_REVIEW_SCHEMA, INITIAL_REVIEW_SCHEMA, PRESENTATION_REVIEW_SCHEMA, review_member_release_source,
 )
 from .operational_admission import ORIGIN, checked_ci
 from .release_acceptance import checked_measurements
 
 
 APPLICATION_SCHEMA = ca.MEMBER_ORDINARY_APPLICATION_SCHEMA
-PREDECESSORS = {
-    ca.TRANSITION_APPLICATION_SCHEMA: ("transition.json", INITIAL_REVIEW_SCHEMA),
-    APPLICATION_SCHEMA: ("member-ordinary.json", PRESENTATION_REVIEW_SCHEMA),
+MEMBER_SUCCESSORS = {
+    INITIAL_REVIEW_SCHEMA: PRESENTATION_REVIEW_SCHEMA,
+    PRESENTATION_REVIEW_SCHEMA: COMPLETED_TIMING_REVIEW_SCHEMA,
 }
 DECISION = "CONTINUING_DAILY_WITH_DORMANT_DESIGNATED_MEMBER_VIEW"
 ORDINARY_DECISION = "CONTINUING_DAILY_WITH_NONOWNER_UNMEASURED"
@@ -57,16 +57,19 @@ def _app_folder(repo, application_id):
 def _predecessor(repo, evidence):
     folder = _app_folder(repo, evidence["application_id"])
     completed = read(folder / "completed.json")
-    contract = PREDECESSORS.get(completed["schema"])
-    ca.require(contract is not None, "verified ordinary predecessor application required")
-    audit, review_schema = contract
-    return folder / audit, review_schema
+    if completed["schema"] == ca.TRANSITION_APPLICATION_SCHEMA:
+        return folder / "transition.json", INITIAL_REVIEW_SCHEMA
+    ca.require(completed["schema"] == APPLICATION_SCHEMA, "verified ordinary predecessor application required")
+    audit = folder / "member-ordinary.json"
+    review_schema = MEMBER_SUCCESSORS.get(read(audit)["source_review"]["schema"])
+    ca.require(review_schema is not None, "ordinary member predecessor has no reviewed successor")
+    return audit, review_schema
 
 
 def _check_successor_policy(source_review, baseline, deployment):
-    if source_review["schema"] == PRESENTATION_REVIEW_SCHEMA:
+    if source_review["schema"] in MEMBER_SUCCESSORS.values():
         ca.require(deployment["policy_sha256"] == baseline["policy_sha256"],
-                   "presentation successor changes the approved live owner policy")
+                   "member successor changes the approved live owner policy")
 
 
 def _header(operating_repo, candidate_repo, plan):
@@ -241,13 +244,13 @@ def verify_application(repo, record, grant, current_path, folder, completed, cla
     before, current = read(archived), read(current_path)
     old_evidence = before["owner_acceptance"]
     baseline = audit["predecessor"]
-    previous_audit, review_schema = _predecessor(repo, old_evidence)
     ca.require(before.get("operational_admission") is None and baseline["activation_sha256"] == file_sha(archived)
                and completed["previous_acceptance"] == old_evidence["continuing_acceptance"],
                "completed member ordinary predecessor differs")
     old = ca.validate_evidence(old_evidence, repo, _activation_path=archived,
                                _historical_source=baseline["source_commit"], _historical_git_sources=True,
                                _seen=seen)
+    previous_audit, review_schema = _predecessor(repo, old_evidence)
     old_deployment = read(previous_audit)["deployment"]
     ca.require(baseline["source_commit"] == old["source_commit"] and baseline["worker"] == record["target"]["service"]
                and baseline["database"] == record["target"]["database_name"] and old["target"] == record["target"]

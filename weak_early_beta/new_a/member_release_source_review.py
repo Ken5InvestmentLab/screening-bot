@@ -15,15 +15,43 @@ ENTRY = "weak-early-beta-gate/src/index.ts"
 PRESENTATION = "weak-early-beta-gate/scripts/new-a-ui-source/assets/member-presentation.js"
 INITIAL_REVIEW_SCHEMA = "NEW_A_MEMBER_RELEASE_SOURCE_REVIEW_V1"
 PRESENTATION_REVIEW_SCHEMA = "NEW_A_MEMBER_PRESENTATION_SUCCESSOR_SOURCE_REVIEW_V1"
+COMPLETED_TIMING_REVIEW_SCHEMA = "NEW_A_MEMBER_COMPLETED_TIMING_SUCCESSOR_SOURCE_REVIEW_V1"
 _PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumのアクセス権を購入する</a>'.encode()
 _NEW_PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumアクセス権を購入する</a>'.encode()
-_PRESENTATION_SUCCESSOR_PATHS = frozenset({
-    PRESENTATION,
+_SUCCESSOR_REVIEW_PATHS = frozenset({
     "weak_early_beta/new_a/member_release_source_review.py",
     "weak_early_beta/new_a/member_ordinary_acceptance.py",
     "tests/test_new_a_member_release_source_review.py",
     "tests/test_new_a_member_ordinary_acceptance.py",
 })
+_PRESENTATION_SUCCESSOR_PATHS = _SUCCESSOR_REVIEW_PATHS | {PRESENTATION}
+_COMPLETED_TIMING_DELTAS = {
+    "weak-early-beta-gate/scripts/prepare-new-a-member-projection.cjs": (
+        (b"date <= terminal && terminal < asOf", b"date <= terminal && terminal <= asOf"),
+        (b"terminal < closed && closed < asOf", b"terminal < closed && closed <= asOf"),
+    ),
+    "weak-early-beta-gate/src/new-a-member-projection.ts": (
+        (b"row.completed_on >= row.date && row.completed_on < through",
+         b"row.completed_on >= row.date && row.completed_on <= through"),
+    ),
+    "weak_early_beta/new_a/member_publisher.py": (
+        (b'row["date"] <= row["completed_on"] < as_of', b'row["date"] <= row["completed_on"] <= as_of'),
+    ),
+}
+_TIMING_GUIDE = "weak-early-beta-gate/AGENTS.md"
+_TIMING_GUIDE_DELTA = (
+    b"Build and paginate that view on the server from verified prior-session monitoring closures and settled virtual "
+    b"positions. The current session's activity and active monitoring are Premium only, including their API and pagination metadata.",
+    b"Build and paginate that view on the server from verified monitoring closures and settled virtual positions "
+    b"completed on or before the latest published session. The current session's action cards and active "
+    b"monitoring are Premium only, including their API and pagination metadata.",
+)
+_TIMING_SUCCESSOR_PATHS = _SUCCESSOR_REVIEW_PATHS | set(_COMPLETED_TIMING_DELTAS) | {
+    _TIMING_GUIDE,
+    "tests/new_a_member_projection_preparation.test.cjs",
+    "tests/new_a_member_projection.test.cjs",
+    "tests/test_new_a_member_publisher.py",
+}
 MEMBER_BINDING = {
     "binding": "CLOUD_MEMBER_DB",
     "database_name": "tentei-cloud-member-view",
@@ -43,16 +71,20 @@ def unique_replace(data, old, new):
     return data.replace(old, new)
 
 
-def _presentation_successor(repo, baseline, candidate):
+def _successor_paths(repo, baseline, candidate):
     raw = git(repo, "diff", "--raw", "--no-abbrev", "--no-renames", "-z", baseline, candidate, "--")
     records = raw.split(b"\0")[:-1]
     paths = set()
     for metadata, path in zip(records[::2], records[1::2], strict=True):
         fields = metadata.split()
         if len(fields) != 5 or fields[:2] != [b":100644", b"100644"] or fields[-1] != b"M":
-            raise ValueError("Presentation successor changes an existing file mode or inventory")
+            raise ValueError("Member successor changes an existing file mode or inventory")
         paths.add(path.decode("utf-8"))
-    if PRESENTATION not in paths or not paths <= _PRESENTATION_SUCCESSOR_PATHS:
+    return paths
+
+
+def _check_presentation_successor(repo, baseline, candidate, paths):
+    if not paths <= _PRESENTATION_SUCCESSOR_PATHS:
         raise ValueError("Presentation successor changes paths outside the purchase-label scope")
 
     former = git(repo, "show", f"{baseline}:{PRESENTATION}")
@@ -60,11 +92,39 @@ def _presentation_successor(repo, baseline, candidate):
     if former.count(_PURCHASE_LABEL) != 1 or proposed != former.replace(_PURCHASE_LABEL, _NEW_PURCHASE_LABEL):
         raise ValueError("Presentation successor changes more than the approved purchase label")
 
+
+def _check_completed_timing_successor(repo, baseline, candidate, paths):
+    if not _COMPLETED_TIMING_DELTAS.keys() <= paths or not paths <= _TIMING_SUCCESSOR_PATHS:
+        raise ValueError("Completed-history successor differs from the approved source scope")
+    if git(repo, "show", f"{baseline}:{PRESENTATION}").count(_NEW_PURCHASE_LABEL) != 1:
+        raise ValueError("Completed-history successor requires the approved member purchase label")
+    deltas = dict(_COMPLETED_TIMING_DELTAS)
+    if _TIMING_GUIDE in paths:
+        deltas[_TIMING_GUIDE] = (_TIMING_GUIDE_DELTA,)
+    for path, replacements in deltas.items():
+        expected = git(repo, "show", f"{baseline}:{path}")
+        for former, inclusive in replacements:
+            if expected.count(former) != 1:
+                raise ValueError("Approved completed-history cutoff contract differs")
+            expected = expected.replace(former, inclusive)
+        if git(repo, "show", f"{candidate}:{path}") != expected:
+            raise ValueError("Completed-history successor changes more than the inclusive cutoff")
+
+
+def _member_successor(repo, baseline, candidate):
+    paths = _successor_paths(repo, baseline, candidate)
+    if PRESENTATION in paths:
+        _check_presentation_successor(repo, baseline, candidate, paths)
+        schema = PRESENTATION_REVIEW_SCHEMA
+    else:
+        _check_completed_timing_successor(repo, baseline, candidate, paths)
+        schema = COMPLETED_TIMING_REVIEW_SCHEMA
+    # Keep the full-index diff format of the already-issued presentation approval.
     delta = git(repo, "diff", "--binary", "--full-index", "--no-renames", "--no-ext-diff", "--no-textconv",
                 "--no-color", "--src-prefix=a/", "--dst-prefix=b/", "--unified=3", "--diff-algorithm=myers",
                 "--no-indent-heuristic", baseline, candidate, "--")
     return {
-        "schema": PRESENTATION_REVIEW_SCHEMA,
+        "schema": schema,
         "accepted_owner_source": baseline,
         "candidate_source": candidate,
         "reviewed_diff_sha256": hashlib.sha256(delta).hexdigest(),
@@ -75,7 +135,7 @@ def _presentation_successor(repo, baseline, candidate):
 
 
 def review_member_release_source(repo, baseline, candidate):
-    """Review initial member support or the exact presentation successor."""
+    """Review initial member support or one exact successor."""
     repo = Path(repo).resolve()
     if not all(re.fullmatch(r"[a-f0-9]{40}", value) for value in (baseline, candidate)) or baseline == candidate:
         raise ValueError("Distinct full commits required for member source review")
@@ -91,11 +151,11 @@ def review_member_release_source(repo, baseline, candidate):
     prior_members = [db for db in common_config["d1_databases"] if db.get("binding") == "CLOUD_MEMBER_DB"]
     if prior_members or "CLOUD_MEMBER_VIEW_ENABLED" in common_config["vars"]:
         if changed:
-            raise ValueError("Presentation successor changes existing Discord or owner authorization source")
+            raise ValueError("Member successor changes existing Discord or owner authorization source")
         if (baseline_config_bytes != candidate_config_bytes or common_config.get("name") != acceptance.SERVICE
                 or common_config["vars"].get("CLOUD_MEMBER_VIEW_ENABLED") != "true" or prior_members != [MEMBER_BINDING]):
-            raise ValueError("Presentation successor changes the approved Worker configuration or member D1")
-        return _presentation_successor(repo, baseline, candidate)
+            raise ValueError("Member successor changes the approved Worker configuration or member D1")
+        return _member_successor(repo, baseline, candidate)
 
     if changed != [ENTRY]:
         raise ValueError("Existing Discord or owner authorization code changed beyond the member fallback")

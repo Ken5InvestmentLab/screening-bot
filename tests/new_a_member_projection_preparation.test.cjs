@@ -163,7 +163,7 @@ test('rejects unpinned evidence, invalid owner READY digest and retained source 
   await assert.rejects(() => prepareNewAMemberProjection(f.input), /differs from the verified owner READY manifest/);
 });
 
-test('separates prior completed evidence, unresolved/active episodes and current paid dashboard actions', async t => {
+test('includes newly completed watches and settled holds while keeping active episodes and dashboard actions separate', async t => {
   const f = await fixture(t, { logical: false });
   const sessions = ['2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06',
     '2026-11-09', '2026-11-10', '2026-11-11', '2026-11-12', '2026-11-13',
@@ -181,6 +181,11 @@ test('separates prior completed evidence, unresolved/active episodes and current
     watch('6666', 8, 'UP_ESCAPED', day),
     watch('7777', 12, 'WATCHING', null),
     watch('8888', 11, 'TRIGGERED', sessions[11], sessions[11]),
+    // These fill in the capped Profit trial and remain open there on day.
+    ...['9001', '9002', '9003'].map(symbol => watch(symbol, 6, 'TRIGGERED', sessions[6], sessions[6])),
+    // This settles in the shared account on day and was never filled in the longer Profit trial.
+    watch('9999', 6, 'TRIGGERED', sessions[6], sessions[6]),
+    watch('9AAA', 8, 'UP_ESCAPED', '2026-11-20'),
   ];
   const frame = JSON.parse(await fs.readFile(path.join(f.root, 'manifest.json'), 'utf8'));
   frame.input_header = { calendar: sessions, source_version: sourceVersion,
@@ -226,13 +231,16 @@ test('separates prior completed evidence, unresolved/active episodes and current
   const manifest = JSON.parse(result.manifestJson);
   assert.deepEqual(manifest.history_layout, { premium_pages: 1, completed_pages: 1 });
   const histories = result.parts.filter(part => part.kind === 'history').map(part => JSON.parse(part.json).rows);
-  assert.equal(histories[0].length, 8);
+  assert.equal(histories[0].length, watches.length);
   assert.deepEqual(histories[1], [
+    { date: sessions[8], symbol: '6666', state: 'UP_ESCAPED', completed_on: day },
+    { date: sessions[6], symbol: '9999', state: 'HOLD_ENDED', completed_on: day },
     { date: sessions[1], symbol: '1111', state: 'EXPIRED', completed_on: sessions[7] },
     { date: sessions[0], symbol: '3333', state: 'HOLD_ENDED', completed_on: sessions[6] },
   ]);
   assert.deepEqual(histories[2].filter(row => row.lane === 'today').map(({ symbol, state }) => [symbol, state]), [
     ['4444', 'ENTRY_CANDIDATE'], ['6666', 'WATCH_TERMINAL'], ['7777', 'WATCH_STARTED'], ['8888', 'HOLD_STARTED'],
+    ['9001', 'HOLD_ENDED'], ['9002', 'HOLD_ENDED'], ['9003', 'HOLD_ENDED'], ['9999', 'HOLD_ENDED'],
   ]);
   assert.deepEqual(histories[2].filter(row => row.lane === 'watching').map(row => row.symbol), ['7777', '2222']);
   assert.doesNotMatch(JSON.stringify(result), /private_price|69253|pending_references|episode_id/);

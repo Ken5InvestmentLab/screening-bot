@@ -35,7 +35,7 @@ function fixture(t, { changePart = () => {}, changeManifest = () => {}, omitHist
   const parts = [
     ...omitHistory ? [] : [{ kind: 'history', index: 0, rows: structuredClone(history) }],
     ...(tiered ? [
-      { kind: 'history', index: 1, rows: [{ date: '2026-11-17', symbol: '123B', state: 'HOLD_ENDED', completed_on: '2026-11-18' }] },
+      { kind: 'history', index: 1, rows: [{ date: '2026-11-17', symbol: '123B', state: 'HOLD_ENDED', completed_on: source.as_of }] },
       { kind: 'history', index: 2, rows: [{ date: source.as_of, symbol: '123A', state: 'WATCH_STARTED', lane: 'today' }] },
     ] : []),
     { kind: 'analytics', index: 0, rows: structuredClone(analytics) },
@@ -203,9 +203,10 @@ test('V1 cannot serve roleless history or dashboard and V2 maps disjoint storage
   assert.equal(await f.read(source, 'dashboard', 1), null);
 });
 
-test('even digest-matched completed pages reject current terminals, pending rows and hidden fields', async t => {
+test('even digest-matched completed pages reject future or inverted completion days, pending rows and hidden fields', async t => {
   for (const properties of [
-    { completed_on: source.as_of },
+    { completed_on: '2026-11-20' },
+    { completed_on: '2026-11-16' },
     { state: 'WATCHING' },
     { owner_holdings: true },
   ]) {

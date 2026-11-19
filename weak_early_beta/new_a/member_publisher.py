@@ -145,7 +145,7 @@ def _public_part_shape(part, kind, index, rows, as_of, view):
                            or row["lane"] == "watching" and row["state"] == "WATCHING")
             elif allowed and view == "completed":
                 allowed = (row["state"] in _COMPLETED_STATES and _day(row["completed_on"])
-                           and row["date"] <= row["completed_on"] < as_of)
+                           and row["date"] <= row["completed_on"] <= as_of)
             elif allowed:
                 allowed = row["state"] in _WATCH_STATES
         elif kind == "chart":

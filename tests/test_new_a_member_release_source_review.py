@@ -147,3 +147,31 @@ class PresentationSuccessorReviewTest(unittest.TestCase):
                 candidate = self.commit("Rejected candidate")
                 with self.assertRaisesRegex(ValueError, error):
                     review.review_member_release_source(self.repo, self.baseline, candidate)
+
+
+    def test_only_confirmed_completion_cutoffs_and_durable_guide_are_reviewed(self):
+        self.purchase_copy()
+        deltas = {**review._COMPLETED_TIMING_DELTAS, review._TIMING_GUIDE: (review._TIMING_GUIDE_DELTA,)}
+        old = {path: b"\n".join(before for before, _ in edits) for path, edits in deltas.items()}
+        inclusive = {path: b"\n".join(after for _, after in edits) for path, edits in deltas.items()}
+        for path, contents in old.items():
+            self.write(path, contents)
+        baseline = self.commit("Approved purchase copy and strict completion cutoff")
+        for path, contents in inclusive.items():
+            self.write(path, contents)
+        candidate = self.commit("Permit confirmed same-session completion")
+        result = review.review_member_release_source(self.repo, baseline, candidate)
+        self.assertEqual(result["schema"], review.COMPLETED_TIMING_REVIEW_SCHEMA)
+        self.git("config", "core.abbrev", "17")
+        self.assertEqual(review.review_member_release_source(self.repo, baseline, candidate), result)
+
+        publisher = "weak_early_beta/new_a/member_publisher.py"
+        self.write(publisher, old[publisher])
+        partial = self.commit("Missing importer validator")
+        with self.assertRaisesRegex(ValueError, "approved source scope"):
+            review.review_member_release_source(self.repo, baseline, partial)
+
+        self.write(publisher, inclusive[publisher] + b"\nOther data change")
+        extra = self.commit("Changes outside the cutoff")
+        with self.assertRaisesRegex(ValueError, "more than the inclusive cutoff"):
+            review.review_member_release_source(self.repo, baseline, extra)

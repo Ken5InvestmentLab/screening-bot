@@ -215,12 +215,12 @@ function completedHistory(episodes, settlements, current, marketDays, asOf) {
     const { candidate_date: date, symbol, watch_status: state, terminal_date: terminal, trigger_date: trigger } = watch;
     const summaryKey = date + '|' + symbol;
     let row;
-    if (!active.has(key) && !pending.has(key) && marketDays.has(terminal) && date <= terminal && terminal < asOf) {
+    if (!active.has(key) && !pending.has(key) && marketDays.has(terminal) && date <= terminal && terminal <= asOf) {
       if (completedWatchStates.has(state) && trigger == null) {
         row = { date, symbol, state, completed_on: terminal };
       } else if (state === 'TRIGGERED' && trigger === terminal) {
         const closed = settlements.get(key);
-        if (closed && terminal < closed && closed < asOf) {
+        if (closed && terminal < closed && closed <= asOf) {
           row = { date, symbol, state: 'HOLD_ENDED', completed_on: closed };
         }
       }

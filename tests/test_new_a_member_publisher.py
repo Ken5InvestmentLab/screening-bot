@@ -58,7 +58,7 @@ def projection(
         parts[0]["rows"] = [{"date": "2026-11-17", "symbol": "123A", "state": "TRIGGERED"}]
         parts[1:1] = [
             {"kind": "history", "index": 1, "rows": [
-                {"date": "2026-11-17", "symbol": "123A", "state": "HOLD_ENDED", "completed_on": "2026-11-18"},
+                {"date": "2026-11-17", "symbol": "123A", "state": "HOLD_ENDED", "completed_on": DAY},
             ]},
             {"kind": "history", "index": 2, "rows": []},
         ]
@@ -200,7 +200,8 @@ class MemberPublisherTest(unittest.TestCase):
 
     def test_tiered_projections_require_completed_rows_to_match_an_exact_premium_predecessor(self):
         for index, (field, value) in enumerate((
-            ("symbol", "123B"), ("state", "WATCHING"), ("completed_on", DAY),
+            ("symbol", "123B"), ("state", "WATCHING"), ("completed_on", "2026-11-20"),
+            ("completed_on", "2026-11-16"),
         )):
             with self.subTest(field=field):
                 folder = self.root / f"tiered-invalid-{index}"

@@ -11,6 +11,7 @@ const { newATaskPlan } = taskRoute;
 import { launchPreflight } from './weak-early-beta-launch-preflight.mjs';
 import { startInvocation, boundedPreflight, readRecord, recoveryPlan, atomicJson, jstDay } from './weak-early-beta-run-journal.mjs';
 import { verifyPreflightReconciliation, claimPreflightReconciliation } from './preflight-reconciliation.mjs';
+import { verifyPreProviderCacheRecovery } from './new-a-pre-provider-cache-recovery.mjs';
 
 // The audit file is written before reading config, inspecting processes, or hashing data.
 export async function taskEntry(configPath, { task = 'cloud-3', start = false, reconciliationFile = null, delayedRecord = null, acceptanceApplication = null, admissionContinuationFile = null,
@@ -72,6 +73,11 @@ export async function taskEntry(configPath, { task = 'cloud-3', start = false, r
     }
     if (!['none', 'resume-detection', 'resume-preflight'].includes(plan.action)) return invocation.update({ status: plan.action, plan });
     if (task === 'cloud-5') return invocation.update({ status: 'reconcile', reason: 'Reminder recovery must reconcile its own delivery receipts; daily launcher not used' });
+    let preProviderRecovery;
+    if (plan.action === 'resume-detection' && Object.hasOwn(prior, 'preProviderCacheFailure')) {
+      preProviderRecovery = verifyPreProviderCacheRecovery(runtime, prior, readiness.result.sourceSha256);
+      plan = { ...plan, acquisition: 'first-live-after-verified-cache-failure' };
+    }
     if (!start) return invocation.update({ status: 'ready', plan, externalSideEffects: false });
     if (jstDay() !== invocation.value.date) throw new Error('Target JST day changed');
     if (reconciliation) claimPreflightReconciliation(runtime,reconciliation,invocation.value.id);
@@ -84,7 +90,10 @@ export async function taskEntry(configPath, { task = 'cloud-3', start = false, r
       let claimFd;
       try { claimFd = fs.openSync(claim, 'wx'); }
       catch (error) { if (error.code !== 'EEXIST') throw error; return invocation.update({ status: 'reconcile', reason: 'Recovery already claimed; inspect saved PID/receipt before any repeat' }); }
-      fs.writeFileSync(claimFd, JSON.stringify({ invocation: invocation.value.id, priorStartedAt: prior.startedAt })); fs.fsyncSync(claimFd); fs.closeSync(claimFd);
+      fs.writeFileSync(claimFd, JSON.stringify({ invocation: invocation.value.id, priorStartedAt: prior.startedAt,
+        ...(preProviderRecovery ? { preProviderSourceSha256: preProviderRecovery.sourceSha256 } : {}) }));
+      fs.fsyncSync(claimFd);
+      fs.closeSync(claimFd);
       receipt = path.join(runtime, `recovery-input-${key}.json`); atomicJson(receipt, prior);
     }
     const args = [path.join(config.repoPath, 'scripts', 'windows', 'weak-early-beta-daily-runner.mjs'), path.resolve(configPath)];

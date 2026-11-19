@@ -16,6 +16,7 @@ from weak_early_beta.cli import _write_daily_cache, command_daily
 from weak_early_beta.corporate_actions import CorporateActionError, normalize_daily
 from weak_early_beta.ledger import merge_detections
 from weak_early_beta.metrics import required_capital
+from weak_early_beta.new_a.source import acquire_and_validate
 from weak_early_beta.trade_basis import ECONOMIC_COLUMNS, PRICE_BASIS_VERSION
 
 
@@ -53,6 +54,57 @@ class SplitAwareModelTests(unittest.TestCase):
         for column in ("open", "high", "low", "close", "volume"):
             frame[column] = raw.iloc[:count][f"actual_{column}"].to_numpy()
         return normalize_daily(frame)
+
+    def test_daily_csv_preserves_parser_results_without_wide_consolidation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "daily.csv"
+            path.write_text(
+                "symbol,date,open,close,volume,split_ratio,provider_repaired,source_issue\n"
+                "0012,2026-11-18,100.12345678901234,100.125,39000,-0.0,False,\n"
+                "12AB,2026-11-19,5e-10,,40000,2.0,True,reviewed\n",
+                encoding="utf-8",
+            )
+            with pd.option_context("mode.copy_on_write", False):
+                legacy = pd.read_csv(path, parse_dates=["date"], dtype={"symbol": str})
+                actual = model.read_daily_csv(path)
+                self.assertFalse(pd.get_option("mode.copy_on_write"))
+
+        pd.testing.assert_frame_equal(actual, legacy, check_exact=True)
+        for column in ("open", "close", "split_ratio"):
+            self.assertEqual(actual[column].to_numpy().tobytes(), legacy[column].to_numpy().tobytes())
+        # A float column must still own only one column's contiguous block.
+        self.assertTrue(all(block.shape[0] == 1 for block in actual._mgr.blocks if block.dtype.kind == "f"))
+
+    def test_previous_cache_oom_marks_only_the_ordinary_pre_provider_boundary(self):
+        for failure, retained, isolated, expect_marker in (
+            (MemoryError("cache allocation"), None, False, True),
+            (MemoryError("cache allocation"), "retained-archive", False, False),
+            (MemoryError("cache allocation"), None, True, False),
+            (ValueError("cache malformed"), None, False, False),
+        ):
+            with self.subTest(failure=type(failure).__name__, retained=retained, isolated=isolated), \
+                 tempfile.TemporaryDirectory() as temporary:
+                path = Path(temporary) / "daily.csv"
+                path.write_text("old cache", encoding="utf-8")
+                args = Namespace(
+                    daily_corpus=str(path), as_of="2026-11-19", refresh_live=True,
+                    retained_acquisition=retained, new_a_isolated=isolated, period="5y",
+                )
+                with patch("weak_early_beta.new_a.operational_admission.source_context", return_value=None), \
+                     patch("weak_early_beta.restrictions.fetch_jpx_restricted_symbols", return_value=[]), \
+                     patch.object(model.base, "jpx_universe", return_value=pd.DataFrame({"code": ["9999"]})), \
+                     patch.object(model, "read_daily_csv", side_effect=failure), \
+                     patch("weak_early_beta.acquisition.AcquisitionArchive") as archive, \
+                     patch("weak_early_beta.corporate_actions.fetch_daily") as fetch, \
+                     redirect_stderr(StringIO()) as progress:
+                    with self.assertRaises(type(failure)):
+                        acquire_and_validate(args)
+                marker = {"identity": "NEW_A_PRE_PROVIDER_CACHE_FAILURE_V1", "reason": "memory", "phase": "previous-cache-read"}
+                records = [json.loads(line) for line in progress.getvalue().splitlines()]
+                self.assertEqual(records.count(marker), int(expect_marker))
+                self.assertEqual(path.read_text(encoding="utf-8"), "old cache")
+                archive.assert_not_called()
+                fetch.assert_not_called()
 
     def test_cached_and_refreshed_daily_use_same_serialized_verified_input(self):
         class InputReached(Exception):

@@ -206,10 +206,17 @@ def acquire_and_validate(args):
                 universe, excluded_universe = exclude_delisted_universe(universe, restrictions, tradability_date)
             # The old cache is evidence for detecting unannounced source rebases;
             # it must not be treated as action-aware input merely because it exists.
-            previous = (
-                pd.read_csv(daily_path, parse_dates=["date"], dtype={"symbol": str})
-                if daily_path.exists() else None
-            )
+            with daily_phase("previous-cache-read"):
+                try:
+                    previous = model.read_daily_csv(daily_path) if daily_path.exists() else None
+                except MemoryError:
+                    if finite is None and not retained and not getattr(args, "new_a_isolated", False):
+                        print(json.dumps({
+                            "identity": "NEW_A_PRE_PROVIDER_CACHE_FAILURE_V1",
+                            "reason": "memory",
+                            "phase": "previous-cache-read",
+                        }, separators=(",", ":")), file=sys.stderr, flush=True)
+                    raise
             if previous is not None:
                 previous.attrs["source_sha256"] = model.sha256(daily_path)
                 quality_path = daily_path.with_suffix(".source-quality.json")

@@ -25,9 +25,17 @@
       "database_id": "e0cdb3a7-b682-4db8-96ac-f2afcc9c23cb",
       "remote": false,
       "migrations_dir": "migrations"
+    },
+    {
+      "binding": "CLOUD_MEMBER_DB",
+      "database_name": "tentei-cloud-member-view",
+      "database_id": "72edf9bf-b033-463b-a053-ff259db17cb5",
+      "remote": false,
+      "migrations_dir": "member-migrations"
     }
   ],
   "vars": {
+    "CLOUD_MEMBER_VIEW_ENABLED": "false",
     "DISCORD_API_BASE": "https://discord.com/api",
     "DISCORD_GUILD_ID": "1479418833352785944",
     "DISCORD_ALLOWED_ROLE_IDS": "1487089073385373828",

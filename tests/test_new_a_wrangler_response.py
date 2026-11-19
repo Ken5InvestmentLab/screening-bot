@@ -64,14 +64,22 @@ class QueryResponse(unittest.TestCase):
  def test_missing_or_wrong_results_shape_rejected(self):
   for item in [{'success':True},{'success':True,'results':None},{'success':True,'results':{}},{'success':True,'results':[1]}]:
    with self.subTest(item=item):self.reject(json.dumps([item]),'remote_d1_query_result_shape_invalid_reconcile_before_retry')
+ def test_primary_opt_in_requires_boolean_true_on_every_result(self):
+  primary={'success':True,'results':[],'meta':{'served_by_primary':True}}
+  self.assertEqual(self.parse(json.dumps([primary,primary]),2,require_primary=True),[[],[]])
+  for meta in [None,[],{}, {'served_by_primary':False},{'served_by_primary':1},{'served_by_primary':'true'}]:
+   with self.subTest(meta=meta):
+    self.reject(json.dumps([primary,{**primary,'meta':meta}]),'remote_d1_primary_read_unconfirmed',2,require_primary=True)
 
-class PrivateTransport(unittest.TestCase):
+class PrivateTransportFixture(unittest.TestCase):
  def setUp(self):
   self.tmp=tempfile.TemporaryDirectory();self.repo=Path(self.tmp.name)
   cli=self.repo/'weak-early-beta-gate/node_modules/wrangler/bin/wrangler.js';cli.parent.mkdir(parents=True);cli.write_text('// fixture','utf8')
   self.root=self.repo/'.cache/weak_early_beta/new-a-private/sql';self.db=WranglerD1(self.repo,self.root,execute=True)
  def tearDown(self):self.tmp.cleanup()
  def fake(self,stdout,code=0):return SimpleNamespace(stdout=stdout,stderr='',returncode=code)
+
+class PrivateTransport(PrivateTransportFixture):
  def test_query_uses_private_bridge_without_sql_in_os_arguments(self):
   value="合成?;値'";seen=[]
   def run(args,**kw):
@@ -98,11 +106,74 @@ class PrivateTransport(unittest.TestCase):
  def test_empty_batch_has_no_provider_request(self):
   with patch('weak_early_beta.new_a.publisher.subprocess.run',return_value=self.fake('[]')) as run:
    self.assertEqual(self.db.batch([]),[]);run.assert_not_called()
+ def test_owner_primary_opt_in_does_not_change_transport(self):
+  db=WranglerD1(self.repo,self.root,execute=True,require_primary=True)
+  with patch('weak_early_beta.new_a.publisher.subprocess.run',return_value=self.fake(response([]))) as run:
+   with self.assertRaisesRegex(RemoteD1Error,'primary_read_unconfirmed'):db.query('SELECT 1')
+   self.assertEqual(len(run.call_args.args[0]),4)
+   self.assertNotIn('env',run.call_args.kwargs)
  def test_existing_sql_parameter_and_size_guards_remain(self):
   with patch('weak_early_beta.new_a.publisher.subprocess.run') as run:
    with self.assertRaisesRegex(ValueError,'parameters mismatch'):self.db.query('SELECT ?')
    with self.assertRaisesRegex(ValueError,'budget'):self.db.query('SELECT '+('x'*90001))
    run.assert_not_called()
+
+
+class MemberTransport(PrivateTransportFixture):
+ def write_config(self,alter=None):
+  source=Path(__file__).resolve().parents[1]/'weak-early-beta-gate/wrangler.jsonc'
+  config=json.loads(source.read_text('utf8'))
+  if alter:alter(config)
+  target=self.repo/'weak-early-beta-gate/wrangler.jsonc'
+  target.write_text(json.dumps(config),'utf8')
+  return target
+ def member(self):return WranglerD1(self.repo,self.root,execute=True,binding='CLOUD_MEMBER_DB')
+ def test_member_reads_select_fixed_bridge_mode_and_assert_primary(self):
+  self.write_config()
+  db=self.member()
+  primary=[{'success':True,'results':[{'member':1}],'meta':{'served_by_primary':True}}]
+  def fake(args,**options):
+   self.assertEqual(args[-1],'CLOUD_MEMBER_DB')
+   self.assertEqual(Path(args[-2]).read_text('utf8'),'SELECT 1 AS member;')
+   self.assertEqual(options['env']['CLOUDFLARE_API_BASE_URL'],'https://api.cloudflare.com/client/v4')
+   return self.fake(json.dumps(primary))
+  with patch('weak_early_beta.new_a.publisher.subprocess.run',side_effect=fake):
+   self.assertEqual(db.query('SELECT 1 AS member'),[{'member':1}])
+  with patch('weak_early_beta.new_a.publisher.subprocess.run',return_value=self.fake(response([]))) as run:
+   with self.assertRaisesRegex(RemoteD1Error,'primary_read_unconfirmed'):db.query('SELECT 1')
+   run.assert_called_once()
+  self.assertEqual(list(self.root.glob('*.sql')),[])
+ def test_member_import_passes_exact_top_level_config_and_private_file(self):
+  config=self.write_config()
+  db=self.member()
+  def fake(args,**options):
+   self.assertEqual(args[2:7],['d1','execute','CLOUD_MEMBER_DB','--remote','--file'])
+   self.assertEqual(args[8:],['--yes','--json','--config',str(config),'--env='])
+   self.assertEqual(Path(args[7]).read_text('utf8'),'UPDATE t SET v=1;')
+   self.assertEqual(options['env']['CLOUDFLARE_API_BASE_URL'],'https://api.cloudflare.com/client/v4')
+   return self.fake(json.dumps([{'success':True,'results':[{'Total queries executed':1,'Rows read':1,'Rows written':1}],
+      'meta':{'rows_read':1,'rows_written':1},'finalBookmark':'SYNTHETIC'}]))
+  with patch('weak_early_beta.new_a.publisher.subprocess.run',side_effect=fake):
+   self.assertEqual(db.query('UPDATE t SET v=1'),[])
+  self.assertEqual(list(self.root.glob('*.sql')),[])
+ def test_member_target_drift_and_unrecognized_binding_stop_before_subprocess(self):
+  self.write_config()
+  db=self.member()
+  with patch('weak_early_beta.new_a.publisher.subprocess.run') as run:
+   with self.assertRaisesRegex(ValueError,'unsupported D1 binding'):
+    WranglerD1(self.repo,self.root,execute=True,binding='arbitrary-database')
+   for change in [lambda c:c.update(name='tentei-kyokuchi-cloud-member-stage'),
+       lambda c:c['d1_databases'][1].update(database_id=c['d1_databases'][0]['database_id']),
+       lambda c:c['d1_databases'][1].update(database_name='other-member-view'),
+       lambda c:c['d1_databases'][1].update(database_internal_env='other'),
+       lambda c:c['d1_databases'].insert(0,{'database_name':'CLOUD_MEMBER_DB'}),
+       lambda c:c['env']['preview']['d1_databases'].append(c['d1_databases'][1])]:
+    self.write_config(change)
+    with self.assertRaisesRegex(ValueError,'canonical member D1'):self.member()
+    for sql in ['SELECT 1','UPDATE t SET v=1']:
+     with self.assertRaisesRegex(ValueError,'canonical member D1'):db.query(sql)
+   run.assert_not_called()
+  self.assertEqual(list(self.root.glob('*.sql')),[])
 
 class ReadOnlyRouting(unittest.TestCase):
  def test_only_single_comment_free_select_is_eligible(self):

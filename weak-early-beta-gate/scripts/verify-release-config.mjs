@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 const productionDatabaseId = 'e0cdb3a7-b682-4db8-96ac-f2afcc9c23cb';
+const memberDatabaseId = '72edf9bf-b033-463b-a053-ff259db17cb5';
 const ownerRegistration = 'new_a_owner_registration';
 const ownerScheduledDelivery = 'new_a_owner_scheduled';
 const ownerNoticeCrons = ['*/5 8-14 * * *', '0 23 * * *'];
@@ -42,8 +43,7 @@ export function verifyReleaseConfig(config) {
   if (memberEnabled === 'true') assert.equal(memberDatabases.length, 1, 'member view requires a dedicated database');
   if (memberDatabases.length) {
     const member = memberDatabases[0];
-    assert.match(member.database_id ?? '', /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/);
-    assert.notEqual(member.database_id, productionDatabaseId, 'member view cannot reuse owner D1');
+    assert.equal(member.database_id, memberDatabaseId, 'wrong production member view database ID');
     assert.equal(member.database_name, 'tentei-cloud-member-view', 'wrong production member view database');
     assert.equal(member.migrations_dir, 'member-migrations');
     assert.equal(member.remote, false, 'local member development must not use remote D1');

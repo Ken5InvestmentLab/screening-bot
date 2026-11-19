@@ -27,9 +27,12 @@ const ordinaryFixture = (head = 'f'.repeat(40)) => ({
  activation_sha256: '1'.repeat(64), build_input_sha256: '2'.repeat(64), policy_sha256: '3'.repeat(64),
  tag: 'cloud-deploy-transition-fixture', ci_run_id: 1234,
 });
-export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nativeInspector=null,dateOverride=null,detected=0,fundamentalOK=true,approvedWorker=null,failApprovedAt=null,noticeConfigured=false,noticeHost=null}={}){
+export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nativeInspector=null,dateOverride=null,detected=0,fundamentalOK=true,approvedWorker=null,failApprovedAt=null,noticeConfigured=false,noticeHost=null,memberEnabled=false,memberDrift=false}={}){
  const {repo,runtime}=fixture(),today=dateOverride||'2026-11-13',head='f'.repeat(40),calls=[];let sent=false;
  const config={repoPath:repo,runtimeDir:runtime,nodePath:'FAKE_NODE_NO_EXEC',pythonPath:'FAKE_PYTHON_NO_EXEC',npmPath:'FAKE_NPM_NO_EXEC',ghPath:'FAKE_GH_NO_EXEC',date:today};
+ if(memberEnabled)write(path.join(repo,'weak-early-beta-gate/wrangler.jsonc'),{
+  name:'tentei-kyokuchi-cloud',vars:{CLOUD_MEMBER_VIEW_ENABLED:'true'},
+ });
  const local=path.join(repo,'.cache/weak_early_beta/new-a-private');fs.mkdirSync(local,{recursive:true});
  if(approvedWorker)write(path.join(local,'activation.json'),{owner_acceptance:{application_id:'4'.repeat(64)}});
  if(noticeConfigured)write(path.join(local,'owner-notice-host.json'),{synthetic:true});
@@ -91,7 +94,17 @@ export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nati
    if(args.some(a=>a.endsWith('build-canonical-input.py')))return{code:0,stdout:'{"privateInputsRead":0}',stderr:''};
    if(args[1]==='weak_early_beta.new_a.cli'&&args[2]==='publish'){
     // This is a synthetic production-shape projection, never a remote D1 publication.
-    const publication={schema:'SYNTHETIC_OWNER_PUBLICATION_FOR_RUNNER_TEST',published:true,active_readback_verified:true,existing_owner_gate_verified:gateAccepted,dataset_id:'a-'+'d'.repeat(24),source_version:metadata.source_version,snapshot_sha256:metadata.snapshot_sha256};write(path.join(local,'latest-publication.json'),publication);return{code:0,stdout:JSON.stringify(publication),stderr:''};
+    const publication={schema:'SYNTHETIC_OWNER_PUBLICATION_FOR_RUNNER_TEST',published:true,active_readback_verified:true,existing_owner_gate_verified:gateAccepted,dataset_id:'a-'+'d'.repeat(24),revision:7,as_of:today,source_version:metadata.source_version,snapshot_sha256:metadata.snapshot_sha256};write(path.join(local,'latest-publication.json'),publication);return{code:0,stdout:JSON.stringify(publication),stderr:''};
+   }
+   if(args[2]==='weak_early_beta.new_a.cli'&&args[3]==='publish-member'){
+    assert(memberEnabled&&args.includes('--remote'));
+    const owner=JSON.parse(fs.readFileSync(path.join(local,'latest-publication.json'),'utf8'));
+    const source={
+     dataset_id:owner.dataset_id,revision:memberDrift?owner.revision+1:owner.revision,
+     as_of:owner.as_of,source_version:owner.source_version,
+    };
+    return{code:0,stdout:JSON.stringify({schema:'NEW_A_MEMBER_PUBLICATION_V1',published:true,
+     active_readback_verified:true,worker_version_id:approvedWorker.version_id,source}),stderr:''};
    }
    if(args[1]==='weak_early_beta.new_a.cli'&&args[2]==='notify'){
     const dry=args.includes('--dry-run'),n=sent?0:pending;if(!dry)sent=true;return{code:0,stdout:JSON.stringify({date:today,dry_run:dry,signal_notifications:n,completion_notifications:n?1:0,pending_discord_messages:dry&&n?1:0,external_sends:!dry&&n?1:0,synthetic:true}),stderr:''};
@@ -147,6 +160,37 @@ test('Transition-approved daily work reuses the exact checked Worker before publ
  const sent=f.calls.findIndex(({args})=>args.includes('notify')&&!args.includes('--dry-run'));
  assert.equal(probes.length,4);
  assert(probes[0]<firstStarted&&probes[2]<publish&&publish<probes[3]&&probes[3]<sent);
+});
+
+test('Role-limited daily publishes only the matching owner generation to the member view',async()=>{
+ const f=runnerFixture({approvedWorker:ordinaryFixture(),memberEnabled:true,pending:1});
+ const result=await f.run();
+ assert.equal(result.ok,true);
+ assert.equal(result.memberPublication.published,true);
+ assert.equal(result.memberPublication.source.dataset_id,result.new_a.dataset_id);
+ const notify=f.calls.findIndex(({args})=>args.includes('notify')&&!args.includes('--dry-run'));
+ const member=f.calls.findIndex(({args})=>args.includes('publish-member'));
+ assert(notify>=0&&notify<member);
+});
+
+test('Role-limited daily cannot enter detection without an exact approved Worker',async()=>{
+ const f=runnerFixture({memberEnabled:true});
+ const result=await f.run();
+ assert.equal(result.ok,false);
+ assert.match(result.error,/requires an exact approved Worker/);
+ assert(!f.calls.some(({args})=>args.includes('daily')||args.includes('publish')||args.includes('publish-member')));
+});
+
+test('Member generation mismatch is held for reconciliation without replaying owner work',async()=>{
+ const f=runnerFixture({approvedWorker:ordinaryFixture(),memberEnabled:true,memberDrift:true,pending:1});
+ const result=await f.run();
+ assert.equal(result.ok,true);
+ assert.equal(result.new_a.owner_publication_verified,true);
+ assert.equal(result.memberPublication.status,'reconcile-required');
+ assert.equal(f.calls.filter(({args})=>args.includes('notify')&&!args.includes('--dry-run')).length,1);
+ const count=f.calls.length;
+ await f.run();
+ assert.equal(f.calls.length,count);
 });
 
 const stagingPath = (runtime, result) => path.join(runtime,`daily-${result.startedAt.replace(/[:.]/g,'-')}`,'owner-notices-staging.json');

@@ -1,5 +1,5 @@
 """immutable parts→検証→READY→atomic pointer。通常Wrangler認証だけを使う。"""
-import copy,datetime,hashlib,json,re,sqlite3,subprocess,tempfile
+import copy,datetime,hashlib,json,os,re,sqlite3,subprocess,tempfile
 from pathlib import Path
 from .files import encode,read,atomic_write
 def hash_text(value):return hashlib.sha256(value.encode()).hexdigest()
@@ -91,7 +91,7 @@ def _require_success(item,returncode):
   codes=sorted({int(value) for pair in re.findall(r'"code"\s*:\s*(\d+)|\[code:\s*(\d+)\]',detail) for value in pair if value})
   raise RemoteD1Error('remote_d1_authorization_failed_reconcile_before_retry' if 7403 in codes else 'remote_d1_operation_unconfirmed',provider_codes=codes,returncode=returncode)
 
-def parse_wrangler_query_results(stdout,expected_count,*,returncode=0,stderr=''):
+def parse_wrangler_query_results(stdout,expected_count,*,returncode=0,stderr='',require_primary=False):
  """Accept query rows only; an import receipt cannot supply RETURNING rows."""
  data=_decode_wrangler_output(stdout,returncode=returncode,stderr=stderr)
  def reject(category):raise RemoteD1Error(category,returncode=returncode)
@@ -103,6 +103,10 @@ def parse_wrangler_query_results(stdout,expected_count,*,returncode=0,stderr='')
    reject('remote_d1_import_summary_not_query_results_reconcile_before_retry')
   if not isinstance(item.get('results'),list) or any(not isinstance(row,dict) for row in item['results']):
    reject('remote_d1_query_result_shape_invalid_reconcile_before_retry')
+  if require_primary:
+   meta=item.get('meta')
+   if not isinstance(meta,dict) or meta.get('served_by_primary') is not True:
+    reject('remote_d1_primary_read_unconfirmed')
  return [item['results'] for item in data]
 
 def parse_wrangler_import_ack(stdout,expected_count,*,returncode=0,stderr=''):
@@ -127,6 +131,43 @@ def _import_statement_allowed(sql):
  unquoted=re.sub(r"'(?:''|[^'])*'|\"(?:\"\"|[^\"])*\"|`(?:``|[^`])*`|\[(?:\]\]|[^\]])*\]",' ',sql)
  return not re.search(r"[;'\"`\[\]]|--|/\*|\bRETURNING\b",unquoted,re.I)
 
+_OWNER_BINDING='CLOUD_DB'
+_MEMBER_BINDING='CLOUD_MEMBER_DB'
+_MEMBER_DATABASE_ID='72edf9bf-b033-463b-a053-ff259db17cb5'
+_CLOUDFLARE_API='https://api.cloudflare.com/client/v4'
+
+
+def _canonical_member_config(repo):
+ """Match the standalone read bridge's production-only binding checks."""
+ path=repo/'weak-early-beta-gate/wrangler.jsonc'
+ try:
+  if path.resolve(strict=True)!=path or not path.is_file():raise ValueError
+  config=read(path)
+ except (OSError,ValueError):
+  raise ValueError('canonical member D1 config required') from None
+ databases=config.get('d1_databases') if isinstance(config,dict) else None
+ if (not isinstance(databases,list) or any(not isinstance(db,dict) for db in databases)
+     or config.get('name')!='tentei-kyokuchi-cloud' or config.get('preview_urls') is not False):
+  raise ValueError('canonical member D1 config required')
+ matches=[db for db in databases if db.get('binding')==_MEMBER_BINDING
+          or db.get('database_name')==_MEMBER_BINDING or db.get('database_id')==_MEMBER_DATABASE_ID]
+ owners=[db for db in databases if db.get('binding')==_OWNER_BINDING]
+ environments=config.get('env')
+ preview=environments.get('preview') if isinstance(environments,dict) else None
+ if (len(matches)!=1 or len(owners)!=1 or owners[0].get('database_id')!='e0cdb3a7-b682-4db8-96ac-f2afcc9c23cb'
+     or owners[0].get('database_name')!='tentei-cloud-settings'
+     or any(db.get('preview_database_id')==_MEMBER_DATABASE_ID for db in databases)
+     or not isinstance(preview,dict) or preview.get('d1_databases')!=[]):
+  raise ValueError('canonical member D1 config required')
+ member=matches[0]
+ if (member.get('binding')!=_MEMBER_BINDING or member.get('database_name')!='tentei-cloud-member-view'
+     or member.get('database_id')!=_MEMBER_DATABASE_ID or member.get('remote') is not False
+     or member.get('migrations_dir')!='member-migrations'
+     or 'preview_database_id' in member or 'database_internal_env' in member):
+  raise ValueError('canonical member D1 config required')
+ return path
+
+
 class LocalD1:
  def __init__(self,path,schema):
   Path(path).parent.mkdir(parents=True,exist_ok=True);self.db=sqlite3.connect(path,isolation_level=None);self.db.row_factory=sqlite3.Row;self.db.execute('PRAGMA foreign_keys=ON');self.db.executescript(Path(schema).read_text(encoding='utf8'));self.external=False
@@ -135,12 +176,15 @@ class LocalD1:
  def batch(self,statements):return [self.query(sql,values) for sql,values in statements]
  def close(self):self.db.close()
 class WranglerD1:
- def __init__(self,repo,private_directory,*,execute=False,node='node'):
+ def __init__(self,repo,private_directory,*,execute=False,node='node',binding=_OWNER_BINDING,require_primary=False):
   if not execute:raise ValueError('remote publication not authorized in preparation')
+  if binding not in (_OWNER_BINDING,_MEMBER_BINDING):raise ValueError('unsupported D1 binding')
   self.repo=Path(repo).resolve();self.directory=Path(private_directory).resolve();self.node=node;self.external=True
+  self.binding=binding;self.require_primary=binding==_MEMBER_BINDING or require_primary
   if not self.directory.is_relative_to(self.repo/'.cache/weak_early_beta/new-a-private'):raise ValueError('private SQL directory required')
   self.cli=self.repo/'weak-early-beta-gate/node_modules/wrangler/bin/wrangler.js'
   if not self.cli.is_file():raise ValueError('existing Wrangler unavailable')
+  if self.binding==_MEMBER_BINDING:_canonical_member_config(self.repo)
   self.directory.mkdir(parents=True,exist_ok=True)
  def query(self,sql,values=()):return self.batch([(sql,values)])[0]
  def batch(self,statements):
@@ -156,15 +200,23 @@ class WranglerD1:
   if len(sql.encode())>1024*1024:raise ValueError('D1 SQL batch budget exceeded')
   read_only=bool(compiled) and all(is_read_only_select(statement) for statement in compiled)
   if not read_only and not all(_import_statement_allowed(statement) for statement in compiled):raise ValueError('D1 import requires single DML statements without RETURNING')
+  options=dict(cwd=self.repo/'weak-early-beta-gate',capture_output=True,text=True,encoding='utf8',timeout=120)
+  member_arguments=[]
+  if self.binding==_MEMBER_BINDING:
+   config=_canonical_member_config(self.repo)
+   member_arguments=['--config',str(config),'--env=']
+   options['env']={**os.environ,'CLOUDFLARE_API_BASE_URL':_CLOUDFLARE_API}
   # 値を引数/履歴へ入れずprivate fileから渡し、stdout/stderrはチャット/CIへ出さない。
   with tempfile.NamedTemporaryFile(mode='w',encoding='utf8',suffix='.sql',dir=self.directory,delete=False) as f:f.write(sql);name=f.name
   try:
    if read_only:
     bridge=Path(__file__).with_name('wrangler-query.cjs')
-    result=subprocess.run([self.node,str(bridge),str(self.cli),name],cwd=self.repo/'weak-early-beta-gate',capture_output=True,text=True,encoding='utf8',timeout=120)
-    return parse_wrangler_query_results(result.stdout,len(statements),returncode=result.returncode,stderr=result.stderr)
+    command=[self.node,str(bridge),str(self.cli),name]
+    if member_arguments:command.append(self.binding)
+    result=subprocess.run(command,**options)
+    return parse_wrangler_query_results(result.stdout,len(statements),returncode=result.returncode,stderr=result.stderr,require_primary=self.require_primary)
    # Keep the existing file-import transport, statement order, limits and timeout.
-   result=subprocess.run([self.node,str(self.cli),'d1','execute','CLOUD_DB','--remote','--file',name,'--yes','--json'],cwd=self.repo/'weak-early-beta-gate',capture_output=True,text=True,encoding='utf8',timeout=120)
+   result=subprocess.run([self.node,str(self.cli),'d1','execute',self.binding,'--remote','--file',name,'--yes','--json',*member_arguments],**options)
    return parse_wrangler_import_ack(result.stdout,len(statements),returncode=result.returncode,stderr=result.stderr)
   finally:Path(name).unlink(missing_ok=True)
  def close(self):pass

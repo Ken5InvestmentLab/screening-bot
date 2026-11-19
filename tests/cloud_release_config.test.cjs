@@ -113,11 +113,9 @@ test('member viewing requires a separate production database outside the canonic
   const { verifyReleaseConfig } = await import('../weak-early-beta-gate/scripts/verify-release-config.mjs');
   const member = structuredClone(config);
   member.vars.CLOUD_MEMBER_VIEW_ENABLED = 'true';
-  assert.throws(() => verifyReleaseConfig(member), /dedicated database/);
-  member.d1_databases.push({
-    binding: 'CLOUD_MEMBER_DB', database_name: 'tentei-cloud-member-view',
-    database_id: '12345678-1234-1234-1234-123456789012', migrations_dir: 'member-migrations', remote: false,
-  });
+  const missing = structuredClone(member);
+  missing.d1_databases = missing.d1_databases.filter(binding => binding.binding !== 'CLOUD_MEMBER_DB');
+  assert.throws(() => verifyReleaseConfig(missing), /dedicated database/);
   verifyReleaseConfig(member);
   for (const change of [
     c => { c.d1_databases.at(-1).database_id = c.d1_databases[0].database_id; },

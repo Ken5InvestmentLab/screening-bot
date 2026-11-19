@@ -40,6 +40,8 @@ def publish(root,db,*,owner_verified=False,operational_verified=False):
  atomic_write(Path(root)/'latest-publication.json',receipt);return receipt
 def main(argv=None):
  p=argparse.ArgumentParser();sub=p.add_subparsers(dest='command',required=True);pub=sub.add_parser('publish');pub.add_argument('--remote',action='store_true');pub.add_argument('--local',action='store_true');n=sub.add_parser('notify');n.add_argument('--date',required=True);mode=n.add_mutually_exclusive_group();mode.add_argument('--dry-run',action='store_true');mode.add_argument('--reconcile-only',action='store_true');n.add_argument('--report-url',default='')
+ member=sub.add_parser('publish-member')
+ member.add_argument('--remote',action='store_true',required=True)
  for command in ['prepare-release','prearm-release']:
   initial=sub.add_parser(command);initial.add_argument('--remote',action='store_true');initial.add_argument('--local',action='store_true');initial.add_argument('--approval-file');initial.add_argument('--code-manifest')
   if command=='prepare-release':initial.add_argument('--bundle',required=True);initial.add_argument('--expected-revision',type=int,default=0)
@@ -54,6 +56,19 @@ def main(argv=None):
   else:approved={'kind':'LOCAL_SYNTHETIC_UNAPPROVED'};db=LocalD1(root/'isolated-owner-d1.sqlite',ROOT/'weak-early-beta-gate/schema/new-a-private.sql')
   try:receipt=release.prepare(root,db,args.bundle,approved,expected_revision=args.expected_revision) if args.command=='prepare-release' else release.prearm(root,db,args.version_receipt,approved,expected_revision=args.expected_revision)
   finally:db.close()
+  print(json.dumps(receipt,ensure_ascii=False));return receipt
+ if args.command=='publish-member':
+  from .member_publication import publish_current_member_view
+  config=read(ROOT/'weak-early-beta-gate/wrangler.jsonc')
+  if config.get('vars',{}).get('CLOUD_MEMBER_VIEW_ENABLED')!='true':
+   raise ValueError('Member publication requires the enabled canonical member view')
+  node=read(ROOT/'.cache/weak_early_beta/daily-runner.config.json')['nodePath']
+  owner_db=WranglerD1(ROOT,root/'sql',execute=True,node=node,require_primary=True)
+  member_db=WranglerD1(ROOT,root/'sql',execute=True,node=node,binding='CLOUD_MEMBER_DB')
+  try:receipt=publish_current_member_view(ROOT,owner_db,member_db,node=node)
+  finally:
+   member_db.close()
+   owner_db.close()
   print(json.dumps(receipt,ensure_ascii=False));return receipt
  if args.command=='publish':
   if args.remote==args.local:raise ValueError('choose one publication target')

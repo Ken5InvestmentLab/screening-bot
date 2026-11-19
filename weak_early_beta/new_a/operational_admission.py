@@ -56,18 +56,18 @@ def default_database(repo):
 
 def active_metadata(repo,database_factory=None):
  db=(database_factory or (lambda:default_database(repo)))()
- try:rows=db.query("SELECT p.dataset_id,p.revision,d.status,d.source_version,d.manifest_sha256,d.manifest_json FROM new_a_active_pointer p JOIN new_a_private_datasets d ON d.dataset_id=p.dataset_id WHERE p.pointer_key='owner'")
+ try:return read_active_metadata(db)
  finally:db.close()
+
+def read_active_metadata(db):
+ rows=db.query("SELECT p.dataset_id,p.revision,d.status,d.source_version,d.manifest_sha256,d.manifest_json FROM new_a_active_pointer p JOIN new_a_private_datasets d ON d.dataset_id=p.dataset_id WHERE p.pointer_key='owner'")
  require(len(rows)==1,'active D1 state unavailable');row=rows[0];manifest=json.loads(row['manifest_json'])
  require(hashlib.sha256(row['manifest_json'].encode()).hexdigest()==row['manifest_sha256'] and manifest.get('source_version')==row['source_version'] and row['status']=='READY','D1 active integrity changed')
  active=digest(['NEW_A_ACTIVE_METADATA_V1',row['dataset_id'],row['revision'],row['status'],row['source_version'],row['manifest_sha256'],manifest['as_of']])
  return row,manifest,active
 
-def observe(repo,ci,*,loader_reader=None,database_factory=None,http_get=None):
- """Genuine current normal-origin readback; no source of JSON/flags can replace it."""
- repo=Path(repo).resolve();source=head(repo);checked_ci(ci,source)
- loader=(loader_reader or (lambda:default_loader(repo)))();deps=fixed_dependencies(repo,loader)
- before_row,before_manifest,before_active=active_metadata(repo,database_factory)
+def observe_normal_response(*,source,version_id,build_input_sha256,policy_sha256,active,http_get=None):
+ """Verify the existing normal-origin Worker and its live D1 challenge."""
  nonce=secrets.token_hex(32)
  get=http_get or requests.get
  response=get(ORIGIN+'/healthz',params={'new_a_probe':nonce},headers={'Cache-Control':'no-cache','User-Agent':'screening-bot-operational-readback/1.0'},allow_redirects=False,timeout=30)
@@ -75,16 +75,26 @@ def observe(repo,ci,*,loader_reader=None,database_factory=None,http_get=None):
  try:actual=response.json()
  except ValueError:raise ValueError('Operational admission: runtime response invalid') from None
  version=actual.get('version',{});target=actual.get('target',{})
- require(actual.get('schema')=='NEW_A_OPERATIONAL_READBACK_V1' and actual.get('nonce')==nonce and actual.get('source_commit')==source and actual.get('build_input_sha256')==ci['build_input_sha256'] and target=={'worker':'tentei-kyokuchi-cloud','database':'tentei-cloud-settings'} and version.get('id')==ci['version_id'] and version.get('tag')==source and actual.get('authentication_probe') is False and actual.get('owner_http_observed') is False and actual.get('d1_writes')==0,'runtime provenance mismatch')
+ require(actual.get('schema')=='NEW_A_OPERATIONAL_READBACK_V1' and actual.get('nonce')==nonce and actual.get('source_commit')==source and actual.get('build_input_sha256')==build_input_sha256 and target=={'worker':'tentei-kyokuchi-cloud','database':'tentei-cloud-settings'} and version.get('id')==version_id and version.get('tag')==source and actual.get('authentication_probe') is False and actual.get('owner_http_observed') is False and actual.get('d1_writes')==0,'runtime provenance mismatch')
  require(stamp(version['timestamp'])<=now(),'runtime version is in future')
- require(actual['policy_sha256']==loader['policy_sha256'],'effective authentication policy changed')
+ require(actual['policy_sha256']==policy_sha256,'effective authentication policy changed')
+ prefix=['NEW_A_OPERATIONAL_CHALLENGE_V1',nonce,target['worker'],target['database'],version['id'],version['tag'],version['timestamp'],source,actual['build_input_sha256']]
+ require(actual['d1_active_sha256']==active and actual['policy_challenge_sha256']==digest([*prefix,'policy',policy_sha256]) and actual['d1_challenge_sha256']==digest([*prefix,'d1-active',active]),'actual D1 binding or fresh challenge mismatch')
+ return hashlib.sha256(response.content).hexdigest()
+
+def observe(repo,ci,*,loader_reader=None,database_factory=None,http_get=None):
+ """Genuine current normal-origin readback; no source of JSON/flags can replace it."""
+ repo=Path(repo).resolve();source=head(repo);checked_ci(ci,source)
+ loader=(loader_reader or (lambda:default_loader(repo)))();deps=fixed_dependencies(repo,loader)
+ before_row,before_manifest,before_active=active_metadata(repo,database_factory)
+ raw_response_sha256=observe_normal_response(source=source,version_id=ci['version_id'],
+    build_input_sha256=ci['build_input_sha256'],policy_sha256=loader['policy_sha256'],
+    active=before_active,http_get=http_get)
  row,manifest,active=active_metadata(repo,database_factory)
  require((row,manifest,active)==(before_row,before_manifest,before_active),'active D1 state raced during readback')
- prefix=['NEW_A_OPERATIONAL_CHALLENGE_V1',nonce,target['worker'],target['database'],version['id'],version['tag'],version['timestamp'],source,actual['build_input_sha256']]
- require(actual['d1_active_sha256']==active and actual['policy_challenge_sha256']==digest([*prefix,'policy',loader['policy_sha256']]) and actual['d1_challenge_sha256']==digest([*prefix,'d1-active',active]),'actual D1 binding or fresh challenge mismatch')
  require(head(repo)==source and fixed_dependencies(repo,(loader_reader or (lambda:default_loader(repo)))())==deps,'loader or source changed during readback')
  from .publisher import logical_manifest
- return {'schema':'NEW_A_OPERATIONAL_OBSERVATION_V1','observed_at':now().isoformat(),'source_commit':source,'version_id':ci['version_id'],'build_input_sha256':ci['build_input_sha256'],'dependencies':deps,'d1_active_sha256':active,'active_as_of':manifest['as_of'],'active_revision':row['revision'],'active_dataset_id':row['dataset_id'],'active_source_version':row['source_version'],'active_manifest_sha256':row['manifest_sha256'],'active_logical_manifest_sha256':digest(logical_manifest(manifest)),'raw_response_sha256':hashlib.sha256(response.content).hexdigest(),'owner_http_observed':False,'authenticated_nonowner_observed':False,'authentication_probe':False,'management_deployment_observed':False,'traffic_percentages_observed':False,'final_worker_artifact_sha256_observed':False}
+ return {'schema':'NEW_A_OPERATIONAL_OBSERVATION_V1','observed_at':now().isoformat(),'source_commit':source,'version_id':ci['version_id'],'build_input_sha256':ci['build_input_sha256'],'dependencies':deps,'d1_active_sha256':active,'active_as_of':manifest['as_of'],'active_revision':row['revision'],'active_dataset_id':row['dataset_id'],'active_source_version':row['source_version'],'active_manifest_sha256':row['manifest_sha256'],'active_logical_manifest_sha256':digest(logical_manifest(manifest)),'raw_response_sha256':raw_response_sha256,'owner_http_observed':False,'authenticated_nonowner_observed':False,'authentication_probe':False,'management_deployment_observed':False,'traffic_percentages_observed':False,'final_worker_artifact_sha256_observed':False}
 
 def historical_review(repo,value,*,activation_path=None):
  """Replay the genuine old V1 audit in its historical source view only."""

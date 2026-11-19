@@ -48,3 +48,40 @@ test('startup failure emits only a fixed safe category',t=>{
  const f=fixture(t),outside=path.join(f.repo,'SYNTHETIC_PRIVATE_MARKER.sql');fs.writeFileSync(outside,'SYNTHETIC_PRIVATE_MARKER');
  const r=spawnSync(process.execPath,[bridge,f.cli,outside],{encoding:'utf8'});assert.equal(r.status,1);assert.equal(r.stdout,'');assert.equal(r.stderr.trim(),'private_wrangler_query_start_failed');
 });
+
+function writeMemberConfig(f, change = () => {}) {
+ const relative = 'weak-early-beta-gate/wrangler.jsonc';
+ const config = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', relative), 'utf8'));
+ change(config);
+ const file = path.join(f.repo, relative);
+ fs.writeFileSync(file, JSON.stringify(config));
+ return file;
+}
+
+test('member query uses canonical production config and pins top-level environment', t => {
+ const f = fixture(t), config = writeMemberConfig(f);
+ const args = prepareQueryArgs(f.cli, f.file, 'CLOUD_MEMBER_DB');
+ assert.deepEqual(args, [process.execPath, f.main, 'd1', 'execute', 'CLOUD_MEMBER_DB', '--remote',
+  '--command', 'SELECT 1 AS connection_test;', '--yes', '--json', '--config', config, '--env=']);
+ fs.writeFileSync(f.main, `const assert=require('node:assert/strict');
+  assert.deepEqual(process.argv.slice(2), ${JSON.stringify(args.slice(2))});
+  assert.equal(process.env.CLOUDFLARE_API_BASE_URL,'https://api.cloudflare.com/client/v4');`);
+ const child = spawnSync(process.execPath, [bridge, f.cli, f.file, 'CLOUD_MEMBER_DB'], {encoding:'utf8',
+  env:{...process.env, CLOUDFLARE_ENV:'preview', CLOUDFLARE_API_BASE_URL:'https://example.invalid'}});
+ assert.equal(child.status, 0, child.stderr);
+});
+
+test('standalone member query refuses alternate targets and conflicting aliases', t => {
+ const f = fixture(t);
+ assert.throws(() => prepareQueryArgs(f.cli, f.file, 'arbitrary'), /unsupported_d1_binding/);
+ assert.throws(() => prepareQueryArgs(f.cli, f.file, 'CLOUD_MEMBER_DB'), /canonical_member_d1_config_required/);
+ for (const change of [c => { c.name += '-member-stage'; },
+  c => { c.d1_databases[1].database_id = c.d1_databases[0].database_id; },
+  c => { c.d1_databases[1].database_name = 'other-member-view'; },
+  c => { c.d1_databases[1].database_internal_env = 'other'; },
+  c => { c.d1_databases.unshift({ database_name: 'CLOUD_MEMBER_DB' }); },
+  c => { c.env.preview.d1_databases.push(c.d1_databases[1]); }]) {
+  writeMemberConfig(f, change);
+  assert.throws(() => prepareQueryArgs(f.cli, f.file, 'CLOUD_MEMBER_DB'), /canonical_member_d1_config_required/);
+ }
+});

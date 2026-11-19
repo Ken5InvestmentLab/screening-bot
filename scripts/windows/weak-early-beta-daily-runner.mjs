@@ -617,7 +617,9 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     saveProgress('preflight');
     result.startCommit = await requireRemoteHead(git);
     result.fundamentals = []; result.fundamental = { ok: true, status: 'NOT_REQUESTED', imported: 0, posted: 0 };
-    if (readJson(path.join(repo, 'weak-early-beta-gate', 'wrangler.jsonc')).name !== 'tentei-kyokuchi-cloud') throw new Error('unexpected Cloud Worker target');
+    const cloudConfig = readJson(path.join(repo, 'weak-early-beta-gate', 'wrangler.jsonc'));
+    if (cloudConfig.name !== 'tentei-kyokuchi-cloud') throw new Error('unexpected Cloud Worker target');
+    const memberPublicationEnabled = cloudConfig.vars?.CLOUD_MEMBER_VIEW_ENABLED === 'true';
     const checkCommand = npmInvocation(config, 'check');
     const ghPath = config.ghPath || (process.platform === 'win32' ? 'C:\\Program Files\\GitHub CLI\\gh.exe' : 'gh');
     await requireOk(ghPath, ['auth', 'status', '--hostname', 'github.com'],
@@ -629,6 +631,10 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     const initialActivation = fs.existsSync(activationFile) ? readJson(activationFile) : {};
     const approvedRelease = initialActivation.owner_acceptance?.application_id && !initialActivation.operational_admission
       ? await inspectApprovedRelease('approved-release-before-detection') : null;
+    if (memberPublicationEnabled && approvedRelease === null) {
+      approvedWorkerReadbackFailed = true;
+      throw new Error('Role-limited Cloud requires an exact approved Worker before daily detection');
+    }
     if (approvedRelease !== null) {
       if (delayedPlan) throw new Error('Ordinary Cloud approval cannot be used for a delayed continuation');
       saveProgress('approved-worker-preflight');
@@ -770,6 +776,25 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
       },
     });
     // New-A outbox receipts remain private; never stage notification or price data in Git.
+    if (regularAnalysis && memberPublicationEnabled) {
+      saveProgress('member-data-publication');
+      try {
+        const member = await requireOk(python, ['-B', '-m', 'weak_early_beta.new_a.cli', 'publish-member', '--remote'],
+          { cwd: repo, env, log: path.join(runDir, 'new-a-member-publish'), capture: true, timeoutMs: 900_000 });
+        const receipt = JSON.parse(member.stdout.trim());
+        if (receipt.schema !== 'NEW_A_MEMBER_PUBLICATION_V1' || receipt.published !== true ||
+            receipt.active_readback_verified !== true || receipt.worker_version_id !== approvedRelease?.version_id ||
+            receipt.source?.dataset_id !== published.dataset_id || receipt.source?.revision !== published.revision ||
+            receipt.source?.as_of !== published.as_of || receipt.source?.source_version !== published.source_version) {
+          throw new Error('New A member publication readback mismatch');
+        }
+        saveProgress('member-data-publication', { memberPublication: receipt });
+      } catch {
+        saveProgress('member-data-publication', { memberPublication: { status: 'reconcile-required' } });
+        await sendSystemLog('error', ['--stage', 'member-data-publication', '--detail',
+          'Member projection publication needs separate reconciliation']);
+      }
+    }
 
     result.ok = true;
   } catch (error) {

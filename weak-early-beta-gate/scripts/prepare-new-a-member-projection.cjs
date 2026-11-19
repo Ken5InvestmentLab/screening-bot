@@ -17,7 +17,17 @@ const historyPageSize = 100;
 const chartLimit = 3000;
 const sharedPreferences = Object.freeze({ ...DEFAULTS, price_cap_yen: null });
 const presets = [['defensive', 'defensive'], ['medium', 'balanced'], ['return_priority', 'profit']];
-const states = new Set(['WATCHING', 'TRIGGERED', 'EXPIRED', 'UP_ESCAPED', 'DOWN_INVALIDATED', 'REFERENCE_ONLY']);
+const completedWatchStates = new Set(['EXPIRED', 'UP_ESCAPED', 'DOWN_INVALIDATED']);
+const states = new Set(['WATCHING', 'TRIGGERED', 'REFERENCE_ONLY', ...completedWatchStates,
+  'DATA_GAP', 'BASIS_CHANGED', 'IDENTITY_CHANGED']);
+const dashboardRowLimit = 1000;
+const symbolPattern = /^[0-9A-Z]{4}$/;
+
+function episodeKey(row) {
+  assert(row && typeof row.symbol === 'string' && symbolPattern.test(row.symbol)
+    && validDay(row.candidate_date) && Number.isSafeInteger(row.episode_id), 'Invalid history episode identity');
+  return [row.symbol, row.candidate_date, row.episode_id].join('|');
+}
 
 function validDay(value) {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -59,6 +69,30 @@ function readActiveEvidence(proofRaw, proofSha256, bundleManifestSha256, manifes
   };
 }
 
+function assembleCurrent(records) {
+  if (!records.length) return null;
+  const first = records[0];
+  assert(first?.schema === 'NEW_A_CURRENT_JSON_FRAGMENT_V1' && first.count === records.length
+    && records.length <= 256 && Number.isSafeInteger(first.bytes_total) && first.bytes_total > 0
+    && first.bytes_total <= 8 * 1024 * 1024 && hash(first.display_sha256), 'Invalid current dashboard fragments');
+  let size = 0;
+  const fragments = records.map((row, index) => {
+    assert(row.schema === first.schema && row.index === index && row.count === first.count
+      && row.bytes_total === first.bytes_total && row.display_sha256 === first.display_sha256
+      && typeof row.payload_base64 === 'string' && row.payload_base64.length <= 43692,
+    'Invalid current dashboard fragment order');
+    const raw = Buffer.from(row.payload_base64, 'base64');
+    assert(raw.length > 0 && raw.length <= 32768 && raw.toString('base64') === row.payload_base64,
+      'Invalid current dashboard fragment bytes');
+    size += raw.length;
+    assert(size <= first.bytes_total, 'Invalid current dashboard size');
+    return raw;
+  });
+  const bytes = Buffer.concat(fragments);
+  assert(size === first.bytes_total && digest(bytes) === first.display_sha256, 'Current dashboard fragment hash mismatch');
+  return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+}
+
 async function openVerifiedBundle(bundle, manifest) {
   async function readPart(descriptor) {
     const raw = await readBounded(path.join(bundle, descriptor.name), partLimit);
@@ -77,8 +111,19 @@ async function openVerifiedBundle(bundle, manifest) {
 
   const input = { ...manifest.input_header };
   for (const key of ['episodes', 'intents', 'watches']) input[key] = await collectParts(manifest.collections[key]);
-  for (const key of ['presentation', 'current_daily']) {
-    for (const descriptor of manifest.collections[key]) await readPart(descriptor);
+  for (const descriptor of manifest.collections.presentation) await readPart(descriptor);
+  const current = assembleCurrent(await collectParts(manifest.collections.current_daily));
+  if (current) {
+    assert(current.schema === 'NEW_A_OWNER_DAILY_DISPLAY_V1' && current.as_of === manifest.as_of
+      && current.strategy === 'A_BASE' && current.audience === 'EXISTING_CLOUD_OWNER_ONLY'
+      && hash(manifest.daily_snapshot_sha256) && current.source_snapshot_sha256 === manifest.daily_snapshot_sha256
+      && Array.isArray(current.events) && current.monitor_state?.schema === 'NEW_A_CURRENT_MONITOR_STATE_V1'
+      && current.monitor_state.strategy === 'A_BASE' && current.monitor_state.actual_fills === false
+      && current.monitor_state.watches && typeof current.monitor_state.watches === 'object'
+      && !Array.isArray(current.monitor_state.watches)
+      && Array.isArray(current.monitor_state.pending_references), 'Current dashboard evidence differs');
+  } else {
+    assert(manifest.live !== true, 'Live source has no current dashboard evidence');
   }
   assert(Array.isArray(input.calendar) && input.calendar.length > 0 && input.calendar.length <= chartLimit
     && input.calendar.at(-1) === manifest.as_of
@@ -101,6 +146,8 @@ async function openVerifiedBundle(bundle, manifest) {
   assert.equal(quotes.size, manifest.expected_quote_keys, 'Canonical quote key count mismatch');
   return {
     watches: input.watches,
+    calendar: input.calendar,
+    current,
     runtime: createDatasetRuntime(input, {
       get(symbol, date) {
         const key = symbol + '|' + date;
@@ -112,15 +159,108 @@ async function openVerifiedBundle(bundle, manifest) {
 }
 
 function safeHistory(watches, asOf) {
-  const rows = new Map();
-  for (const { symbol, candidate_date: date, watch_status: state } of watches) {
-    assert(typeof symbol === 'string' && /^[0-9A-Z]{4}$/.test(symbol)
-      && validDay(date) && date <= asOf && states.has(state), 'Invalid shared history row');
-    const key = date + '|' + symbol;
-    assert(!rows.has(key) || rows.get(key).state === state, 'Ambiguous shared history state');
-    rows.set(key, { date, symbol, state });
+  const episodes = new Map();
+  const paid = new Map();
+  for (const watch of watches) {
+    const key = episodeKey(watch);
+    const { symbol, candidate_date: date, watch_status: state } = watch;
+    assert(date <= asOf && states.has(state) && !episodes.has(key), 'Invalid shared history row');
+    episodes.set(key, watch);
+    const summaryKey = date + '|' + symbol;
+    assert(!paid.has(summaryKey) || paid.get(summaryKey).state === state, 'Ambiguous shared history state');
+    paid.set(summaryKey, { date, symbol, state });
   }
-  return Array.from(rows.values()).sort((a, b) => b.date.localeCompare(a.date) || a.symbol.localeCompare(b.symbol, 'en'));
+  return { episodes, history: sortedRows(paid.values()) };
+}
+
+function sortedRows(rows) {
+  return [...rows].sort((a, b) => b.date.localeCompare(a.date) || a.symbol.localeCompare(b.symbol, 'en'));
+}
+
+function settlementEvidence(models, sharedScenarios, marketDays, asOf) {
+  const open = new Set();
+  for (const model of [...models, ...sharedScenarios]) {
+    for (const [symbol, position] of Object.entries(model.open_positions)) {
+      open.add(episodeKey({ ...position, symbol }));
+    }
+  }
+  const closed = new Map();
+  for (const model of models) {
+    const fills = new Map(model.orders.filter(order => order.status === 'FILLED')
+      .map(order => [episodeKey(order), order.order_date]));
+    for (const trade of model.trades) {
+      const key = episodeKey(trade);
+      if (open.has(key) || fills.get(key) !== trade.entry_date || !marketDays.has(trade.entry_date)
+        || !marketDays.has(trade.exit_date) || trade.entry_date > trade.exit_date || trade.exit_date > asOf
+        || model.unresolved.some(item => item.symbol === trade.symbol && item.date >= trade.entry_date
+          && item.date <= trade.exit_date)) continue;
+      const previous = closed.get(key);
+      if (!previous || trade.exit_date > previous) closed.set(key, trade.exit_date);
+    }
+  }
+  return closed;
+}
+
+function completedHistory(episodes, settlements, current, marketDays, asOf) {
+  const active = new Set(Object.values(current?.monitor_state.watches ?? {}).map(watch => episodeKey(watch.episode)));
+  // Entry references can be retained after a simulated position closes.
+  // Neither an old reference price nor its separate reference exit date is settlement evidence.
+  const pending = new Set((current?.monitor_state.pending_references ?? [])
+    .filter(item => item.price_status !== 'HISTORICAL_REFERENCE_ONLY'
+      || !marketDays.has(item.reference_entry_date) || item.reference_entry_date >= asOf)
+    .map(episodeKey));
+  const rows = new Map();
+  const blocked = new Set();
+  for (const [key, watch] of episodes) {
+    const { candidate_date: date, symbol, watch_status: state, terminal_date: terminal, trigger_date: trigger } = watch;
+    const summaryKey = date + '|' + symbol;
+    let row;
+    if (!active.has(key) && !pending.has(key) && marketDays.has(terminal) && date <= terminal && terminal < asOf) {
+      if (completedWatchStates.has(state) && trigger == null) {
+        row = { date, symbol, state, completed_on: terminal };
+      } else if (state === 'TRIGGERED' && trigger === terminal) {
+        const closed = settlements.get(key);
+        if (closed && terminal < closed && closed < asOf) {
+          row = { date, symbol, state: 'HOLD_ENDED', completed_on: closed };
+        }
+      }
+    }
+    // A collapsed date/symbol key must never certify another ambiguous episode.
+    if (!row || rows.has(summaryKey)) blocked.add(summaryKey);
+    if (row) rows.set(summaryKey, row);
+  }
+  return sortedRows([...rows].filter(([key]) => !blocked.has(key)).map(([, row]) => row));
+}
+
+function dashboardRows(current, currentModel, episodes, marketDays, asOf) {
+  if (!current) return [];
+  const rows = new Map();
+  function add(date, symbol, state, lane) {
+    rows.set([lane, date, symbol, state].join('|'), { date, symbol, state, lane });
+  }
+  const actions = new Set(['WATCH_STARTED', 'ENTRY_CANDIDATE', 'WATCH_TERMINAL']);
+  for (const event of current.events) {
+    if (!actions.has(event.kind)) continue;
+    assert(event.session === asOf && episodes.has(episodeKey(event)), 'Invalid current dashboard event');
+    add(asOf, event.symbol, event.kind, 'today');
+  }
+  if (currentModel?.resolved === true && currentModel.period[1] === asOf) {
+    for (const trade of currentModel.trades) {
+      if (trade.entry_date === asOf) add(asOf, trade.symbol, 'HOLD_STARTED', 'today');
+      if (trade.exit_date === asOf) add(asOf, trade.symbol, 'HOLD_ENDED', 'today');
+    }
+    for (const [symbol, position] of Object.entries(currentModel.open_positions)) {
+      if (position.entry_date === asOf) add(asOf, symbol, 'HOLD_STARTED', 'today');
+    }
+  }
+  for (const { episode } of Object.values(current.monitor_state.watches)) {
+    const watch = episodes.get(episodeKey(episode));
+    assert(watch?.watch_status === 'WATCHING' && marketDays.has(episode.candidate_date), 'Invalid current monitoring row');
+    add(episode.candidate_date, episode.symbol, 'WATCHING', 'watching');
+  }
+  const result = sortedRows(rows.values());
+  assert(result.length <= dashboardRowLimit, 'Dashboard row limit exceeded');
+  return result;
 }
 
 function amount(value) {
@@ -168,8 +308,18 @@ async function prepareNewAMemberProjection({ bundle, readyProof, readyProofSha25
   const sourceManifestSha256 = digest(manifestRaw);
   const manifest = validateManifest(JSON.parse(manifestRaw));
   const source = readActiveEvidence(proofRaw, readyProofSha256, sourceManifestSha256, manifest);
-  const { runtime, watches } = await openVerifiedBundle(bundle, manifest);
-  const history = safeHistory(watches, source.as_of);
+  const { runtime, watches, calendar, current } = await openVerifiedBundle(bundle, manifest);
+  const { episodes, history } = safeHistory(watches, source.as_of);
+  const marketDays = new Set(calendar);
+  const options = { exitPolicy: OPEN_EXIT_POLICY };
+  const fullModel = runtime.simulate(sharedPreferences, options);
+  const currentModel = runtime.currentPortfolio(sharedPreferences, source.as_of,
+    { ...options, fullResult: fullModel })?.result;
+  const scenarios = presets.map(([, trialPreset]) => runtime.simulate(sharedPreferences, { ...options, trialPreset }));
+  const settlements = settlementEvidence(currentModel && currentModel !== fullModel ? [fullModel, currentModel] : [fullModel],
+    scenarios, marketDays, source.as_of);
+  const completed = completedHistory(episodes, settlements, current, marketDays, source.as_of);
+  const dashboard = dashboardRows(current, currentModel, episodes, marketDays, source.as_of);
   const parts = [];
   function add(kind, index, rows) {
     const json = JSON.stringify({ kind, index, rows });
@@ -177,22 +327,29 @@ async function prepareNewAMemberProjection({ bundle, readyProof, readyProofSha25
     assert(bytes <= partLimit, 'Shared projection part exceeds the storage limit');
     parts.push({ kind, index, rows: rows.length, bytes, sha256: digest(json), json });
   }
-  for (let offset = 0; offset < history.length; offset += historyPageSize) {
-    add('history', offset / historyPageSize, history.slice(offset, offset + historyPageSize));
+  let historyIndex = 0;
+  for (const view of [history, completed]) {
+    for (let offset = 0; offset < view.length; offset += historyPageSize) {
+      add('history', historyIndex++, view.slice(offset, offset + historyPageSize));
+    }
   }
+  add('history', historyIndex, dashboard);
+  const premium_pages = Math.ceil(history.length / historyPageSize);
+  const completed_pages = Math.ceil(completed.length / historyPageSize);
+  assert(premium_pages <= 200 && completed_pages <= premium_pages, 'Shared history exceeds its page limit');
   const analytics = [];
-  for (const [index, [preset, trialPreset]] of presets.entries()) {
-    const result = runtime.simulate(sharedPreferences, { trialPreset, exitPolicy: OPEN_EXIT_POLICY });
+  for (const [index, [preset]] of presets.entries()) {
+    const result = scenarios[index];
     analytics.push(sharedAnalytics(preset, result, source.as_of));
     add('chart', index, sharedChart(result, source.as_of));
   }
   add('analytics', 0, analytics);
-  assert(parts.length <= 204, 'Shared projection exceeds the reader part count');
   const projection = {
-    schema: 'NEW_A_SHARED_READONLY_VIEW_V1',
-    audience: 'EXISTING_DESIGNATED_DISCORD_ROLE',
+    schema: 'NEW_A_SHARED_READONLY_VIEW_V2',
+    audience: 'AUTHENTICATED_TIERED_DISCORD_VIEW',
     basis: 'SHARED_SIMULATION_DEFAULTS_NOT_OWNER_SETTINGS',
     source,
+    history_layout: { premium_pages, completed_pages },
     parts: parts.map(({ json, ...descriptor }) => descriptor),
   };
   const manifestJson = JSON.stringify(projection);
@@ -201,7 +358,7 @@ async function prepareNewAMemberProjection({ bundle, readyProof, readyProofSha25
     manifestJson,
     parts,
     receipt: {
-      schema: 'NEW_A_MEMBER_PROJECTION_OFFLINE_V1',
+      schema: 'NEW_A_MEMBER_PROJECTION_OFFLINE_V2',
       source,
       source_manifest_sha256: sourceManifestSha256,
       owner_readback_sha256: readyProofSha256,

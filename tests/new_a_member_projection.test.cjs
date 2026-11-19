@@ -21,7 +21,7 @@ const analytics = ['defensive', 'medium', 'return_priority'].map(preset => ({
   preset, from: '2026-11-18', through: source.as_of, resolved: false, metrics: null,
 }));
 
-function fixture(t, { changePart = () => {}, changeManifest = () => {}, omitHistory = false } = {}) {
+function fixture(t, { changePart = () => {}, changeManifest = () => {}, omitHistory = false, tiered = false } = {}) {
   const db = new DatabaseSync(':memory:');
   t.after(() => db.close());
   db.exec(`
@@ -34,6 +34,10 @@ function fixture(t, { changePart = () => {}, changeManifest = () => {}, omitHist
   const identity = JSON.stringify(source);
   const parts = [
     ...omitHistory ? [] : [{ kind: 'history', index: 0, rows: structuredClone(history) }],
+    ...(tiered ? [
+      { kind: 'history', index: 1, rows: [{ date: '2026-11-17', symbol: '123B', state: 'HOLD_ENDED', completed_on: '2026-11-18' }] },
+      { kind: 'history', index: 2, rows: [{ date: source.as_of, symbol: '123A', state: 'WATCH_STARTED', lane: 'today' }] },
+    ] : []),
     { kind: 'analytics', index: 0, rows: structuredClone(analytics) },
     ...[0, 1, 2].map(index => ({ kind: 'chart', index, rows: structuredClone(charts) })),
   ];
@@ -48,8 +52,9 @@ function fixture(t, { changePart = () => {}, changeManifest = () => {}, omitHist
     };
   });
   const manifest = {
-    schema: 'NEW_A_SHARED_READONLY_VIEW_V1',
-    audience: 'EXISTING_DESIGNATED_DISCORD_ROLE',
+    schema: tiered ? 'NEW_A_SHARED_READONLY_VIEW_V2' : 'NEW_A_SHARED_READONLY_VIEW_V1',
+    audience: tiered ? 'AUTHENTICATED_TIERED_DISCORD_VIEW' : 'EXISTING_DESIGNATED_DISCORD_ROLE',
+    ...(tiered ? { history_layout: { premium_pages: 1, completed_pages: 1 } } : {}),
     basis: 'SHARED_SIMULATION_DEFAULTS_NOT_OWNER_SETTINGS',
     source: { ...source },
     parts: descriptors,
@@ -181,4 +186,33 @@ test('rejects hash-matched projection rows outside the exact safe schema or date
   assert.equal(await unsafe.read(source, 'history', 0), null);
   assert.equal(await unsafe.read(source, 'analytics', 0), null);
   assert.equal(await unsafe.read(source, 'chart', 0), null);
+});
+
+test('V1 cannot serve roleless history or dashboard and V2 maps disjoint storage pages', async t => {
+  const legacy = fixture(t);
+  assert.equal(await legacy.read(source, 'completed-history', 0), null);
+  assert.equal(await legacy.read(source, 'dashboard', 0), null);
+  const f = fixture(t, { tiered: true });
+  assert.deepEqual((await f.read(source, 'history', 0)).rows, history);
+  assert.deepEqual((await f.read(source, 'history', 1)).rows, []);
+  assert.deepEqual((await f.read(source, 'completed-history', 0)).rows,
+    [{ date: '2026-11-17', symbol: '123B', state: 'HOLD_ENDED' }]);
+  assert.deepEqual((await f.read(source, 'completed-history', 1)).rows, []);
+  assert.deepEqual((await f.read(source, 'dashboard', 0)).rows,
+    [{ date: source.as_of, symbol: '123A', state: 'WATCH_STARTED', lane: 'today' }]);
+  assert.equal(await f.read(source, 'dashboard', 1), null);
+});
+
+test('even digest-matched completed pages reject current terminals, pending rows and hidden fields', async t => {
+  for (const properties of [
+    { completed_on: source.as_of },
+    { state: 'WATCHING' },
+    { owner_holdings: true },
+  ]) {
+    const f = fixture(t, { tiered: true, changePart(part) {
+      if (part.kind === 'history' && part.index === 1) Object.assign(part.rows[0], properties);
+    } });
+    assert.equal(await f.read(source, 'completed-history', 0), null);
+    assert.deepEqual((await f.read(source, 'history', 0)).rows, history);
+  }
 });

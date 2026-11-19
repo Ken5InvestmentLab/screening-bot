@@ -64,8 +64,19 @@ test('separate stage databases load the same immutable READY owner and member pr
   assert.deepEqual(JSON.parse(JSON.stringify(source)), seed.source);
   const shared = createNewAMemberProjectionReader(projectionSql(member), current);
   const history = await shared(source, 'history', 0);
-  assert.deepEqual(JSON.parse(JSON.stringify(history.rows)),
-    [{ date: seed.source.as_of, symbol: '0000', state: 'WATCHING' }]);
+  assert.deepEqual(JSON.parse(JSON.stringify(history.rows)), [
+    { date: seed.source.as_of, symbol: '0000', state: 'WATCHING' },
+    { date: '2026-11-18', symbol: '0001', state: 'EXPIRED' },
+  ]);
+  const completed = await shared(source, 'completed-history', 0);
+  assert.deepEqual(JSON.parse(JSON.stringify(completed.rows)),
+    [{ date: '2026-11-18', symbol: '0001', state: 'EXPIRED' }]);
+  assert.equal(completed.history_pages, 1);
+  const dashboard = await shared(source, 'dashboard', 0);
+  assert.deepEqual(JSON.parse(JSON.stringify(dashboard.rows)), [
+    { date: seed.source.as_of, symbol: '0000', state: 'WATCH_STARTED', lane: 'today' },
+    { date: seed.source.as_of, symbol: '0000', state: 'WATCHING', lane: 'watching' },
+  ]);
   assert.equal((await shared(source, 'analytics', 0)).rows.length, 3);
   for (let index = 0; index < 3; index++) assert.equal((await shared(source, 'chart', index)).rows.length, 1);
   assert.equal(member.prepare('SELECT count(*) n FROM new_a_member_settings').get().n, 0);

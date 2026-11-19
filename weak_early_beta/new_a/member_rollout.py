@@ -23,13 +23,14 @@ from .publisher import LocalD1, WranglerD1
 
 _NORMAL = "https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev"
 _STAGE = "https://tentei-kyokuchi-cloud-member-stage.ipo-ken5-5489.workers.dev"
-_SCOPE = "EXACT_NEW_A_DESIGNATED_ROLE_VIEW"
+_SCOPE = "EXACT_NEW_A_TIERED_MEMBER_VIEW"
 _GUILD = "1479418833352785944"
 _ROLE = "1487089073385373828"
 _PROTECTED_PATHS = {
     "document": "/weak_early_beta_latest.html",
     "owner_access": "/api/cloud/new-a-finite/access",
     "member_api": "/api/cloud/new-a-view/history.json",
+    "premium_dashboard": "/api/cloud/new-a-view/dashboard.json",
     "owner_direct": "/api/cloud/new-a-finite/input/manifest.json",
 }
 _SUBJECT_DOMAIN = "new-a-member-rollout-subject-v1"
@@ -40,7 +41,9 @@ _SUBJECT = re.compile(r"[0-9]{17,20}")
 _MODES = {"off", "canary", "enabled"}
 _REVISION_MAX = 2**53 - 1
 _PUBLIC_FIELDS = ("revision", "mode", "source_commit", "worker_version_id")
-_FIELDS = (*_PUBLIC_FIELDS, "canary_nonce", "canary_subject_hmac")
+_SUBJECT_FIELDS = ("canary_subject_hmac", "canary_free_subject_hmac")
+_CANARY_FIELDS = ("canary_nonce", *_SUBJECT_FIELDS)
+_FIELDS = (*_PUBLIC_FIELDS, *_CANARY_FIELDS)
 _READ = f"SELECT {','.join(_FIELDS)} FROM new_a_member_release_policy WHERE singleton=1"
 
 
@@ -56,10 +59,14 @@ def _validate_row(row):
         and _matches(_COMMIT, row["source_commit"]) and _matches(_VERSION, row["worker_version_id"]),
         "member_rollout_policy_invalid",
     )
-    ca.require(
-        all(_matches(_SHA256, row[key]) if row["mode"] == "canary" else row[key] is None for key in _FIELDS[-2:]),
-        "member_rollout_canary_binding_invalid",
-    )
+    if row["mode"] == "canary":
+        ca.require(
+            all(_matches(_SHA256, row[key]) for key in _CANARY_FIELDS)
+            and row[_SUBJECT_FIELDS[0]] != row[_SUBJECT_FIELDS[1]],
+            "member_rollout_canary_binding_invalid",
+        )
+    else:
+        ca.require(all(row[key] is None for key in _CANARY_FIELDS), "member_rollout_canary_binding_invalid")
 
 
 def _policy(member_db):
@@ -74,7 +81,9 @@ def _policy(member_db):
 def _safe(row):
     if row is None:
         return None
-    return {**{key: row[key] for key in _PUBLIC_FIELDS}, "row_sha256": digest(row)}
+    # A null additive field must not invalidate the previous OFF checkpoint.
+    fingerprint = row if row["mode"] == "canary" else {key: row[key] for key in _FIELDS[:-1]}
+    return {**{key: row[key] for key in _PUBLIC_FIELDS}, "row_sha256": digest(fingerprint)}
 
 
 def _validate_expected(expected):
@@ -165,9 +174,9 @@ def _role(value, allowed):
         and value.get("owner") is False and value.get("fresh_designated_role_checked") is True
         and value.get("guild_id") == _GUILD and value.get("designated_role_id") == _ROLE
         and value.get("has_designated_role") is allowed and _matches(_SUBJECT, value.get("subject"))
-        and value.get("document_status") == (200 if allowed else 403)
-        and value.get("member_api_status") == (200 if allowed else 403)
-        and value.get("owner_direct_status") in (401, 403),
+        and value.get("document_status") == 200 and value.get("member_api_status") == 200
+        and value.get("premium_dashboard_status") == (200 if allowed else 403)
+        and value.get("owner_direct_status") == 403,
         "member_rollout_actual_role_observation_required",
     )
     return value["subject"]
@@ -175,11 +184,14 @@ def _role(value, allowed):
 
 def _observe(reader, context, *, live, stage=False, observed_after=None, canary=None):
     ca.require(callable(reader), "member_rollout_authenticated_observer_required")
-    request = {**context, "paths": _PROTECTED_PATHS, "guild_id": _GUILD, "designated_role_id": _ROLE}
+    request = {
+        **context, "schema": "NEW_A_MEMBER_ROLLOUT_OBSERVATION_REQUEST_V2",
+        "paths": _PROTECTED_PATHS, "guild_id": _GUILD, "designated_role_id": _ROLE,
+    }
     request_sha256 = digest(request)
     value = reader(deepcopy(request))
     ca.require(
-        isinstance(value, dict) and value.get("schema") == "NEW_A_HOST_MEMBER_ROLLOUT_OBSERVATION_V1"
+        isinstance(value, dict) and value.get("schema") == "NEW_A_HOST_MEMBER_ROLLOUT_OBSERVATION_V2"
         and value.get("request_sha256") == request_sha256
         and value.get("synthetic") is False and value.get("platform_signature_claimed") is False
         and value.get("origin") == (_STAGE if stage else _NORMAL)
@@ -204,24 +216,34 @@ def _observe(reader, context, *, live, stage=False, observed_after=None, canary=
             and anonymous.get("cookies_sent") is False and anonymous.get("authorization_sent") is False
             and anonymous.get("document_status") in (302, 303, 307, 401, 403)
             and anonymous.get("member_api_status") in (401, 403)
+            and anonymous.get("premium_dashboard_status") in (401, 403)
             and anonymous.get("owner_direct_status") in (401, 403),
             "member_rollout_owner_or_private_boundary_unverified",
         )
-    subject = None
+    subjects = None
     if stage or context["effective_mode"] != "off":
-        subject = _role(value.get("role_allowed"), True)
-        ca.require(subject != _role(value.get("role_denied"), False), "member_rollout_distinct_accounts_required")
+        premium = _role(value.get("role_allowed"), True)
+        free = _role(value.get("role_denied"), False)
+        ca.require(premium != free, "member_rollout_distinct_accounts_required")
+        subjects = (premium, free)
     if canary is not None:
-        ca.require(hmac.compare_digest(
-            _subject_hmac(canary["canary_nonce"], live, subject), canary["canary_subject_hmac"],
-        ), "member_rollout_canary_subject_differs")
-    return subject, value["raw_receipt_sha256"]
+        ca.require(
+            subjects is not None and all(hmac.compare_digest(
+                _subject_hmac(canary["canary_nonce"], live, subject), canary[key],
+            ) for key, subject in zip(_SUBJECT_FIELDS, subjects, strict=True)),
+            "member_rollout_canary_subject_differs",
+        )
+    return subjects, value["raw_receipt_sha256"]
 
 
 def _cas(member_db, previous, proposed):
     values = tuple(proposed[key] for key in _FIELDS)
     if previous is None:
-        sql = f"INSERT INTO new_a_member_release_policy (singleton,{','.join(_FIELDS)}) VALUES (1,?,?,?,?,?,?) ON CONFLICT(singleton) DO NOTHING"
+        placeholders = ",".join("?" for _ in _FIELDS)
+        sql = (
+            f"INSERT INTO new_a_member_release_policy (singleton,{','.join(_FIELDS)}) "
+            f"VALUES (1,{placeholders}) ON CONFLICT(singleton) DO NOTHING"
+        )
     else:
         setters = ",".join(f"{key}=?" for key in _FIELDS)
         predicates = " AND ".join(f"{key} IS ?" for key in _FIELDS)
@@ -302,21 +324,27 @@ def change_member_rollout(
             "member_rollout_transition_denied",
         )
         source_observations = {}
-        subject = None
+        subjects = None
         if mode != "off":
             _, source_observations["normal"] = _observe(
                 observation_reader, {**context, "phase": "before", "policy": before, "effective_mode": existing_mode},
                 live=live, canary=current if existing_mode == "canary" else None,
             )
             if mode == "canary":
-                subject, source_observations["stage"] = _observe(
+                subjects, source_observations["stage"] = _observe(
                     observation_reader, {**context, "phase": "stage", "effective_mode": "enabled"}, live=live, stage=True,
                 )
-        nonce = secrets.token_hex(32) if subject is not None else None
+        nonce = secrets.token_hex(32) if subjects is not None else None
+        subject_hashes = dict.fromkeys(_SUBJECT_FIELDS)
+        if nonce is not None:
+            subject_hashes = {
+                key: _subject_hmac(nonce, release, subject)
+                for key, subject in zip(_SUBJECT_FIELDS, subjects, strict=True)
+            }
         proposed = {
             "revision": current["revision"] + 1 if current else 1,
             "mode": mode, "source_commit": release["source_commit"], "worker_version_id": release["version_id"],
-            "canary_nonce": nonce, "canary_subject_hmac": _subject_hmac(nonce, release, subject) if nonce else None,
+            "canary_nonce": nonce, **subject_hashes,
         }
         _validate_row(proposed)
         ca.require(ordinary_runtime_release(repo) == release, "member_rollout_approved_release_changed")

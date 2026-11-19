@@ -118,9 +118,9 @@ def read_member_window(member_db, *, origin, deployment_reader, window_id, allow
     observed_before = now_ms()
     if type(opened) is not int or type(closed) is not int or not 0 < opened <= observed_before or not 0 < closed - opened <= 900_000:
         raise ValueError("Member observation window time is invalid")
-    routes = {key: _PROTECTED_PATHS[key] for key in ("document", "member_api", "owner_direct")}
+    routes = {key: _PROTECTED_PATHS[key] for key in ("document", "member_api", "premium_dashboard", "owner_direct")}
     rows = member_db.query(
-        f"SELECT {','.join(OBSERVATION_FIELDS)} FROM new_a_member_response_observation_v1 "
+        f"SELECT {','.join(OBSERVATION_FIELDS)} FROM new_a_member_response_observation_v2 "
         "WHERE window_id=? ORDER BY subject_hmac, route", (window_id,),
     )
     if len(rows) != len(routes) * len(subjects):
@@ -142,7 +142,7 @@ def read_member_window(member_db, *, origin, deployment_reader, window_id, allow
         for key, route in routes.items():
             row = indexed.get((tags[role], route))
             result = "not_checked" if key == "owner_direct" else role
-            status = 403 if key == "owner_direct" or not has_role else 200
+            status = 403 if key == "owner_direct" or (key == "premium_dashboard" and not has_role) else 200
             if not row or row["role_result"] != result or row["status"] != status:
                 raise ValueError("Member route or Discord role outcome differs")
             values[key + "_status"] = status
@@ -166,7 +166,8 @@ def member_rollout_observation(request, *, deployment_reader, member_db=None,
     phase = request.get("phase")
     stage = phase == "stage"
     origin = _STAGE if stage else _NORMAL
-    if (phase not in ("stage", "before", "after") or request.get("paths") != _PROTECTED_PATHS
+    if (request.get("schema") != "NEW_A_MEMBER_ROLLOUT_OBSERVATION_REQUEST_V2"
+            or phase not in ("stage", "before", "after") or request.get("paths") != _PROTECTED_PATHS
             or request.get("guild_id") != _GUILD or request.get("designated_role_id") != _ROLE):
         raise ValueError("Member rollout observation request differs")
     live = checked_deployment(deployment_reader, origin)
@@ -210,7 +211,7 @@ def member_rollout_observation(request, *, deployment_reader, member_db=None,
         report_times.append(datetime.fromisoformat(members["observed_at"]))
         raw_receipts.append(members["raw_receipt_sha256"])
     return {
-        "schema": "NEW_A_HOST_MEMBER_ROLLOUT_OBSERVATION_V1", "request_sha256": digest(request),
+        "schema": "NEW_A_HOST_MEMBER_ROLLOUT_OBSERVATION_V2", "request_sha256": digest(request),
         "synthetic": False, "platform_signature_claimed": False, "origin": origin,
         "source_commit": live["source_commit"], "worker_version_id": live["version_id"],
         "deployed_at": live["deployed_at"], "observed_at": min(report_times).isoformat(),

@@ -1,4 +1,4 @@
-/* Member transport uses only authorized aggregate and preferences endpoints. */
+/* The Worker grants the dashboard view and checks every data request. */
 (function (g) {
   'use strict';
   const base = '/api/cloud/new-a-view/';
@@ -28,6 +28,7 @@
   }
   g.NewAMemberTransport = {
     history: (page, options) => read('history.json?page=' + page, options),
+    dashboard: options => read('dashboard.json', options),
     analytics: options => read('analytics.json', options),
     chart: (preset, options) => read('chart.json?preset=' + encodeURIComponent(preset), options),
     personal: options => read('personal.json', options),
@@ -42,14 +43,23 @@
   let page = 1;
   let snapshot = null;
   let memberSession = null;
+  let memberAccess = null;
   let attempt;
   let accessCheck;
+
+  function updateNavigation() {
+    for (const link of document.querySelectorAll('[data-member-premium-nav]')) {
+      link.hidden = memberAccess !== 'premium';
+    }
+  }
 
   function clearDisplay(message, reauthenticate = false) {
     attempt?.abort();
     attempt = undefined;
     snapshot = null;
     memberSession = null;
+    memberAccess = null;
+    updateNavigation();
     page = 1;
     out.replaceChildren();
     status.textContent = message;
@@ -69,15 +79,18 @@
       try {
         const response = await request('session', { signal: AbortSignal.timeout(8000) });
         const session = response.headers.get('x-cloud-member-session');
-        if (response.status !== 204 || !isToken(session)) {
+        const access = response.headers.get('x-cloud-member-access');
+        if (response.status !== 204 || !isToken(session) || (access !== 'premium' && access !== 'free')) {
           clearDisplay(denied(response) ? accessDenied : unavailable, requiresLogin(response));
           return false;
         }
-        if (memberSession !== null && memberSession !== session) {
+        if (memberSession !== null && (memberSession !== session || memberAccess !== access)) {
           clearDisplay(accessDenied);
           return false;
         }
         memberSession = session;
+        memberAccess = access;
+        updateNavigation();
         return true;
       } catch {
         clearDisplay(unavailable);
@@ -104,6 +117,18 @@
     out.append(nav);
   }
 
+  function prepareSettings() {
+    if (typeof g.mountMemberSettings === 'function') return;
+    // A role can be restored while a previously locked settings page is open.
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = '/new-a-assets/member-settings.js';
+      script.onload = resolve;
+      script.onerror = () => reject(Error(unavailable));
+      document.head.append(script);
+    });
+  }
+
   async function load() {
     attempt?.abort();
     const controller = new AbortController();
@@ -115,8 +140,17 @@
     status.textContent = '読込中';
     if (!await verifyAccess() || !active()) return;
 
+    const mode = document.body.dataset.page;
+    const free = memberAccess === 'free';
     try {
-      if (document.body.dataset.page === 'settings') {
+      if (free && mode !== 'home') {
+        out.innerHTML = g.NewAMemberPresentation.lockedPage(mode);
+        status.textContent = '';
+        return;
+      }
+      if (mode === 'settings') {
+        await prepareSettings();
+        if (!active()) return;
         await g.mountMemberSettings(out, status, {
           signal, active, session: memberSession, verifyAccess,
           accessDenied: reauthenticate => clearDisplay(accessDenied, reauthenticate),
@@ -124,39 +158,57 @@
         return;
       }
 
-      const analytics = document.body.dataset.page === 'analytics';
+      const analytics = mode === 'analytics';
       const options = { signal, generation: snapshot, session: memberSession };
       const transport = g.NewAMemberTransport;
-      const [summary, history, chart, personal] = await Promise.all([
-        transport.analytics(options),
+      const [summary, history, chart, personal, dashboard] = await Promise.all([
+        free ? null : transport.analytics(options),
         analytics ? null : transport.history(page, options),
-        transport.chart(selected, options),
+        free ? null : transport.chart(selected, options),
         analytics ? transport.personal(options) : null,
+        !free && !analytics ? transport.dashboard(options) : null,
       ]);
       if (!active()) return;
-      if (!isToken(summary.generation) || (snapshot !== null && snapshot !== summary.generation)
-        || [history, chart, personal].some(result => result !== null && result.generation !== summary.generation)) {
+      const source = free ? history : summary;
+      if (!source || !isToken(source.generation) || (snapshot !== null && snapshot !== source.generation)
+        || [history, chart, personal, dashboard].some(result => result !== null && result.generation !== source.generation)
+        || (dashboard && dashboard.as_of !== source.as_of)) {
         throw Error(changed);
+      }
+      if (history && (!Array.isArray(history.rows) || !Number.isSafeInteger(history.pages) || history.pages < 1)) {
+        throw Error(unavailable);
       }
       if (!await verifyAccess() || !active()) return;
 
-      snapshot = summary.generation;
+      snapshot = source.generation;
       out.innerHTML = g.NewAMemberPresentation.view({
-        mode: analytics ? 'analytics' : 'home',
-        asOf: summary.as_of,
-        presets: summary.presets,
+        mode,
+        access: memberAccess,
+        asOf: source.as_of,
+        presets: summary?.presets,
         selected,
         rows: history?.rows ?? [],
-        chartRows: chart.rows,
+        chartRows: chart?.rows,
         personal: personal?.metrics,
+        dashboard,
       });
-      status.textContent = '共通データ ' + summary.as_of;
-      document.getElementById('member-preset').addEventListener('change', event => {
+      status.textContent = free ? '' : '共通データ ' + source.as_of;
+      document.getElementById('member-preset')?.addEventListener('change', event => {
         selected = event.target.value;
         load();
       });
       if (history) addPagination(history.pages);
     } catch (error) {
+      if (!active()) return;
+      if (free && mode === 'home' && error.message !== accessDenied
+        && await verifyAccess() && active() && memberAccess === 'free') {
+        snapshot = null;
+        page = 1;
+        out.innerHTML = g.NewAMemberPresentation.freeHome();
+        status.textContent = error.message === changed ? changed : '終了済みの検出履歴を読み込めませんでした。';
+        retry.hidden = false;
+        return;
+      }
       if (active()) clearDisplay([changed, accessDenied].includes(error.message) ? error.message : unavailable, error.requiresLogin);
     }
   }

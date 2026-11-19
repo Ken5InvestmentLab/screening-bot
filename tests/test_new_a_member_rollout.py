@@ -24,7 +24,10 @@ NORMAL = "https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev"
 STAGE = "https://tentei-kyokuchi-cloud-member-stage.ipo-ken5-5489.workers.dev"
 CANARY = "111111111111111111"
 OTHER = "222222222222222222"
-MODE_COLUMN = "SELECT mode,revision,canary_nonce,canary_subject_hmac FROM new_a_member_release_policy"
+MODE_COLUMN = (
+    "SELECT mode,revision,canary_nonce,canary_subject_hmac,canary_free_subject_hmac "
+    "FROM new_a_member_release_policy"
+)
 
 
 class MemberRolloutTest(unittest.TestCase):
@@ -46,7 +49,11 @@ class MemberRolloutTest(unittest.TestCase):
         self.member_db = LocalD1(":memory:", GATE / "member-migrations/0001_new_a_member_storage.sql")
         self.addCleanup(self.owner_db.close)
         self.addCleanup(self.member_db.close)
-        self.member_db.db.executescript((GATE / "member-migrations/0002_new_a_member_release_policy.sql").read_text())
+        for name in (
+            "0002_new_a_member_release_policy.sql", "0003_new_a_member_response_observations.sql",
+            "0004_new_a_member_access_tiers.sql",
+        ):
+            self.member_db.db.executescript((GATE / "member-migrations" / name).read_text())
         self.ready = {
             "status": "READY", "dataset_id": "a-" + "e" * 24, "revision": 4,
             "as_of": "2026-11-19", "source_version": "e" * 64,
@@ -115,11 +122,13 @@ class MemberRolloutTest(unittest.TestCase):
         self.phases.append(phase)
         self.assertEqual(request["paths"]["document"], "/weak_early_beta_latest.html")
         self.assertEqual(request["paths"]["member_api"], "/api/cloud/new-a-view/history.json")
+        self.assertEqual(request["paths"]["premium_dashboard"], "/api/cloud/new-a-view/dashboard.json")
         self.assertEqual(request["paths"]["owner_direct"], "/api/cloud/new-a-finite/input/manifest.json")
+        self.assertEqual(request["schema"], "NEW_A_MEMBER_ROLLOUT_OBSERVATION_REQUEST_V2")
         if phase != "stage":
             self.assertEqual(request["policy"], rollout.read_member_policy(self.member_db))
         return {
-            "schema": "NEW_A_HOST_MEMBER_ROLLOUT_OBSERVATION_V1", "request_sha256": digest(request),
+            "schema": "NEW_A_HOST_MEMBER_ROLLOUT_OBSERVATION_V2", "request_sha256": digest(request),
             "synthetic": False, "platform_signature_claimed": False, "source_commit": SOURCE,
             "origin": STAGE if phase == "stage" else NORMAL,
             "worker_version_id": STAGE_VERSION if phase == "stage" else VERSION,
@@ -130,7 +139,8 @@ class MemberRolloutTest(unittest.TestCase):
             },
             "anonymous": {
                 "cookies_sent": False, "authorization_sent": False,
-                "document_status": 302, "member_api_status": 401, "owner_direct_status": 401,
+                "document_status": 302, "member_api_status": 401,
+                "premium_dashboard_status": 401, "owner_direct_status": 401,
             },
             "role_allowed": self.role(CANARY, True),
             "role_denied": self.role(OTHER, False),
@@ -141,8 +151,8 @@ class MemberRolloutTest(unittest.TestCase):
         return {
             "session_verified": True, "owner": False, "fresh_designated_role_checked": True,
             "guild_id": "1479418833352785944", "designated_role_id": "1487089073385373828",
-            "has_designated_role": allowed, "subject": subject, "document_status": 200 if allowed else 403,
-            "member_api_status": 200 if allowed else 403, "owner_direct_status": 403,
+            "has_designated_role": allowed, "subject": subject, "document_status": 200, "member_api_status": 200,
+            "premium_dashboard_status": 200 if allowed else 403, "owner_direct_status": 403,
         }
 
     def apply(self, mode, *, expected=None, deploy=None, observe=None, maintain=None):
@@ -159,12 +169,14 @@ class MemberRolloutTest(unittest.TestCase):
         self.assertEqual(canary["after"], rollout.read_member_policy(self.member_db))
         self.assertIsNone(canary["before"])
         row, = self.member_db.query(MODE_COLUMN)
-        expected_mac = hmac.new(
-            bytes.fromhex(row["canary_nonce"]), encode([
-                "new-a-member-rollout-subject-v1", SOURCE, VERSION, CANARY,
-            ]).encode(), hashlib.sha256,
-        ).hexdigest()
-        self.assertEqual(row["canary_subject_hmac"], expected_mac)
+        for key, subject in (("canary_subject_hmac", CANARY), ("canary_free_subject_hmac", OTHER)):
+            expected_mac = hmac.new(
+                bytes.fromhex(row["canary_nonce"]), encode([
+                    "new-a-member-rollout-subject-v1", SOURCE, VERSION, subject,
+                ]).encode(), hashlib.sha256,
+            ).hexdigest()
+            self.assertEqual(row[key], expected_mac)
+        self.assertNotEqual(row["canary_subject_hmac"], row["canary_free_subject_hmac"])
 
         role = self.apply("enabled", expected=canary["after"])
         self.assertEqual(role["after"]["mode"], "enabled")
@@ -180,10 +192,11 @@ class MemberRolloutTest(unittest.TestCase):
         self.assertEqual(off["after"]["revision"], 3)
         self.assertEqual(self.member_db.query(MODE_COLUMN), [{
             "mode": "off", "revision": 3, "canary_nonce": None, "canary_subject_hmac": None,
+            "canary_free_subject_hmac": None,
         }])
         for path in self.audit.glob("*.json"):
             text = path.read_text()
-            for private in (CANARY, OTHER, row["canary_nonce"], expected_mac):
+            for private in (CANARY, OTHER, row["canary_nonce"], row["canary_subject_hmac"], row["canary_free_subject_hmac"]):
                 self.assertNotIn(private, text)
 
     def test_refuses_shortcut_unapproved_provider_or_unauthenticated_stage(self):
@@ -209,7 +222,7 @@ class MemberRolloutTest(unittest.TestCase):
         def incorrect_subject(request):
             observed = self.observe(request)
             if request["phase"] == "after":
-                observed["role_allowed"]["subject"] = "333333333333333333"
+                observed["role_denied"]["subject"] = "333333333333333333"
             return observed
 
         with self.assertRaisesRegex(ValueError, "canary_subject_differs"):
@@ -224,6 +237,42 @@ class MemberRolloutTest(unittest.TestCase):
         restored = self.apply("canary")
         self.assertEqual(restored, confirmed)
         self.assertEqual(rollout.read_member_policy(self.member_db), before)
+
+    def test_stage_requires_all_routes_and_does_not_accept_old_observations(self):
+        faults = (
+            ("old", "observation_provenance"),
+            ("free_dashboard", "actual_role_observation_required"),
+            ("free_history", "actual_role_observation_required"),
+        )
+        for fault, error in faults:
+            def bad_stage(request):
+                observed = self.observe(request)
+                if request["phase"] == "stage":
+                    if fault == "old":
+                        observed["schema"] = "NEW_A_HOST_MEMBER_ROLLOUT_OBSERVATION_V1"
+                    elif fault == "free_dashboard":
+                        observed["role_denied"]["premium_dashboard_status"] = 200
+                    else:
+                        observed["role_denied"]["member_api_status"] = 403
+                return observed
+
+            with self.subTest(fault=fault), self.assertRaisesRegex(ValueError, error):
+                self.apply("canary", observe=bad_stage)
+            self.assertIsNone(rollout.read_member_policy(self.member_db))
+
+    def test_old_off_policy_remains_an_exact_baseline_after_nullable_migration(self):
+        old = {
+            "revision": 4, "mode": "off", "source_commit": SOURCE, "worker_version_id": VERSION,
+            "canary_nonce": None, "canary_subject_hmac": None,
+        }
+        self.member_db.query("""
+            INSERT INTO new_a_member_release_policy (singleton,revision,mode,source_commit,worker_version_id)
+            VALUES (1,?,?,?,?)
+        """, (old["revision"], old["mode"], old["source_commit"], old["worker_version_id"]))
+        before = rollout.read_member_policy(self.member_db)
+        self.assertEqual(before["row_sha256"], digest(old))
+        canary = self.apply("canary", expected=before)
+        self.assertEqual(canary["after"]["revision"], 5)
 
     def test_ambiguous_mutation_is_never_retried(self):
         writes = []

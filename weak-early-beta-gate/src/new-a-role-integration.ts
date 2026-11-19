@@ -61,5 +61,5 @@ export function memberRouteCandidate(
     }, true),
   }, env.SESSION_SECRET);
   return roleFacade(request, env, denial, services,
-    subject => memberReleaseAllows(env.CLOUD_MEMBER_DB, build, env.CLOUD_VERSION_METADATA, subject), observe);
+    (subject, tier) => memberReleaseAllows(env.CLOUD_MEMBER_DB, build, env.CLOUD_VERSION_METADATA, subject, tier), observe);
 }

@@ -10,13 +10,15 @@ import { createMemberStageConfig } from './prepare-new-a-member-stage.mjs';
 const gate = fileURLToPath(new URL('../', import.meta.url));
 const stageRoot = path.join(gate, '.cache', 'new-a-member-stage');
 const day = '2026-11-19';
+const priorDay = '2026-11-18';
 const created = day + 'T08:00:00Z';
 const symbol = '0000';
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const literal = value => "'" + value.replaceAll("'", "''") + "'";
 const descriptor = (json, rows) => ({ sha256: digest(json), bytes: Buffer.byteLength(json), rows });
 
-export async function createSyntheticStageSeed() {
+export async function createSyntheticStageSeed({ revision = 1 } = {}) {
+  if (!Number.isSafeInteger(revision) || revision < 1) throw Error('Invalid synthetic stage revision.');
   const [ownerSchema, memberSchema] = await Promise.all([
     fs.readFile(path.join(gate, 'schema', 'new-a-private.sql'), 'utf8'),
     fs.readFile(path.join(gate, 'member-migrations', '0001_new_a_member_storage.sql'), 'utf8'),
@@ -35,7 +37,7 @@ export async function createSyntheticStageSeed() {
     const json = JSON.stringify(rows);
     return { kind, json, descriptor: { name: kind + '-000.json', ...descriptor(json, rows.length) } };
   });
-  const version = digest(JSON.stringify(['SYNTHETIC_NEW_A_MEMBER_STAGE_V1', day, parts.map(part => part.descriptor)]));
+  const version = digest(JSON.stringify(['SYNTHETIC_NEW_A_MEMBER_STAGE_V2', day, parts.map(part => part.descriptor)]));
   const ownerManifest = JSON.stringify({
     schema: 'A_BROWSER_PRIVATE_INPUT_V1',
     audience: 'EXISTING_CLOUD_OWNER_ONLY',
@@ -51,11 +53,17 @@ export async function createSyntheticStageSeed() {
   });
   const ownerHash = digest(ownerManifest);
   const id = 'a-' + ownerHash.slice(0, 24);
-  const source = { status: 'READY', dataset_id: id, revision: 1, as_of: day, source_version: version };
+  const source = { status: 'READY', dataset_id: id, revision, as_of: day, source_version: version };
   const identity = JSON.stringify(source);
   const presets = ['defensive', 'medium', 'return_priority'];
+  const completed = { date: priorDay, symbol: '0001', state: 'EXPIRED' };
   const sharedParts = [
-    { kind: 'history', index: 0, rows: [{ date: day, symbol, state: 'WATCHING' }] },
+    { kind: 'history', index: 0, rows: [{ date: day, symbol, state: 'WATCHING' }, completed] },
+    { kind: 'history', index: 1, rows: [{ ...completed, completed_on: priorDay }] },
+    { kind: 'history', index: 2, rows: [
+      { date: day, symbol, state: 'WATCH_STARTED', lane: 'today' },
+      { date: day, symbol, state: 'WATCHING', lane: 'watching' },
+    ] },
     { kind: 'analytics', index: 0, rows: presets.map(preset => ({ preset, from: day, through: day, resolved: false, metrics: null })) },
     ...presets.map((_, index) => ({ kind: 'chart', index, rows: [{ date: day, equity_yen: null, holding_count: null }] })),
   ].map(part => {
@@ -63,8 +71,9 @@ export async function createSyntheticStageSeed() {
     return { json, kind: part.kind, index: part.index, ...descriptor(json, part.rows.length) };
   });
   const shared = JSON.stringify({
-    schema: 'NEW_A_SHARED_READONLY_VIEW_V1', audience: 'EXISTING_DESIGNATED_DISCORD_ROLE',
+    schema: 'NEW_A_SHARED_READONLY_VIEW_V2', audience: 'AUTHENTICATED_TIERED_DISCORD_VIEW',
     basis: 'SHARED_SIMULATION_DEFAULTS_NOT_OWNER_SETTINGS', source,
+    history_layout: { premium_pages: 1, completed_pages: 1 },
     parts: sharedParts.map(({ json, ...meta }) => meta),
   });
   const sharedHash = digest(shared);
@@ -85,7 +94,7 @@ export async function createSyntheticStageSeed() {
       + ` (${literal(id)}, ${literal(part.name)}, ${literal(json)}, ${literal(part.sha256)}, ${part.bytes});`),
     `UPDATE new_a_private_datasets SET status = 'READY' WHERE dataset_id = ${literal(id)};`,
     'INSERT INTO new_a_active_pointer (pointer_key, dataset_id, revision, updated_at) VALUES'
-      + ` ('owner', ${literal(id)}, 1, ${literal(created)});`,
+      + ` ('owner', ${literal(id)}, ${revision}, ${literal(created)});`,
     '',
   ].join('\n');
   const memberSql = [

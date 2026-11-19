@@ -52,9 +52,10 @@ export default {
     console.log(JSON.stringify({ operation: "cloud_personal_schedule", ...result }));
   },
   async fetch(request: SharedRequest, env: CloudEnv, ctx?: ExecutionContext): Promise<Response> {
+    const pathname = new URL(request.url).pathname;
+    if (env.CLOUD_MEMBER_VIEW_ENABLED === 'true' && pathname === '/purchase' && ['GET', 'HEAD'].includes(request.method)) return sharedGate.fetch(request, env);
     const denied = await ownerOnlyGate(request, env);
     if (denied) return (await memberRouteCandidate(request, env, denied, operationalBuild, ctx)) ?? denied;
-    const pathname = new URL(request.url).pathname;
     if (pathname === '/healthz' && new URL(request.url).searchParams.has('new_a_probe')) return operationalReadback(request, env, operationalBuild);
     // Existing ownerOnlyGate has already run. Reuse the existing fresh-role identity.
     // Preserve existing push-only script updates after the unchanged owner gate.

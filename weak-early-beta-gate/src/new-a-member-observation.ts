@@ -3,6 +3,8 @@ import type { OperationalBuild } from './operational-readback';
 export const OBSERVED_OWNER_MANIFEST = '/api/cloud/new-a-finite/input/manifest.json';
 const documentPath = '/weak_early_beta_latest.html';
 const historyPath = '/api/cloud/new-a-view/history.json';
+const dashboardPath = '/api/cloud/new-a-view/dashboard.json';
+const observedPaths = new Set([documentPath, historyPath, dashboardPath, OBSERVED_OWNER_MANIFEST]);
 const productionOrigin = 'https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev';
 const stageOrigin = 'https://tentei-kyokuchi-cloud-member-stage.ipo-ken5-5489.workers.dev';
 const maxWindowMs = 15 * 60_000;
@@ -33,7 +35,7 @@ export type MemberResponseObserver = (response: Response, subject: Subject, role
 const windowWhere = 'singleton = 1 AND origin = ? AND source_commit = ? AND build_input_sha256 = ? AND worker_version_id = ?';
 const selectWindow = 'SELECT window_id, opens_at_ms, closes_at_ms, subject_key, allowed_subject_hmac, denied_subject_hmac'
   + ` FROM new_a_member_observation_window_v1 WHERE ${windowWhere} AND opens_at_ms <= ? AND closes_at_ms > ?`;
-const insertObservation = `INSERT INTO new_a_member_response_observation_v1
+const insertObservation = `INSERT INTO new_a_member_response_observation_v2
  (window_id, origin, source_commit, build_input_sha256, worker_version_id, subject_hmac, route, status, role_result, observed_at_ms)
  SELECT window_id, origin, source_commit, build_input_sha256, worker_version_id, ?, ?, ?, ?, ?
  FROM new_a_member_observation_window_v1 WHERE ${windowWhere} AND window_id = ?
@@ -45,9 +47,10 @@ function responseMatches(path: string, response: Response, role: RoleResult): bo
   if (path === OBSERVED_OWNER_MANIFEST) {
     return role === 'not_checked' && response.status === 403 && response.headers.get('x-cloud-private') === 'true';
   }
-  if (role === 'denied') return response.status === 403;
+  if (role === 'denied' && path === dashboardPath) return response.status === 403;
+  const tier = role === 'allowed' ? 'premium' : role === 'denied' ? 'free' : undefined;
   const type = response.headers.get('content-type')?.split(';', 1)[0];
-  return role === 'allowed' && response.status === 200
+  return !!tier && response.status === 200 && response.headers.get('x-cloud-member-access') === tier
     && type === (path === documentPath ? 'text/html' : 'application/json');
 }
 
@@ -58,7 +61,7 @@ export function memberResponseObserver(
   const url = new URL(request.url);
   if (!ctx || !db || !owner || !/^\d{17,20}$/.test(owner) || request.method !== 'GET' || url.search || url.hash
     || url.origin !== (scope === 'stage' ? stageOrigin : productionOrigin)
-    || (url.pathname !== documentPath && url.pathname !== historyPath && url.pathname !== OBSERVED_OWNER_MANIFEST)) return;
+    || !observedPaths.has(url.pathname)) return;
   if ([...request.headers.keys()].some(header => /(?:version|preview|override)/i.test(header)
     || header === 'x-forwarded-host' || header === 'authorization')) return;
   const host = request.headers.get('host');

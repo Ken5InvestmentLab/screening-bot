@@ -38,9 +38,18 @@ test('actual sync builds the exact data-free public inventory and a worker-only 
   const html = await fs.readFile(path.join(f.publicDir, name), 'utf8');
   assert.doesNotMatch(html, /data-date=|SYNTHETIC_PRIVATE|variants[.]bundle|member-loader[.]js/);
  }
- const memberFrame = await fs.readFile(path.join(f.gate, 'src/new-a-member-frame.generated.ts'), 'utf8');
+ const memberFramePath = path.join(f.gate, 'src/new-a-member-frame.generated.ts');
+ const memberFrame = await fs.readFile(memberFramePath, 'utf8');
  for (const name of memberScripts) assert(memberFrame.includes('/new-a-assets/' + name), name);
  assert.doesNotMatch(memberFrame, /owner-loader[.]js|\/auth\/guard[.]js|data-date=|SYNTHETIC_PRIVATE/);
+ const { memberFrame: renderMemberFrame } = await import(pathToFileURL(memberFramePath).href);
+ const freeHome = renderMemberFrame('/weak_early_beta_latest.html', 'free');
+ const freeSettings = renderMemberFrame('/weak_early_beta_settings.html', 'free');
+ const premiumSettings = renderMemberFrame('/weak_early_beta_settings.html', 'premium');
+ assert.match(freeHome, /href="\.\/weak_early_beta_analytics\.html" data-member-premium-nav hidden/);
+ assert.match(freeHome, /href="\.\/weak_early_beta_settings\.html" data-member-premium-nav hidden/);
+ assert.doesNotMatch(freeHome + freeSettings, /src="\/new-a-assets\/member-settings\.js"/);
+ assert.match(premiumSettings, /src="\/new-a-assets\/member-settings\.js"/);
  const scan = spawnSync(process.execPath, [path.join(f.gate, 'scripts/verify-new-a-code-only.mjs')], {encoding: 'utf8'});
  assert.equal(scan.status, 0, scan.stderr);
 });

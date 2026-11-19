@@ -40,7 +40,7 @@ def source(revision):
 
 def projection(
     folder, ready, *, alter=lambda parts: None,
-    source_manifest_sha256="d" * 64, owner_readback_sha256="e" * 64,
+    source_manifest_sha256="d" * 64, owner_readback_sha256="e" * 64, tiered=False,
 ):
     folder.mkdir()
     parts = [
@@ -54,6 +54,14 @@ def projection(
             for index in range(3)
         ],
     ]
+    if tiered:
+        parts[0]["rows"] = [{"date": "2026-11-17", "symbol": "123A", "state": "TRIGGERED"}]
+        parts[1:1] = [
+            {"kind": "history", "index": 1, "rows": [
+                {"date": "2026-11-17", "symbol": "123A", "state": "HOLD_ENDED", "completed_on": "2026-11-18"},
+            ]},
+            {"kind": "history", "index": 2, "rows": []},
+        ]
     alter(parts)
     descriptors = []
     for part in parts:
@@ -65,12 +73,15 @@ def projection(
             "sha256": sha(text),
         })
     manifest = encode({
-        "schema": "NEW_A_SHARED_READONLY_VIEW_V1", "audience": "EXISTING_DESIGNATED_DISCORD_ROLE",
+        "schema": "NEW_A_SHARED_READONLY_VIEW_V2" if tiered else "NEW_A_SHARED_READONLY_VIEW_V1",
+        "audience": "AUTHENTICATED_TIERED_DISCORD_VIEW" if tiered else "EXISTING_DESIGNATED_DISCORD_ROLE",
         "basis": "SHARED_SIMULATION_DEFAULTS_NOT_OWNER_SETTINGS", "source": ready, "parts": descriptors,
+        **({"history_layout": {"premium_pages": 1, "completed_pages": 1}} if tiered else {}),
     })
     (folder / "manifest.json").write_bytes(manifest.encode())
     receipt = encode({
-        "schema": "NEW_A_MEMBER_PROJECTION_OFFLINE_V1", "source": ready,
+        "schema": "NEW_A_MEMBER_PROJECTION_OFFLINE_V2" if tiered else "NEW_A_MEMBER_PROJECTION_OFFLINE_V1",
+        "source": ready,
         "source_manifest_sha256": source_manifest_sha256, "owner_readback_sha256": owner_readback_sha256,
         "projection_manifest_sha256": sha(manifest), "history_rows": 1, "parts": len(parts), "activated": False,
     })
@@ -186,6 +197,26 @@ class MemberPublisherTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "sql_statement_budget"):
             self.ingest(prepared=(large, large_pin))
         self.assertEqual(self.member.query("SELECT COUNT(*) AS n FROM private_projection_manifest"), [{"n": 0}])
+
+    def test_tiered_projections_require_completed_rows_to_match_an_exact_premium_predecessor(self):
+        for index, (field, value) in enumerate((
+            ("symbol", "123B"), ("state", "WATCHING"), ("completed_on", DAY),
+        )):
+            with self.subTest(field=field):
+                folder = self.root / f"tiered-invalid-{index}"
+                def alter(parts):
+                    parts[1]["rows"][0][field] = value
+                pin = projection(folder, source(4), alter=alter, tiered=True)
+                with self.assertRaisesRegex(ValueError, "completed_history|public_row_shape"):
+                    import_member_projection(self.member, folder, receipt_sha256=pin,
+                                             read_official_ready=lambda: source(4), expected_previous=None)
+                self.assertIsNone(read_member_marker(self.member))
+        folder = self.root / "tiered-valid"
+        pin = projection(folder, source(4), tiered=True)
+        result = import_member_projection(self.member, folder, receipt_sha256=pin,
+                                          read_official_ready=lambda: source(4), expected_previous=None)
+        self.assertEqual(result["status"], "activated")
+        self.assertEqual(result["parts"], 7)
 
     def test_conflicting_existing_bytes_withhold_activation(self):
         staged = self.ingest(activate=False)

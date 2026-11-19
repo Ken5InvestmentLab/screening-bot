@@ -19,10 +19,11 @@ class MemberObservationHostTest(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
-        migration = Path(__file__).resolve().parents[1] / (
-            "weak-early-beta-gate/member-migrations/0003_new_a_member_response_observations.sql"
-        )
+        migrations = Path(__file__).resolve().parents[1] / "weak-early-beta-gate/member-migrations"
+        migration = migrations / "0003_new_a_member_response_observations.sql"
         self.db = LocalD1(Path(temporary.name) / "isolated.sqlite", migration)
+        for file in ("0002_new_a_member_release_policy.sql", "0004_new_a_member_access_tiers.sql"):
+            self.db.db.executescript((migrations / file).read_text(encoding="utf-8"))
         self.addCleanup(self.db.close)
         self.live = {
             "origin": host._STAGE, "source_commit": SOURCE, "build_input_sha256": BUILD,
@@ -39,11 +40,11 @@ class MemberObservationHostTest(unittest.TestCase):
     def seed(self):
         scope = host.read_window(self.db)
         for role in ("allowed", "denied"):
-            for key in ("document", "member_api", "owner_direct"):
+            for key in ("document", "member_api", "premium_dashboard", "owner_direct"):
                 state = role if key != "owner_direct" else "not_checked"
-                status = 200 if role == "allowed" and key != "owner_direct" else 403
+                status = 403 if key == "owner_direct" or (role == "denied" and key == "premium_dashboard") else 200
                 self.db.query(
-                    "INSERT INTO new_a_member_response_observation_v1 VALUES(?,?,?,?,?,?,?,?,?,?)",
+                    "INSERT INTO new_a_member_response_observation_v2 VALUES(?,?,?,?,?,?,?,?,?,?)",
                     (*(scope[key] for key in host.WINDOW_FIELDS[:5]), scope[role + "_subject_hmac"],
                      host._PROTECTED_PATHS[key], status, state, scope["opens_at_ms"]),
                 )
@@ -59,9 +60,10 @@ class MemberObservationHostTest(unittest.TestCase):
         self.seed()
         self.assertNotIn(ALLOWED, str(host.read_window(self.db)))
         self.assertEqual(self.read()["role_allowed"]["document_status"], 200)
-        self.assertEqual(self.read()["role_denied"]["member_api_status"], 403)
+        self.assertEqual(self.read()["role_denied"]["member_api_status"], 200)
+        self.assertEqual(self.read()["role_denied"]["premium_dashboard_status"], 403)
         normal = {**self.live, "version_id": NORMAL_VERSION}
-        allowed, receipt = member_rollout._observe(
+        accounts, receipt = member_rollout._observe(
             lambda request: host.member_rollout_observation(
                 request, deployment_reader=lambda: self.live, member_db=self.db,
                 window_id=self.window, accounts=(ALLOWED, DENIED),
@@ -69,7 +71,7 @@ class MemberObservationHostTest(unittest.TestCase):
             {"phase": "stage", "source_commit": SOURCE, "worker_version_id": NORMAL_VERSION,
              "effective_mode": "enabled"}, live=normal, stage=True,
         )
-        self.assertEqual(allowed, ALLOWED)
+        self.assertEqual(accounts, (ALLOWED, DENIED))
         self.assertEqual(len(receipt), 64)
 
     def test_conflicting_window_and_incomplete_paths_refuse(self):
@@ -94,6 +96,7 @@ class MemberObservationHostTest(unittest.TestCase):
         other_stage = "30000000-0000-4000-8000-000000000019"
         copies = iter([self.live, {**self.live, "version_id": other_stage}])
         actual_request = {
+            "schema": "NEW_A_MEMBER_ROLLOUT_OBSERVATION_REQUEST_V2",
             "phase": "stage", "source_commit": SOURCE, "worker_version_id": NORMAL_VERSION,
             "effective_mode": "enabled", "paths": host._PROTECTED_PATHS,
             "guild_id": host._GUILD, "designated_role_id": host._ROLE,

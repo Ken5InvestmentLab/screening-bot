@@ -52,7 +52,20 @@ def review_member_release_source(repo, baseline, candidate):
         b"    if (denied) return (await memberRouteCandidate(request, env, denied, operationalBuild)) ?? denied;"
     ))
     with_observer = unique_replace(expected, b"env, denied, operationalBuild))", b"env, denied, operationalBuild, ctx))")
-    if after[ENTRY] not in (expected, with_observer):
+    purchase_anchor = (
+        b"    const denied = await ownerOnlyGate(request, env);\n"
+        b"    if (denied) return (await memberRouteCandidate(request, env, denied, operationalBuild, ctx)) ?? denied;\n"
+        b"    const pathname = new URL(request.url).pathname;"
+    )
+    variants = [expected, with_observer]
+    if with_observer.count(purchase_anchor) == 1:
+        variants.append(unique_replace(with_observer, purchase_anchor, (
+            b"    const pathname = new URL(request.url).pathname;\n"
+            b"    if (env.CLOUD_MEMBER_VIEW_ENABLED === 'true' && pathname === '/purchase' && ['GET', 'HEAD'].includes(request.method)) return sharedGate.fetch(request, env);\n"
+            b"    const denied = await ownerOnlyGate(request, env);\n"
+            b"    if (denied) return (await memberRouteCandidate(request, env, denied, operationalBuild, ctx)) ?? denied;"
+        )))
+    if after[ENTRY] not in variants:
         raise ValueError("Member fallback changes more than the existing owner-denial branch")
 
     common_config = json.loads(git(repo, "show", f"{baseline}:{CONFIG}"))
@@ -68,8 +81,11 @@ def review_member_release_source(repo, baseline, candidate):
 
     paths = [*sorted(acceptance.AUTH_FILES), CONFIG, "weak-early-beta-gate/src/new-a-member-release.ts",
              "weak-early-beta-gate/src/new-a-role-facade.ts", "weak-early-beta-gate/src/new-a-role-integration.ts",
+             "weak-early-beta-gate/src/new-a-member-services.ts", "weak-early-beta-gate/src/new-a-member-projection.ts",
+             "weak-early-beta-gate/scripts/prepare-new-a-member-projection.cjs", "weak_early_beta/new_a/member_publisher.py",
              "weak-early-beta-gate/src/new-a-member-observation.ts",
-             "weak-early-beta-gate/member-migrations/0003_new_a_member_response_observations.sql"]
+             "weak-early-beta-gate/member-migrations/0003_new_a_member_response_observations.sql",
+             "weak-early-beta-gate/member-migrations/0004_new_a_member_access_tiers.sql"]
     delta = git(repo, "diff", "--binary", baseline, candidate, "--", *paths)
     return {
         "schema": "NEW_A_MEMBER_RELEASE_SOURCE_REVIEW_V1",

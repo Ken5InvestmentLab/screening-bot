@@ -15,7 +15,12 @@ _ROW_LIMITS = {"history": 100, "analytics": 3, "chart": 3000}
 _PRESETS = ("defensive", "medium", "return_priority")
 _WATCH_STATES = {
     "WATCHING", "TRIGGERED", "EXPIRED", "UP_ESCAPED", "DOWN_INVALIDATED", "REFERENCE_ONLY",
+    "DATA_GAP", "BASIS_CHANGED", "IDENTITY_CHANGED",
 }
+_COMPLETED_STATES = {"EXPIRED", "UP_ESCAPED", "DOWN_INVALIDATED", "HOLD_ENDED"}
+_TODAY_STATES = {"WATCH_STARTED", "ENTRY_CANDIDATE", "WATCH_TERMINAL", "HOLD_STARTED", "HOLD_ENDED"}
+_MAX_HISTORY_PAGES = 200
+_MAX_DASHBOARD_ROWS = 1000
 _MAX_SAFE_INT = 2**53 - 1
 _MAX_MANIFEST = 65_536
 _MAX_PART = 196_608
@@ -114,7 +119,7 @@ def _amount(value):
     return type(value) in (int, float) and abs(value) < 1e12
 
 
-def _public_part_shape(part, kind, index, rows, as_of):
+def _public_part_shape(part, kind, index, rows, as_of, view):
     # The pinned builder and Worker validate the actual analytic values.
     # Reject any data outside the builder's public field and container shapes.
     _require(
@@ -125,11 +130,24 @@ def _public_part_shape(part, kind, index, rows, as_of):
     )
     for position, row in enumerate(part["rows"]):
         if kind == "history":
+            keys = ("date", "symbol", "state")
+            if view == "dashboard":
+                keys += ("lane",)
+            elif view == "completed":
+                keys += ("completed_on",)
             allowed = (
-                _keys(row, ("date", "symbol", "state")) and _day(row["date"]) and row["date"] <= as_of
+                _keys(row, keys) and _day(row["date"]) and row["date"] <= as_of
                 and isinstance(row["symbol"], str) and re.fullmatch(r"[0-9A-Z]{4}", row["symbol"])
-                and isinstance(row["state"], str) and row["state"] in _WATCH_STATES
+                and isinstance(row["state"], str)
             )
+            if allowed and view == "dashboard":
+                allowed = (row["lane"] == "today" and row["date"] == as_of and row["state"] in _TODAY_STATES
+                           or row["lane"] == "watching" and row["state"] == "WATCHING")
+            elif allowed and view == "completed":
+                allowed = (row["state"] in _COMPLETED_STATES and _day(row["completed_on"])
+                           and row["date"] <= row["completed_on"] < as_of)
+            elif allowed:
+                allowed = row["state"] in _WATCH_STATES
         elif kind == "chart":
             allowed = (
                 _keys(row, ("date", "equity_yen", "holding_count")) and _day(row["date"]) and row["date"] <= as_of
@@ -166,14 +184,18 @@ def _prepared(folder, receipt_sha256):
     receipt_bytes, receipt_text = _read(folder / "receipt.json", _MAX_MANIFEST)
     _require(_hash(receipt_sha256) and _sha(receipt_bytes) == receipt_sha256, "member_projection_receipt_pin")
     receipt = _json(receipt_text)
+    version = receipt.get("schema") if isinstance(receipt, dict) else None
+    tiered = version == "NEW_A_MEMBER_PROJECTION_OFFLINE_V2"
     _require(
         _keys(receipt, (
             "schema", "source", "source_manifest_sha256", "owner_readback_sha256",
             "projection_manifest_sha256", "history_rows", "parts", "activated",
-        )) and receipt["schema"] == "NEW_A_MEMBER_PROJECTION_OFFLINE_V1"
+        )) and (tiered or version == "NEW_A_MEMBER_PROJECTION_OFFLINE_V1")
         and receipt["activated"] is False and _hash(receipt["source_manifest_sha256"])
         and _hash(receipt["owner_readback_sha256"]) and _hash(receipt["projection_manifest_sha256"])
-        and _int(receipt["history_rows"]) and _int(receipt["parts"], 4, 204),
+        and _int(receipt["history_rows"])
+        and _int(receipt["parts"], 5 if tiered else 4,
+                 2 * _MAX_HISTORY_PAGES + 5 if tiered else _MAX_HISTORY_PAGES + 4),
         "member_projection_receipt_invalid",
     )
     identity = _identity(receipt["source"])
@@ -181,36 +203,71 @@ def _prepared(folder, receipt_sha256):
     digest = _sha(raw)
     _require(digest == receipt["projection_manifest_sha256"], "member_projection_manifest_pin")
     manifest = _json(manifest_text)
+    keys = ("schema", "audience", "basis", "source", "parts")
     _require(
-        _keys(manifest, ("schema", "audience", "basis", "source", "parts"))
-        and manifest["schema"] == "NEW_A_SHARED_READONLY_VIEW_V1"
-        and manifest["audience"] == "EXISTING_DESIGNATED_DISCORD_ROLE"
+        _keys(manifest, (*keys, "history_layout") if tiered else keys)
+        and manifest["schema"] == ("NEW_A_SHARED_READONLY_VIEW_V2" if tiered else "NEW_A_SHARED_READONLY_VIEW_V1")
+        and manifest["audience"] == ("AUTHENTICATED_TIERED_DISCORD_VIEW" if tiered else "EXISTING_DESIGNATED_DISCORD_ROLE")
         and manifest["basis"] == "SHARED_SIMULATION_DEFAULTS_NOT_OWNER_SETTINGS"
         and _identity(manifest["source"]) == identity and isinstance(manifest["parts"], list)
         and len(manifest["parts"]) == receipt["parts"],
         "member_projection_manifest_invalid",
     )
+    premium_pages = dashboard_index = None
+    if tiered:
+        layout = manifest["history_layout"]
+        _require(_keys(layout, ("premium_pages", "completed_pages"))
+                 and _int(layout["premium_pages"], 0, _MAX_HISTORY_PAGES)
+                 and _int(layout["completed_pages"], 0, layout["premium_pages"]),
+                 "member_projection_history_layout")
+        premium_pages = layout["premium_pages"]
+        dashboard_index = premium_pages + layout["completed_pages"]
     counts = dict.fromkeys(_ROW_LIMITS, 0)
     parts = {}
     history_rows = 0
+    premium = {}
+    completed = set()
     for descriptor in manifest["parts"]:
         _require(_keys(descriptor, ("kind", "index", "rows", "bytes", "sha256")), "member_projection_descriptor")
         kind, index, rows, size, sha = (descriptor[key] for key in ("kind", "index", "rows", "bytes", "sha256"))
+        _require(isinstance(kind, str) and kind in counts and _int(index, counts[kind], counts[kind]),
+                 "member_projection_descriptor")
+        view = kind
+        if kind == "history" and tiered:
+            _require(index <= dashboard_index, "member_projection_history_layout")
+            if index == dashboard_index:
+                view = "dashboard"
+            elif index >= premium_pages:
+                view = "completed"
         _require(
-            isinstance(kind, str) and kind in counts and _int(index, counts[kind], counts[kind])
-            and _int(rows, 1, _ROW_LIMITS[kind]) and _int(size, 1, _MAX_PART) and _hash(sha)
-            and (kind != "analytics" or rows == len(_PRESETS)),
+            _int(rows, 0, _MAX_DASHBOARD_ROWS) if view == "dashboard" else _int(rows, 1, _ROW_LIMITS[kind]),
             "member_projection_descriptor",
         )
+        _require(_int(size, 1, _MAX_PART) and _hash(sha) and (kind != "analytics" or rows == len(_PRESETS)),
+                 "member_projection_descriptor")
         raw, text = _read(folder / f"{kind}-{index}.json", size)
         _require(len(raw) == size and _sha(raw) == sha, "member_projection_part_pin")
-        _public_part_shape(_json(text), kind, index, rows, receipt["source"]["as_of"])
+        part = _json(text)
+        _public_part_shape(part, kind, index, rows, receipt["source"]["as_of"], view)
         parts[kind, index] = text
         counts[kind] += 1
-        if kind == "history":
+        if view == "history":
             history_rows += rows
+            if tiered:
+                for row in part["rows"]:
+                    key = (row["date"], row["symbol"])
+                    _require(key not in premium, "member_projection_history_duplicate")
+                    premium[key] = row["state"]
+        elif view == "completed":
+            for row in part["rows"]:
+                key = (row["date"], row["symbol"])
+                original = "TRIGGERED" if row["state"] == "HOLD_ENDED" else row["state"]
+                _require(key not in completed and premium.get(key) == original,
+                         "member_projection_unmatched_completed_history")
+                completed.add(key)
     _require(
-        counts["analytics"] == 1 and counts["chart"] == 3 and history_rows == receipt["history_rows"],
+        counts["analytics"] == 1 and counts["chart"] == 3 and history_rows == receipt["history_rows"]
+        and (not tiered or counts["history"] == dashboard_index + 1),
         "member_projection_inventory",
     )
     return identity, digest, manifest_text, parts

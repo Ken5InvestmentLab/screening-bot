@@ -1,6 +1,7 @@
 import type { MemberAdapters, ReadyPointer } from './new-a-member-services';
 
 type PartKind = 'history' | 'analytics' | 'chart';
+type ViewKind = PartKind | 'completed-history' | 'dashboard';
 type Row = Record<string, unknown>;
 type Statement = { bind(...values: (string | number)[]): Statement; first<T>(): Promise<T | null> };
 type D1Session = { prepare(sql: string): Statement };
@@ -8,11 +9,16 @@ type ProjectionDatabase = { withSession(constraint: 'first-primary'): D1Session 
 
 const sourceKeys = ['status', 'dataset_id', 'revision', 'as_of', 'source_version'];
 const presets = ['defensive', 'medium', 'return_priority'];
-const states = new Set(['WATCHING', 'TRIGGERED', 'EXPIRED', 'UP_ESCAPED', 'DOWN_INVALIDATED', 'REFERENCE_ONLY']);
+const completedStates = new Set(['EXPIRED', 'UP_ESCAPED', 'DOWN_INVALIDATED', 'HOLD_ENDED']);
+const states = new Set(['WATCHING', 'TRIGGERED', 'EXPIRED', 'UP_ESCAPED', 'DOWN_INVALIDATED', 'REFERENCE_ONLY',
+  'DATA_GAP', 'BASIS_CHANGED', 'IDENTITY_CHANGED']);
+const todayStates = new Set(['WATCH_STARTED', 'ENTRY_CANDIDATE', 'WATCH_TERMINAL', 'HOLD_STARTED', 'HOLD_ENDED']);
 const rowLimits: Record<PartKind, number> = { history: 100, analytics: 3, chart: 3000 };
 const maxManifestBytes = 65_536;
 const maxPartBytes = 196_608;
-const maxPartCount = 204;
+const maxHistoryPages = 200;
+const maxDashboardRows = 1000;
+const viewKinds = new Set<ViewKind>(['history', 'completed-history', 'dashboard', 'analytics', 'chart']);
 const encoder = new TextEncoder();
 const activeManifest = `SELECT r.identity, r.digest, m.json
   FROM private_projection_ready r
@@ -70,15 +76,27 @@ function requireValid(ok: unknown): asserts ok {
   if (!ok) throw new Error('invalid_member_projection');
 }
 
-function validateRows(kind: PartKind, rows: unknown[], through: string): void {
+function validateRows(kind: ViewKind, rows: unknown[], through: string): void {
   if (kind === 'analytics') requireValid(rows.length === 3);
   let previous: string | undefined;
   const seen = new Set<string>();
   for (const [index, row] of rows.entries()) {
-    if (kind === 'history') {
-      requireValid(exactKeys(row, ['date', 'symbol', 'state']) && day(row.date) && row.date <= through
+    if (kind === 'dashboard') {
+      requireValid(exactKeys(row, ['date', 'symbol', 'state', 'lane']) && day(row.date) && row.date <= through
+        && typeof row.symbol === 'string' && /^[0-9A-Z]{4}$/.test(row.symbol) && typeof row.state === 'string'
+        && (row.lane === 'today' && row.date === through && todayStates.has(row.state)
+          || row.lane === 'watching' && row.state === 'WATCHING'));
+      const key = row.date + '|' + row.symbol + '|' + row.state + '|' + row.lane;
+      requireValid(!seen.has(key));
+      seen.add(key);
+    } else if (kind === 'history' || kind === 'completed-history') {
+      const completed = kind === 'completed-history';
+      const keys = completed ? ['date', 'symbol', 'state', 'completed_on'] : ['date', 'symbol', 'state'];
+      requireValid(exactKeys(row, keys) && day(row.date) && row.date <= through
         && typeof row.symbol === 'string' && /^[0-9A-Z]{4}$/.test(row.symbol)
-        && typeof row.state === 'string' && states.has(row.state));
+        && typeof row.state === 'string' && (completed
+          ? completedStates.has(row.state) && day(row.completed_on) && row.completed_on >= row.date && row.completed_on < through
+          : states.has(row.state)));
       const key = row.date + '|' + row.symbol;
       requireValid((previous === undefined || previous >= row.date) && !seen.has(key));
       previous = row.date;
@@ -113,31 +131,55 @@ function validateRows(kind: PartKind, rows: unknown[], through: string): void {
 
 type Descriptor = { rows: number; bytes: number; sha256: string };
 
-function manifestPart(manifest: unknown, identity: string, kind: PartKind, index: number) {
-  requireValid(exactKeys(manifest, ['schema', 'audience', 'basis', 'source', 'parts'])
-    && manifest.schema === 'NEW_A_SHARED_READONLY_VIEW_V1'
-    && manifest.audience === 'EXISTING_DESIGNATED_DISCORD_ROLE'
-    && manifest.basis === 'SHARED_SIMULATION_DEFAULTS_NOT_OWNER_SETTINGS'
+function manifestPart(manifest: unknown, identity: string, view: ViewKind, index: number) {
+  const keys = ['schema', 'audience', 'basis', 'source', 'parts'];
+  const legacy = exactKeys(manifest, keys) && manifest.schema === 'NEW_A_SHARED_READONLY_VIEW_V1'
+    && manifest.audience === 'EXISTING_DESIGNATED_DISCORD_ROLE';
+  const tiered = exactKeys(manifest, [...keys, 'history_layout']) && manifest.schema === 'NEW_A_SHARED_READONLY_VIEW_V2'
+    && manifest.audience === 'AUTHENTICATED_TIERED_DISCORD_VIEW';
+  requireValid((legacy || tiered) && manifest.basis === 'SHARED_SIMULATION_DEFAULTS_NOT_OWNER_SETTINGS'
     && canonicalIdentity(manifest.source) === identity && Array.isArray(manifest.parts)
-    && manifest.parts.length <= maxPartCount);
+    && manifest.parts.length <= maxHistoryPages * (tiered ? 2 : 1) + (tiered ? 5 : 4));
+  requireValid(tiered || (view !== 'completed-history' && view !== 'dashboard'));
+
+  let premiumPages = 0;
+  let completedPages = 0;
+  let dashboardIndex = -1;
+  if (tiered) {
+    const layout = manifest.history_layout;
+    requireValid(exactKeys(layout, ['premium_pages', 'completed_pages']) && count(layout.premium_pages)
+      && count(layout.completed_pages) && layout.premium_pages <= maxHistoryPages
+      && layout.completed_pages <= layout.premium_pages);
+    premiumPages = layout.premium_pages;
+    completedPages = layout.completed_pages;
+    dashboardIndex = premiumPages + completedPages;
+  }
+  const kind = view === 'completed-history' || view === 'dashboard' ? 'history' : view;
+  const storedIndex = view === 'completed-history' ? index + premiumPages : view === 'dashboard' ? dashboardIndex : index;
+  const outsideView = tiered && (view === 'history' && index >= premiumPages
+    || view === 'completed-history' && index >= completedPages || view === 'dashboard' && index !== 0);
+
   const next: Record<PartKind, number> = { history: 0, analytics: 0, chart: 0 };
   let wanted: Descriptor | undefined;
   for (const descriptor of manifest.parts as unknown[]) {
     requireValid(exactKeys(descriptor, ['kind', 'index', 'rows', 'bytes', 'sha256'])
       && typeof descriptor.kind === 'string' && Object.hasOwn(next, descriptor.kind)
-      && count(descriptor.index) && count(descriptor.rows) && descriptor.rows > 0
+      && count(descriptor.index) && count(descriptor.rows)
       && count(descriptor.bytes) && descriptor.bytes > 0 && descriptor.bytes <= maxPartBytes
       && hash(descriptor.sha256));
     const descriptorKind = descriptor.kind as PartKind;
+    const dashboard = tiered && descriptorKind === 'history' && descriptor.index === dashboardIndex;
     requireValid(descriptor.index === next[descriptorKind]
-      && descriptor.rows <= rowLimits[descriptorKind]);
+      && (dashboard ? descriptor.rows <= maxDashboardRows : descriptor.rows > 0 && descriptor.rows <= rowLimits[descriptorKind]));
     next[descriptorKind] += 1;
-    if (descriptorKind === kind && descriptor.index === index) {
+    if (!outsideView && descriptorKind === kind && descriptor.index === storedIndex) {
       wanted = { rows: descriptor.rows, bytes: descriptor.bytes, sha256: descriptor.sha256 };
     }
   }
-  requireValid(next.analytics === 1 && next.chart === 3 && (wanted || kind === 'history'));
-  return { wanted, historyPages: Math.max(next.history, 1) };
+  requireValid(next.analytics === 1 && next.chart === 3 && (!tiered || next.history === dashboardIndex + 1)
+    && (wanted || view === 'history' || view === 'completed-history'));
+  const pages = view === 'completed-history' ? completedPages : tiered ? premiumPages : next.history;
+  return { wanted, kind, storedIndex, historyPages: Math.max(pages, 1) };
 }
 
 // The activation digest is the independently approved manifest hash. The canonical
@@ -149,7 +191,7 @@ export function createNewAMemberProjectionReader(
   return async (expected, kind, index) => {
     const identity = canonicalIdentity(expected);
     if (!db || typeof db.withSession !== 'function' || !identity || !count(index)
-      || !Object.hasOwn(rowLimits, kind)) return null;
+      || !viewKinds.has(kind)) return null;
     const source = JSON.parse(identity) as ReadyPointer;
     try {
       if (canonicalIdentity(await readOfficialReady()) !== identity) return null;
@@ -160,19 +202,22 @@ export function createNewAMemberProjectionReader(
         && typeof manifest.json === 'string');
       const manifestBytes = encoder.encode(manifest.json);
       requireValid(manifestBytes.byteLength <= maxManifestBytes && await sha256(manifestBytes) === manifest.digest);
-      const { wanted, historyPages } = manifestPart(JSON.parse(manifest.json), identity, kind, index);
+      const { wanted, kind: storedKind, storedIndex, historyPages } = manifestPart(JSON.parse(manifest.json), identity, kind, index);
       let rows: unknown[] = [];
       if (wanted) {
-        const part = await session.prepare(activePart).bind(identity, manifest.digest, kind, index, maxPartBytes)
+        const part = await session.prepare(activePart).bind(identity, manifest.digest, storedKind, storedIndex, maxPartBytes)
           .first<{ json: unknown }>();
         requireValid(part && typeof part.json === 'string');
         const partBytes = encoder.encode(part.json);
         requireValid(partBytes.byteLength === wanted.bytes && await sha256(partBytes) === wanted.sha256);
         const decoded: unknown = JSON.parse(part.json);
-        requireValid(exactKeys(decoded, ['kind', 'index', 'rows']) && decoded.kind === kind
-          && decoded.index === index && Array.isArray(decoded.rows) && decoded.rows.length === wanted.rows);
+        requireValid(exactKeys(decoded, ['kind', 'index', 'rows']) && decoded.kind === storedKind
+          && decoded.index === storedIndex && Array.isArray(decoded.rows) && decoded.rows.length === wanted.rows);
         rows = decoded.rows;
         validateRows(kind, rows, source.as_of);
+        if (kind === 'completed-history') {
+          rows = (rows as Row[]).map(({ date, symbol, state }) => ({ date, symbol, state }));
+        }
       }
       // A new primary session is required here: the first session's bookmark alone
       // can allow a replica that has not observed a concurrent activation.

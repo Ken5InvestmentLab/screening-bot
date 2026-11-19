@@ -16,10 +16,12 @@ export type RoleIdentity = {
   discord_authorized?: boolean;
 };
 
+export type MemberTier = 'premium' | 'free';
+
 export type RoleServices = {
   identity: (request: Request) => Promise<RoleIdentity>;
-  document: (request: Request, subject: string) => Promise<Response>;
-  aggregate: (request: Request, subject: string) => Promise<Response>;
+  document: (request: Request, subject: string, tier: MemberTier) => Promise<Response>;
+  aggregate: (request: Request, subject: string, tier: MemberTier) => Promise<Response>;
   preferences: (request: Request, subject: string) => Promise<Response>;
   asset: (request: Request) => Promise<Response>;
 };
@@ -30,8 +32,10 @@ const documents = new Set([
   '/', '/report', '/index.html',
   '/weak_early_beta_latest.html', '/weak_early_beta_analytics.html', '/weak_early_beta_settings.html',
 ]);
+const historyPath = '/api/cloud/new-a-view/history.json';
 const aggregates = new Map([
-  ['/api/cloud/new-a-view/history.json', 'page'],
+  [historyPath, 'page'],
+  ['/api/cloud/new-a-view/dashboard.json', null],
   ['/api/cloud/new-a-view/analytics.json', null],
   ['/api/cloud/new-a-view/chart.json', 'preset'],
   ['/api/cloud/new-a-view/personal.json', null],
@@ -39,6 +43,7 @@ const aggregates = new Map([
 const preferencesPath = '/api/cloud/new-a-view/preferences';
 const sessionPath = '/api/cloud/new-a-view/session';
 const memberSessionHeader = 'x-cloud-member-session';
+const memberAccessHeader = 'x-cloud-member-access';
 const assets = new Set([
   '/new-a-assets/member-loader.js',
   '/new-a-assets/member-presentation.js',
@@ -75,18 +80,18 @@ export function hasMemberRoleConfiguration(env: RoleEnv): boolean {
     && env.DISCORD_ALLOWED_ROLE_IDS === '1487089073385373828';
 }
 
-async function memberSessionTag(secret: string, subject: string): Promise<string> {
+async function memberSessionTag(secret: string, subject: string, tier: MemberTier): Promise<string> {
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey('raw', encoder.encode(secret),
     { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  const message = encoder.encode(JSON.stringify(['new-a-member-session-v1', subject]));
+  const message = encoder.encode(JSON.stringify(['new-a-member-session-v2', subject, tier]));
   const tag = await crypto.subtle.sign('HMAC', key, message);
   return Array.from(new Uint8Array(tag), value => value.toString(16).padStart(2, '0')).join('');
 }
 
 export async function roleFacade(
   request: Request, env: RoleEnv, ownerDenial: Response | null, services: RoleServices | undefined,
-  productionAllowed?: (subject: string) => Promise<boolean>,
+  productionAllowed?: (subject: string, tier: MemberTier) => Promise<boolean>,
   observe?: MemberResponseObserver,
 ): Promise<Response | null> {
   if (!ownerDenial || env.CLOUD_MEMBER_VIEW_ENABLED !== 'true') return ownerDenial;
@@ -133,26 +138,34 @@ export async function roleFacade(
       return reject(request, loginRequired ? 401 : 503, 'authentication_unavailable');
     }
     const subject = identity.subject;
-    if (!/^\d{17,20}$/.test(subject) || identity.discord_authorized !== true) {
+    if (typeof subject !== 'string' || !/^\d{17,20}$/.test(subject) || typeof identity.discord_authorized !== 'boolean') {
+      return reject(request, 503, 'authentication_unavailable');
+    }
+    const tier: MemberTier = identity.discord_authorized ? 'premium' : 'free';
+    const role = tier === 'premium' ? 'allowed' : 'denied';
+    if (releaseOrigin === 'production' && await productionAllowed?.(subject, tier) !== true) return ownerDenial;
+    if (tier === 'free' && (preferences || (aggregate && pathname !== historyPath))) {
       const response = reject(request, 403, 'role_required');
-      if (identity.discord_authorized === false) observe?.(response, subject, 'denied');
+      observe?.(response, subject, role);
       return response;
     }
-    if (releaseOrigin === 'production' && await productionAllowed?.(identity.subject) !== true) return ownerDenial;
     const expectedSession = aggregate || preferences ? request.headers.get(memberSessionHeader) : null;
     if (session || expectedSession !== null) {
       if (!env.SESSION_SECRET) return reject(request, 503, 'member_service_unavailable');
-      const tag = await memberSessionTag(env.SESSION_SECRET, identity.subject);
-      if (session) return new Response(null, { status: 204, headers: { ...privateHeaders, [memberSessionHeader]: tag } });
+      const tag = await memberSessionTag(env.SESSION_SECRET, subject, tier);
+      if (session) return new Response(null, {
+        status: 204, headers: { ...privateHeaders, [memberSessionHeader]: tag, [memberAccessHeader]: tier },
+      });
       if (expectedSession !== tag) return reject(request, 403, 'member_session_changed');
     }
     const handler = document ? services.document : preferences ? services.preferences
       : aggregate ? services.aggregate : services.asset;
-    const response = await handler(request, identity.subject);
+    const response = await handler(request, subject, tier);
     const headers = new Headers(response.headers);
     for (const [key, value] of Object.entries(privateHeaders)) headers.set(key, value);
+    headers.set(memberAccessHeader, tier);
     const finalResponse = new Response(request.method === 'HEAD' ? null : response.body, { status: response.status, headers });
-    observe?.(finalResponse, subject, 'allowed');
+    observe?.(finalResponse, subject, role);
     return finalResponse;
   } catch {
     return reject(request, 503, 'member_service_unavailable');

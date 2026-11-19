@@ -113,15 +113,18 @@ function element() {
 }
 function browser(options = {}) {
   let access = 204;
+  let tier = options.tier ?? 'premium';
   let session = initialSession;
   let interval;
   const requests = [];
   const nodes = Object.fromEntries(['state', 'retry', 'content', 'preset'].map(key => ['member-' + key, element()]));
+  const premiumLink = { hidden: true };
   const document = {
     body: { dataset: { page: options.page ?? 'home' } },
     visibilityState: 'visible',
     events: {},
     getElementById(id) { return nodes[id]; },
+    querySelectorAll(selector) { return selector === '[data-member-premium-nav]' ? [premiumLink] : []; },
     createElement: element,
     addEventListener(type, handler) { this.events[type] = handler; },
   };
@@ -133,14 +136,18 @@ function browser(options = {}) {
     addEventListener() {},
     structuredClone,
     setInterval(handler) { interval = handler; },
-    NewAMemberPresentation: { view: () => 'synthetic-private-content' },
+    NewAMemberPresentation: {
+      view: ({ access }) => access === 'premium' ? 'synthetic-private-content' : 'synthetic-closed-history',
+      lockedPage: mode => 'synthetic-premium-lock-' + mode,
+      freeHome: () => 'synthetic-premium-purchase',
+    },
     fetch: async (route, init) => {
       const url = new URL(route, 'https://example.invalid');
       const name = url.pathname.split('/').at(-1);
       requests.push({ name, url, init });
       if (name === 'session') return new Response(null, {
         status: access,
-        headers: access === 204 && session ? { 'x-cloud-member-session': session } : undefined,
+        headers: access === 204 && session ? { 'x-cloud-member-session': session, 'x-cloud-member-access': tier } : undefined,
       });
       if (options.read) {
         const result = await options.read(name, url, init);
@@ -153,7 +160,7 @@ function browser(options = {}) {
   if (options.page === 'settings') vm.runInContext(settings, context);
   vm.runInContext(loader, context);
   return {
-    document, requests, nodes,
+    document, requests, nodes, premiumLink,
     poll() { interval(); },
     show() {
       document.visibilityState = 'visible';
@@ -164,9 +171,63 @@ function browser(options = {}) {
       document.events.visibilitychange();
     },
     setAccess(status) { access = status; },
+    setTier(value) { tier = value; },
     setSession(value) { session = value; },
   };
 }
+
+test('free dashboard and paid direct pages never request Premium data or settings', async () => {
+  const free = browser({ tier: 'free' });
+  await flush();
+  assert.deepEqual(free.requests.map(request => request.name), ['session', 'history.json', 'session']);
+  assert.equal(free.nodes['member-content'].innerHTML, 'synthetic-closed-history');
+  assert.equal(free.premiumLink.hidden, true);
+  for (const page of ['analytics', 'settings']) {
+    const locked = browser({ page, tier: 'free' });
+    await flush();
+    assert.deepEqual(locked.requests.map(request => request.name), ['session']);
+    assert.equal(locked.nodes['member-content'].innerHTML, 'synthetic-premium-lock-' + page);
+  }
+});
+
+test('confirmed Free access keeps the purchase action during a history outage', async () => {
+  let historyStatus = 503;
+  const view = browser({ tier: 'free', read: name => name === 'history.json' && historyStatus !== 200
+    ? new Response(null, { status: historyStatus }) : null });
+  assert.equal(view.nodes['member-content'].innerHTML, '');
+  await flush();
+  assert.equal(view.nodes['member-content'].innerHTML, 'synthetic-premium-purchase');
+  assert.match(view.nodes['member-state'].textContent, /履歴を読み込めません/);
+  assert.equal(view.nodes['member-retry'].hidden, false);
+  assert.deepEqual(view.requests.map(request => request.name), ['session', 'history.json', 'session']);
+
+  historyStatus = 200;
+  view.nodes['member-retry'].events.click();
+  await flush();
+  assert.equal(view.nodes['member-content'].innerHTML, 'synthetic-closed-history');
+
+  historyStatus = 403;
+  view.nodes['member-content'].children[0].children[1].events.click();
+  await flush();
+  assert.equal(view.nodes['member-content'].innerHTML, '');
+});
+
+test('changed tier clears the older Premium view before it can repaint', async () => {
+  const view = browser();
+  await flush();
+  assert.equal(view.premiumLink.hidden, false);
+  assert.equal(view.nodes['member-content'].innerHTML, 'synthetic-private-content');
+  view.setTier('free');
+  view.poll();
+  await flush();
+  assert.equal(view.premiumLink.hidden, true);
+  assert.equal(view.nodes['member-content'].innerHTML, '');
+  const before = view.requests.length;
+  view.nodes['member-retry'].events.click();
+  await flush();
+  assert.deepEqual(view.requests.slice(before).map(request => request.name), ['session', 'history.json', 'session']);
+  assert.equal(view.nodes['member-content'].innerHTML, 'synthetic-closed-history');
+});
 
 test('browser refuses mixed parallel responses even if their dates agree', async () => {
   const view = browser({ read: name => name === 'chart.json'

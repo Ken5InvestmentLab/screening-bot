@@ -13,6 +13,7 @@ const owner = '111111111111111111';
 const allowed = '222222222222222222';
 const denied = '333333333333333333';
 const otherAllowed = '444444444444444444';
+const otherFree = '555555555555555555';
 const dateTime = day + 'T08:00:00Z';
 const digest = text => createHash('sha256').update(text).digest('hex');
 const loadSql = name => fs.readFileSync(path.resolve(__dirname, '../weak-early-beta-gate', name), 'utf8');
@@ -23,7 +24,9 @@ const workerVersion = '87654321-4321-4321-aaaa-123456789abc';
 const makeSession = workerModules.load('shared-report-gate').__test.createSession;
 const preferences = '/api/cloud/new-a-view/preferences';
 const history = '/api/cloud/new-a-view/history.json';
+const dashboard = '/api/cloud/new-a-view/dashboard.json';
 const documentPath = '/weak_early_beta_latest.html';
+const ended = { date: '2026-11-18', symbol: '0010', state: 'EXPIRED' };
 
 function openDb(t, sql) {
   const db = new DatabaseSync(':memory:');
@@ -66,12 +69,18 @@ function setup(t) {
   const identity = JSON.stringify(source);
   const presets = ['defensive', 'medium', 'return_priority'];
   const parts = [
-    { kind: 'history', index: 0, rows: [{ date: day, symbol: '123A', state: 'WATCHING' }] },
+    { kind: 'history', index: 0, rows: [{ date: day, symbol: '123A', state: 'WATCHING' }, ended] },
+    { kind: 'history', index: 1, rows: [{ ...ended, completed_on: ended.date }] },
+    { kind: 'history', index: 2, rows: [
+      { date: day, symbol: '123A', state: 'WATCH_STARTED', lane: 'today' },
+      { date: day, symbol: '123A', state: 'WATCHING', lane: 'watching' },
+    ] },
     { kind: 'analytics', index: 0, rows: presets.map(preset => ({ preset, from: day, through: day, resolved: false, metrics: null })) },
     ...presets.map((_, index) => ({ kind: 'chart', index, rows: [{ date: day, equity_yen: null, holding_count: null }] })),
   ];
   const shared = JSON.stringify({
-    schema: 'NEW_A_SHARED_READONLY_VIEW_V1', audience: 'EXISTING_DESIGNATED_DISCORD_ROLE',
+    schema: 'NEW_A_SHARED_READONLY_VIEW_V2', audience: 'AUTHENTICATED_TIERED_DISCORD_VIEW',
+    history_layout: { premium_pages: 1, completed_pages: 1 },
     basis: 'SHARED_SIMULATION_DEFAULTS_NOT_OWNER_SETTINGS', source, parts: parts.map(part => {
       const json = JSON.stringify(part);
       return { kind: part.kind, index: part.index, rows: part.rows.length, bytes: Buffer.byteLength(json), sha256: digest(json) };
@@ -89,6 +98,7 @@ function setup(t) {
     CLOUD_MEMBER_VIEW_ENABLED: 'true', CLOUD_MEMBER_STAGE_ORIGIN: stage, PUBLIC_BASE_URL: stage,
     DISCORD_GUILD_ID: '1479418833352785944', DISCORD_ALLOWED_ROLE_IDS: '1487089073385373828',
     DISCORD_CLIENT_ID: 'fixture-client', SESSION_SECRET: 'isolated-worker-test-key',
+    ACCESS_PURCHASE_URL: 'https://whop.com/scoring-bot/tenteikyokuchi/',
     CLOUD_ROLE_AUTHORITY: { idFromName: value => value, get: () => ({
       fetch: async (url, options) => {
         assert.equal(url, 'https://cloud-role-authority.invalid/check');
@@ -120,12 +130,17 @@ function productionFixture(t) {
   return {
     ...fixture,
     call: async (route, user, env = fixture.env) => worker.fetch(await fixture.request(route, user, production), env),
-    migrate: () => fixture.memberDb.db.exec(loadSql('member-migrations/0002_new_a_member_release_policy.sql')),
-    setPolicy(mode, { source = sourceCommit, version = workerVersion, nonce = null, tag = null } = {}) {
-      fixture.memberDb.db.prepare('INSERT INTO new_a_member_release_policy VALUES (1,1,?,?,?,?,?)'
+    migrate: () => {
+      for (const file of ['0002_new_a_member_release_policy.sql', '0004_new_a_member_access_tiers.sql']) {
+        fixture.memberDb.db.exec(loadSql('member-migrations/' + file));
+      }
+    },
+    setPolicy(mode, { source = sourceCommit, version = workerVersion, nonce = null, tag = null, freeTag = null } = {}) {
+      fixture.memberDb.db.prepare('INSERT INTO new_a_member_release_policy VALUES (1,1,?,?,?,?,?,?)'
         + ' ON CONFLICT(singleton) DO UPDATE SET revision=revision+1, mode=excluded.mode, source_commit=excluded.source_commit,'
-        + ' worker_version_id=excluded.worker_version_id, canary_nonce=excluded.canary_nonce, canary_subject_hmac=excluded.canary_subject_hmac')
-        .run(mode, source, version, nonce, tag);
+        + ' worker_version_id=excluded.worker_version_id, canary_nonce=excluded.canary_nonce,'
+        + ' canary_subject_hmac=excluded.canary_subject_hmac, canary_free_subject_hmac=excluded.canary_free_subject_hmac')
+        .run(mode, source, version, nonce, tag, freeTag);
     },
   };
 }
@@ -134,7 +149,12 @@ test('the Worker serves assets and shared data to a verified member while keepin
   const f = setup(t);
   const call = async (route, user) => worker.fetch(await f.request(route, user), f.env);
   assert.equal((await call(documentPath)).status, 302);
-  assert.equal((await call(documentPath, denied)).status, 403);
+  const freeFrame = await call(documentPath, denied);
+  assert.equal(freeFrame.status, 200);
+  assert.equal(freeFrame.headers.get('x-cloud-member-access'), 'free');
+  const purchase = await call('/purchase', denied);
+  assert.equal(purchase.status, 302);
+  assert.equal(purchase.headers.get('location'), f.env.ACCESS_PURCHASE_URL);
   assert.equal((await call('/api/cloud/new-a-finite/input/manifest.json', allowed)).status, 403);
   assert.equal(f.ownerDb.reads(), 0);
   assert.equal(f.memberDb.reads(), 0);
@@ -144,8 +164,15 @@ test('the Worker serves assets and shared data to a verified member while keepin
   const result = await call(history, allowed);
   assert.equal(result.status, 200, await result.clone().text());
   const json = await result.json();
-  assert.deepEqual(json.rows, [{ date: day, symbol: '123A', state: 'WATCHING' }]);
+  assert.deepEqual(json.rows, [{ date: day, symbol: '123A', state: 'WATCHING' }, ended]);
   assert.doesNotMatch(JSON.stringify(json), /source_version|dataset_id|input_header/);
+  const free = await call(history, denied);
+  assert.equal(free.status, 200);
+  assert.deepEqual((await free.json()).rows, [ended]);
+  assert.equal((await call(dashboard, denied)).status, 403);
+  const premiumDashboard = await call(dashboard, allowed);
+  assert.equal(premiumDashboard.status, 200);
+  assert.deepEqual((await premiumDashboard.json()).watching, [{ date: day, symbol: '123A', state: 'WATCHING' }]);
   f.ownerDb.db.exec('UPDATE new_a_active_pointer SET revision=2');
   assert.equal((await call(history, allowed)).status, 503);
 });
@@ -181,7 +208,8 @@ test('normal origin preserves the existing owner response and requires a matchin
   assert.equal((await f.call(history, allowed, { ...f.env, CLOUD_VERSION_METADATA: undefined })).status, 403);
   assert.equal((await f.call(documentPath, allowed)).status, 200);
   assert.equal((await f.call(history, allowed)).status, 200);
-  assert.equal((await f.call(documentPath, denied)).status, 403);
+  assert.equal((await f.call(documentPath, denied)).headers.get('x-cloud-member-access'), 'free');
+  assert.equal((await f.call(dashboard, denied)).status, 403);
   assert.equal((await f.call('/api/cloud/new-a-view/release', allowed)).status, 403);
   assert.equal((await f.call('/api/cloud/new-a-finite/input/manifest.json', allowed)).status, 403);
   assert.equal((await f.call(history)).status, 401);
@@ -193,7 +221,7 @@ test('the exact canary proof narrows the normal role and is removed immediately 
   const nonce = 'b7'.repeat(32);
   const sign = (subject, version = workerVersion) => createHmac('sha256', Buffer.from(nonce, 'hex'))
     .update(JSON.stringify(['new-a-member-rollout-subject-v1', sourceCommit, version, subject])).digest('hex');
-  f.setPolicy('canary', { nonce, tag: sign(allowed) });
+  f.setPolicy('canary', { nonce, tag: sign(allowed), freeTag: sign(denied) });
   const response = await f.call(documentPath, allowed);
   assert.equal(response.status, 200);
   const body = await response.text();
@@ -204,10 +232,13 @@ test('the exact canary proof narrows the normal role and is removed immediately 
   }
   const session = '/api/cloud/new-a-view/session';
   assert.equal((await f.call(session, allowed)).status, 204);
+  assert.equal((await f.call(history, denied)).status, 200);
+  assert.equal((await f.call(dashboard, denied)).status, 403);
+  assert.equal((await f.call(history, otherFree)).status, 403);
   assert.equal((await f.call(session, otherAllowed)).status, 403);
   f.setPolicy('canary', { nonce, tag: sign(denied) });
   assert.equal((await f.call(history, denied)).status, 403);
-  f.setPolicy('canary', { nonce, tag: sign(allowed, '00000000-0000-4000-8000-000000000000') });
+  f.setPolicy('canary', { nonce, tag: sign(allowed, '00000000-0000-4000-8000-000000000000'), freeTag: sign(denied) });
   assert.equal((await f.call(history, allowed)).status, 403);
   f.setPolicy('enabled');
   assert.equal((await f.call(history, otherAllowed)).status, 200);
@@ -250,7 +281,9 @@ function observationFixture(t) {
   const key = '51'.repeat(32);
   const subjects = [allowed, denied];
   f.env.CLOUD_VERSION_METADATA = { id: workerVersion, tag: sourceCommit, timestamp: new Date(now - 120_000).toISOString() };
-  f.memberDb.db.exec(loadSql('member-migrations/0003_new_a_member_response_observations.sql'));
+  for (const file of ['0002_new_a_member_release_policy.sql', '0003_new_a_member_response_observations.sql', '0004_new_a_member_access_tiers.sql']) {
+    f.memberDb.db.exec(loadSql('member-migrations/' + file));
+  }
   function tag(subject) {
     const target = ['new-a-member-observation-subject-v1', windowId, stage, sourceCommit,
       observationBuild.build_input_sha256, workerVersion, subject];
@@ -269,17 +302,17 @@ function observationFixture(t) {
     await Promise.all(tasks.splice(0));
     return response;
   }
-  const rows = () => f.memberDb.db.prepare('SELECT * FROM new_a_member_response_observation_v1 ORDER BY subject_hmac,route').all();
+  const rows = () => f.memberDb.db.prepare('SELECT * FROM new_a_member_response_observation_v2 ORDER BY subject_hmac,route').all();
   return { ...f, key, subjects, tag, open, call, rows, windowId };
 }
 
-test('exact signed nonowner responses create six bounded, keyed stage observations', async t => {
+test('exact signed nonowner responses record both free and premium routes', async t => {
   const f = observationFixture(t);
   f.open();
   for (const user of f.subjects) {
-    for (const route of [documentPath, history, ownerManifest]) {
+    for (const route of [documentPath, history, dashboard, ownerManifest]) {
       const response = await f.call(route, user);
-      const status = user === allowed && route !== ownerManifest ? 200 : 403;
+      const status = route === ownerManifest || (route === dashboard && user === denied) ? 403 : 200;
       assert.equal(response.status, status);
       for (const hidden of [f.key, user, f.tag(user)]) {
         assert.ok(!JSON.stringify([...response.headers]).includes(hidden));
@@ -288,7 +321,7 @@ test('exact signed nonowner responses create six bounded, keyed stage observatio
     }
   }
   const recorded = f.rows();
-  assert.equal(recorded.length, 6);
+  assert.equal(recorded.length, 8);
   for (const row of recorded) {
     assert.equal(row.origin, stage);
     assert.equal(row.source_commit, sourceCommit);
@@ -299,7 +332,7 @@ test('exact signed nonowner responses create six bounded, keyed stage observatio
     const actualRole = row.subject_hmac === f.tag(allowed) ? 'allowed' : row.subject_hmac === f.tag(denied) ? 'denied' : '';
     assert.ok(actualRole);
     assert.equal(row.role_result, row.route === ownerManifest ? 'not_checked' : actualRole);
-    assert.equal(row.status, row.role_result === 'allowed' ? 200 : 403);
+    assert.equal(row.status, row.route === ownerManifest || (row.route === dashboard && actualRole === 'denied') ? 403 : 200);
     for (const hidden of [f.key, ...f.subjects]) assert.ok(!JSON.stringify(row).includes(hidden));
   }
   await f.call(documentPath, allowed);
@@ -338,7 +371,7 @@ test('worker never counts Discord lookup failure or an observation revoked befor
   const revoked = { ...f.env, CLOUD_MEMBER_DB: { withSession(constraint) {
     const session = db.withSession(constraint);
     return { prepare(sql) {
-      if (sql.startsWith('INSERT INTO new_a_member_response_observation_v1')) {
+      if (sql.startsWith('INSERT INTO new_a_member_response_observation_v2')) {
         f.memberDb.db.exec('DELETE FROM new_a_member_observation_window_v1');
       }
       return session.prepare(sql);

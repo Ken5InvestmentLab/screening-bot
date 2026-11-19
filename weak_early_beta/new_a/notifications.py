@@ -3,6 +3,7 @@
 import csv
 import datetime
 import io
+import math
 import os
 import re
 from pathlib import Path
@@ -26,12 +27,183 @@ def _counts(rows):
     }
 
 
-def _attachment(date, chart_links):
+def _attachment(date, chart_links, entries=None, openings=None):
     file = io.StringIO(newline="")
     writer = csv.writer(file)
-    writer.writerow(["検出日", "証券コード", "TradingView"])
-    writer.writerows((date, symbol, url) for symbol, url in chart_links)
+    if entries is None and openings is None:
+        writer.writerow(["検出日", "証券コード", "TradingView"])
+        writer.writerows((date, symbol, url) for symbol, url in chart_links)
+    else:
+        columns = ["通知種別", "対象日", "証券コード", "TradingView"]
+        rows = [("監視開始", date, symbol, url) for symbol, url in chart_links]
+        if entries is not None:
+            rows.extend(("買付候補（未約定）", entries["session"], symbol, "")
+                        for symbol in entries["symbols"])
+        if openings is not None:
+            writer.writerow([*columns, "日足始値（円）"])
+            writer.writerows((*row, "") for row in rows)
+            writer.writerows(_opening_csv_row(date, row) for row in openings["rows"])
+        else:
+            writer.writerow(columns)
+            writer.writerows(rows)
     return {"filename": f"cloud-new-a-{date}.csv", "text": "\ufeff" + file.getvalue()}
+
+
+def _opening_csv_row(date, row):
+    symbol, price = row
+    if price is None:
+        return ("始値保留", date, symbol, "", "")
+    return ("終了後に確認した始値", date, symbol, "", _format_opening_price(price))
+
+
+def _fresh_ordinary_result(run, snapshot, publication):
+    date = snapshot["as_of"]
+    return (snapshot["observation_kind"] == "LIVE_OBSERVATION"
+            and run.get("identity") == "NEW_A_CLOUD_DAILY_V1"
+            and run.get("latest_session") == date and run.get("dry_run") is False
+            and run.get("detection_executed") is True and run.get("same_run_replay") is False
+            and "delayed_recovery" not in run
+            and publication.get("schema") == "NEW_A_PRIVATE_PUBLICATION_RECEIPT_V1"
+            and publication.get("as_of") == date and publication.get("same_dataset_replay") is False
+            and publication.get("existing_owner_gate_verified") is True
+            and publication.get("local_d1_emulation") is False
+            and publication.get("operational_gate_continuity_verified") in (None, False)
+            and "delayed_recovery" not in publication)
+
+
+def _episode(row):
+    symbol, candidate_date, episode = (row.get(key) for key in ("symbol", "candidate_date", "episode_id"))
+    if (not isinstance(symbol, str) or not re.fullmatch(r"[0-9A-Z]{4}", symbol)
+            or not isinstance(candidate_date, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", candidate_date)
+            or type(episode) is not int or episode <= 0):
+        raise ValueError("closing opening episode identity differs")
+    datetime.date.fromisoformat(candidate_date)
+    return symbol, candidate_date, episode
+
+
+def _closing_openings(snapshot, events, pending, index, previous_day):
+    date = snapshot["as_of"]
+    due = {}
+    for row in pending:
+        identity = _episode(row)
+        if (identity in due or row.get("entry_index") != index or row.get("trigger_date") != previous_day
+                or identity[1] > previous_day or row.get("execution_status") != "NOT_EXECUTED"):
+            raise ValueError("closing opening does not match its preceding market-session episode")
+        due[identity] = row
+
+    results = {}
+    for event in events:
+        identity = _episode(event)
+        row = due.pop(identity, None)
+        if row is None or event.get("execution_status") != "NOT_EXECUTED":
+            raise ValueError("closing opening event lacks a matching pending episode")
+        price = event.get("reference_open")
+        status = event.get("price_status")
+        if status == "HISTORICAL_REFERENCE_ONLY":
+            if (type(price) not in (int, float) or not math.isfinite(price) or price <= 0
+                    or price != row.get("reference_open") or status != row.get("price_status")):
+                raise ValueError("closing opening price differs from the monitor receipt")
+        elif status != "UNRESOLVED_OPEN" or price is not None or status != row.get("price_status"):
+            raise ValueError("closing opening hold differs from the monitor receipt")
+        symbol = identity[0]
+        if symbol in results and results[symbol] != price:
+            raise ValueError("closing opening price differs between episodes")
+        results[symbol] = price
+
+    for (symbol, _, _), row in due.items():
+        hold = snapshot.get("held_symbols", {}).get(symbol, {})
+        held_day = hold.get("day")
+        if (row.get("price_status") == "UNCONFIRMED_NEXT_OPEN" and isinstance(held_day, str)
+                and held_day <= date):
+            if symbol in results and results[symbol] is not None:
+                raise ValueError("closing opening price conflicts with an unresolved episode")
+            results[symbol] = None
+    if results:
+        return {"rows": sorted([symbol, price] for symbol, price in results.items()),
+                "snapshot_sha256": snapshot["payload_sha256"]}
+    return None
+
+
+def _summary_details(root, snapshot):
+    from .owner_notice_producer import _verified_calendar
+
+    date = snapshot["as_of"]
+    same_observation = [
+        event for event in snapshot["events"]
+        if event["session"] == date and event.get("observation_kind") == "LIVE_OBSERVATION"
+        and event.get("observed_at") == snapshot["observed_at"]
+    ]
+    candidates = [
+        event for event in same_observation if event["kind"] == "ENTRY_CANDIDATE"
+        and event.get("trigger_date") == date
+        and event.get("execution_status") == "NOT_EXECUTED"
+        and event.get("price_status") == "UNCONFIRMED_NEXT_OPEN"
+    ]
+    openings = [event for event in same_observation if event["kind"] == "REFERENCE_OPEN"]
+    state = snapshot.get("monitor_state", {})
+    pending = [row for row in state.get("pending_references", []) if row.get("reference_entry_date") == date]
+    if not (candidates or openings or pending):
+        return {}
+    observed = datetime.datetime.fromisoformat(snapshot["observed_at"])
+    day = datetime.date.fromisoformat(date)
+    close = datetime.datetime.combine(day, datetime.time(15, 30), tzinfo=JST)
+    if observed.tzinfo is None or observed < close or observed.astimezone(JST).date() != day:
+        raise ValueError("daily notification details require a same-session live observation after close")
+    calendar = _verified_calendar(root.parents[2])
+    if day not in calendar:
+        raise ValueError("verified current market session required")
+    index = calendar.index(day)
+    details = {}
+    if openings or pending:
+        if (not index or state.get("schema") != "NEW_A_CURRENT_MONITOR_STATE_V1"
+                or state.get("strategy") != "A_BASE" or state.get("actual_fills") is not False):
+            raise ValueError("verified closing monitor state required")
+        result = _closing_openings(snapshot, openings, pending, index, calendar[index - 1].isoformat())
+        if result is not None:
+            details["closing_openings"] = result
+    if candidates:
+        if index + 1 >= len(calendar):
+            raise ValueError("verified next market session required for entry candidates")
+        next_date = calendar[index + 1].isoformat()
+        if any(event.get("reference_entry_date") != next_date
+               or not re.fullmatch(r"[0-9A-Z]{4}", event["symbol"]) for event in candidates):
+            raise ValueError("entry candidate differs from the verified next market session")
+        details["next_session_entries"] = {
+            "session": next_date,
+            "symbols": sorted({event["symbol"] for event in candidates}),
+            "snapshot_sha256": snapshot["payload_sha256"],
+        }
+    return details
+
+
+def _format_opening_price(price):
+    return f"{price:,.2f}".rstrip("0").rstrip(".")
+
+
+def _opening_field(openings, attached):
+    rows = openings["rows"]
+    lines = [
+        f"{symbol}　{_format_opening_price(price)}円" if price is not None else f"{symbol}　始値保留"
+        for symbol, price in (rows[:10] if attached else rows)
+    ]
+    if attached:
+        lines.append(f"全{len(rows)}銘柄は添付CSV")
+    return {"name": "終了後に確認した始値（日足始値）", "value": "\n".join(lines)}
+
+def _entry_field(entries, attached):
+    symbols = entries["symbols"]
+    shown = "・".join(symbols[:12] if attached else symbols)
+    if attached:
+        shown += f"（全{len(symbols)}銘柄は添付CSV）"
+    return {
+        "name": f"翌営業日の買付候補（{entries['session']}）",
+        "value": (f"{shown}\n"
+                  "支持線付近で終値の反発条件を満たした銘柄です。"
+                  "翌営業日の取引終了後に日足始値を確認し、確認できない場合は保留します。"
+                  "始値×設定株数が注文上限以内で、手数料込みの資金と保有枠が足りる場合が対象です。"
+                  "保有の確定には当日の値幅と出来高の確認も必要です。"
+                  "現時点では買付候補（未約定）です。"),
+    }
 
 
 def _delivery_sha(batch):
@@ -67,16 +239,36 @@ def _batch(snapshot, rows, report_url):
         "fields": fields,
         "color": 0x5B8DEF,
     }
-    attachment = None
+    summary = next((payload for _, payload, _ in pending if payload.get("kind") == SUMMARY), {})
+    entries = summary.get("next_session_entries")
+    openings = summary.get("closing_openings")
+    attach_details = False
+    for details, field_builder in ((openings, _opening_field), (entries, _entry_field)):
+        if details is not None:
+            if delayed or details["snapshot_sha256"] != snapshot["payload_sha256"]:
+                raise ValueError("daily notification details differ from the verified live snapshot")
+            field = field_builder(details, attached=False)
+            if len(field["value"]) > 1024:
+                field = field_builder(details, attached=True)
+                attach_details = True
+            fields.append(field)
+    attachment = _attachment(date, chart_links, entries, openings) if attach_details else None
     if chart_links:
         lines = [f"[{symbol}]({url})" for symbol, url in chart_links]
         heading = f"**検出一覧（{len(symbols)}銘柄）**\n仕込み候補・監視開始（未約定）\n"
         description = heading + " ・ ".join(lines)
-        if len(description) > 4096:
-            attachment = _attachment(date, chart_links)
+        other_chars = len(embed["title"]) + len(FOOTER_PREFIX) + 64 + sum(
+            len(field["name"]) + len(field["value"]) for field in fields
+        )
+        if len(description) > min(4096, 6000 - other_chars):
+            attachment = attachment or _attachment(date, chart_links, entries, openings)
             description = heading + "全銘柄のチャートリンクは添付CSVをご覧ください。\n" + " ・ ".join(lines[:8])
         embed["description"] = description
     payload = {"content": "", "embeds": [embed], "allowed_mentions": {"parse": []}}
+    if openings is not None:
+        payload["components"] = [{"type": 1, "components": [{
+            "type": 2, "style": 5, "label": "Cloudダッシュボードで試算を確認", "url": embed["url"],
+        }]}]
     if attachment is not None:
         payload["attachments"] = [{"id": 0, "filename": attachment["filename"]}]
     batch = {
@@ -136,6 +328,16 @@ def _matches_discord(message, batch, *, webhook_id, channel_id):
             or actual.get("footer", {}).get("text") != FOOTER_PREFIX + batch["batch_id"]
             or _field_values(actual) != _field_values(expected)):
         return False
+    if "components" in batch["payload"]:
+        rows = message.get("components")
+        if not isinstance(rows, list) or len(rows) != 1 or not isinstance(rows[0], dict) or rows[0].get("type") != 1:
+            return False
+        buttons = rows[0].get("components")
+        expected = batch["payload"]["components"][0]["components"][0]
+        if (not isinstance(buttons, list) or len(buttons) != 1 or not isinstance(buttons[0], dict)
+                or buttons[0].get("disabled") is True
+                or any(buttons[0].get(key) != value for key, value in expected.items())):
+            return False
     attachments = [(file.get("filename"), file.get("size")) for file in message.get("attachments", [])]
     file = batch["attachment"]
     return attachments == ([(file["filename"], len(file["text"].encode("utf-8")))] if file else [])
@@ -239,7 +441,10 @@ def notify_day(root, *, date, dry_run, report_url, transport=None, reconcile_onl
         if (snapshot.get("data_status") not in {"COMPLETED", "COMPLETED_WITH_HELD_SYMBOLS"}
                 or snapshot.get(count_field) != len(signals)):
             raise ValueError("completed New A detection result required")
-    if signals:
+    build_summary_details = None
+    if _fresh_ordinary_result(run, snapshot, publication):
+        build_summary_details = lambda: _summary_details(root, snapshot)
+    if signals or build_summary_details is not None:
         summary = {
             "kind": SUMMARY, "event_id": digest(["A_BASE", date, SUMMARY]), "signal_date": date,
             "count": len({event["symbol"] for event in signals}), "strategy": "A_BASE",
@@ -254,8 +459,10 @@ def notify_day(root, *, date, dry_run, report_url, transport=None, reconcile_onl
     outbox = Outbox(root / "notification-outbox.sqlite")
     try:
         if not reconcile_only:
-            # An empty verified result preserves the previous silent completion behavior.
-            outbox.stage(snapshot, publication, existing_notifications_enabled=True, summary=summary)
+            # Only a fresh session can add the optional evening summary; a
+            # verified day without signals or entry candidates stays silent.
+            outbox.stage(snapshot, publication, existing_notifications_enabled=True, summary=summary,
+                         build_summary_details=build_summary_details)
         rows = outbox.day_rows(date)
         reconciled = False
         if any(status == ATTEMPTED for _, _, status in rows):

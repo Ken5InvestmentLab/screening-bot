@@ -35,7 +35,8 @@ class Outbox:
             );
         """)
 
-    def stage(self, snapshot, publication_receipt, *, existing_notifications_enabled, summary=None):
+    def stage(self, snapshot, publication_receipt, *, existing_notifications_enabled,
+              summary=None, build_summary_details=None):
         if not existing_notifications_enabled:
             return []
         from .operational_admission import publication_gate_verified
@@ -70,10 +71,22 @@ class Outbox:
                     observed_at=snapshot["observed_at"], delayed_recovery=snapshot["delayed_recovery"],
                 )
             payloads.append(payload)
-        if summary is not None:
-            payloads.append(summary)
         staged = []
         with self.db:
+            if summary is not None and build_summary_details is not None:
+                self.db.execute("BEGIN IMMEDIATE")
+                date = snapshot["as_of"]
+                already_staged = self.db.execute(
+                    """SELECT 1 FROM new_a_delivery
+                       WHERE json_extract(payload_json, '$.signal_date') = ?
+                       UNION ALL SELECT 1 FROM new_a_discord_batch WHERE signal_date = ? LIMIT 1""",
+                    (date, date),
+                ).fetchone()
+                details = build_summary_details() if not already_staged else {}
+                if summary["count"] or details:
+                    payloads.append({**summary, **details})
+            elif summary is not None:
+                payloads.append(summary)
             for payload in payloads:
                 inserted = self.db.execute(
                     "INSERT OR IGNORE INTO new_a_delivery VALUES (?, ?, 'PENDING', NULL)",

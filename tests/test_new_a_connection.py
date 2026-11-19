@@ -158,6 +158,8 @@ class BatchedDiscord(unittest.TestCase):
             "id": self.message_id, "webhook_id": self.webhook_id, "channel_id": self.channel_id,
             "content": payload["content"], "embeds": payload["embeds"], "attachments": attachments,
         }
+        if "components" in payload:
+            message["components"] = copy.deepcopy(payload["components"])
         self.posts.append((message, files))
         response = Mock(status_code=200)
         response.json.return_value = message
@@ -224,6 +226,274 @@ class BatchedDiscord(unittest.TestCase):
         self.fixture.save()
         with self.assertRaisesRegex(ValueError, "completed"):
             self.call()
+        self.post.assert_not_called()
+
+    def prepare_next_session(self, symbols=("2345", "417A"), entry_date="2026-06-03", previous=None):
+        from datetime import date
+        from weak_early_beta.new_a import owner_notice_producer
+
+        observed_at = self.day + "T17:40:00+09:00"
+        self.snapshot["observed_at"] = observed_at
+        self.snapshot["events"].extend({
+            "event_id": digest(["entry", symbol]), "kind": "ENTRY_CANDIDATE",
+            "symbol": symbol, "session": self.day, "trigger_date": self.day,
+            "observation_kind": "LIVE_OBSERVATION", "observed_at": observed_at,
+            "execution_status": "NOT_EXECUTED", "price_status": "UNCONFIRMED_NEXT_OPEN",
+            "reference_entry_date": entry_date,
+        } for symbol in symbols)
+        self.fixture.save()
+        self.update_receipt("latest-run.json", identity="NEW_A_CLOUD_DAILY_V1", latest_session=self.day,
+                            dry_run=False, detection_executed=True, same_run_replay=False)
+        self.update_receipt("latest-publication.json", schema="NEW_A_PRIVATE_PUBLICATION_RECEIPT_V1",
+                            as_of=self.day, same_dataset_replay=False, local_d1_emulation=False)
+        dates = [self.day, "2026-06-03", "2026-06-04"]
+        if previous:
+            dates.insert(0, previous)
+        return self.enterContext(patch.object(owner_notice_producer, "_verified_calendar", return_value=[
+            date.fromisoformat(day) for day in dates
+        ]))
+
+    def update_receipt(self, name, **fields):
+        path = self.root / name
+        receipt = json.loads(path.read_text(encoding="utf-8"))
+        atomic_write(path, {**receipt, **fields})
+
+    def test_evening_conditions_are_in_the_existing_watch_message(self):
+        calendar = self.prepare_next_session()
+        preview = self.call(dry_run=True)
+        self.assertEqual((preview["signal_notifications"], preview["completion_notifications"]), (1, 1))
+        self.post.assert_not_called()
+        sent = self.call()
+        self.assertEqual((sent["signal_notifications"], sent["completion_notifications"], sent["external_sends"]),
+                         (1, 1, 1))
+        calendar.assert_called_once()
+        embed = self.posts[0][0]["embeds"][0]
+        self.assertIn("[1111]", embed["description"])
+        next_open = embed["fields"][-1]
+        self.assertEqual(next_open["name"], "翌営業日の買付候補（2026-06-03）")
+        self.assertIn("2345・417A", next_open["value"])
+        self.assertIn("翌営業日の取引終了後に日足始値を確認", next_open["value"])
+        self.assertIn("未約定", next_open["value"])
+        self.assertEqual(self.call()["external_sends"], 0)
+        self.assertEqual(self.post.call_count, 1)
+        self.assertEqual({(status, json.loads(raw)["message_id"]) for _, status, raw in self.receipts()},
+                         {("SENT", self.message_id)})
+
+    def test_zero_watches_with_candidates_still_has_one_completion_batch(self):
+        self.events(0)
+        self.prepare_next_session(symbols=("2345",))
+        preview = self.call(dry_run=True)
+        self.assertEqual((preview["signal_notifications"], preview["completion_notifications"]), (0, 1))
+        self.assertEqual(preview["pending_discord_messages"], 1)
+        sent = self.call()
+        self.assertEqual((sent["signal_notifications"], sent["completion_notifications"], sent["external_sends"]),
+                         (0, 1, 1))
+        embed = self.posts[0][0]["embeds"][0]
+        self.assertNotIn("description", embed)
+        self.assertIn("2345", embed["fields"][-1]["value"])
+
+    def test_legacy_pending_without_summary_does_not_gain_evening_payload(self):
+        from weak_early_beta.new_a import notifications
+
+        calendar = self.prepare_next_session()
+        with patch.object(notifications, "_fresh_ordinary_result", return_value=False):
+            self.call(dry_run=True)
+        with closing(sqlite3.connect(self.root / "notification-outbox.sqlite")) as db:
+            db.execute("DELETE FROM new_a_delivery WHERE event_id=?", (digest(["A_BASE", self.day, "DAILY_SUMMARY"]),))
+            db.commit()
+        self.assertEqual(self.call()["external_sends"], 1)
+        calendar.assert_not_called()
+        self.assertNotIn("翌営業日", json.dumps(self.posts[0][0], ensure_ascii=False))
+
+    def test_existing_uncertain_evening_batch_uses_exact_history_without_resending(self):
+        from unittest.mock import Mock
+        from weak_early_beta.new_a.outbox import Outbox
+
+        calendar = self.prepare_next_session()
+        with patch.object(Outbox, "confirm_batch", side_effect=RuntimeError("interrupted after delivery")):
+            with self.assertRaisesRegex(RuntimeError, "interrupted"):
+                self.call()
+        response = Mock(status_code=200)
+        edited = copy.deepcopy(self.posts[0][0])
+        edited["embeds"][0]["fields"][-1]["value"] = "変更済み"
+        response.json.return_value = [edited]
+        self.get.side_effect = None
+        self.get.return_value = response
+        with self.assertRaisesRegex(ValueError, "expected one exact"):
+            self.call(reconcile_only=True)
+        response.json.return_value = [edited, self.posts[0][0]]
+        self.assertTrue(self.call(reconcile_only=True)["reconciled_batch"])
+        self.assertEqual(self.call()["external_sends"], 0)
+        calendar.assert_called_once()
+        self.assertEqual(self.post.call_count, 1)
+
+    def test_replay_or_local_run_does_not_stage_a_next_session_notice(self):
+        self.events(0)
+        calendar = self.prepare_next_session()
+        for name, key in (("latest-run.json", "same_run_replay"),
+                          ("latest-run.json", "dry_run"),
+                          ("latest-publication.json", "same_dataset_replay"),
+                          ("latest-publication.json", "local_d1_emulation")):
+            with self.subTest(key=key):
+                self.update_receipt(name, **{key: True})
+                self.assertEqual(self.call()["external_sends"], 0)
+                self.update_receipt(name, **{key: False})
+        self.post.assert_not_called()
+        calendar.assert_not_called()
+
+    def test_candidate_must_bind_to_the_next_exchange_session(self):
+        self.events(0)
+        self.prepare_next_session(entry_date="2026-06-04")
+        with self.assertRaisesRegex(ValueError, "verified next market session"):
+            self.call()
+        self.post.assert_not_called()
+        self.assertFalse(self.receipts())
+
+    def test_long_evening_list_uses_the_existing_single_attachment(self):
+        import csv
+        import io
+
+        self.events(220)
+        candidates = tuple(f"{1000 + i:04}" for i in range(250))
+        self.prepare_next_session(symbols=candidates)
+        self.assertEqual(self.call()["external_sends"], 1)
+        message, files = self.posts[0]
+        self.assertLessEqual(len(message["embeds"][0]["fields"][-1]["value"]), 1024)
+        self.assertEqual(list(files), ["files[0]"])
+        rows = list(csv.reader(io.StringIO(files["files[0]"][1].decode("utf-8-sig"))))[1:]
+        self.assertEqual({row[2] for row in rows if row[0] == "買付候補（未約定）"}, set(candidates))
+        self.assertEqual(len([row for row in rows if row[0] == "監視開始"]), 220)
+
+    def add_closing_opening(self, symbol, price, *, event=True, previous="2026-05-29"):
+        identity = {"symbol": symbol, "candidate_date": "2026-05-26", "episode_id": 4}
+        status = "HISTORICAL_REFERENCE_ONLY" if price is not None else "UNRESOLVED_OPEN"
+        state = self.snapshot.setdefault("monitor_state", {
+            "schema": "NEW_A_CURRENT_MONITOR_STATE_V1", "strategy": "A_BASE", "actual_fills": False,
+            "pending_references": [],
+        })
+        state["pending_references"].append({
+            **identity, "entry_index": 1, "reference_entry_date": self.day, "trigger_date": previous,
+            "execution_status": "NOT_EXECUTED", "reference_open": price,
+            "price_status": status if event else "UNCONFIRMED_NEXT_OPEN",
+        })
+        if event:
+            self.snapshot["events"].append({
+                **identity, "event_id": digest(["closing", symbol]), "kind": "REFERENCE_OPEN",
+                "session": self.day, "observation_kind": "LIVE_OBSERVATION", "observed_at": self.snapshot["observed_at"],
+                "execution_status": "NOT_EXECUTED", "reference_open": price, "price_status": status,
+            })
+        else:
+            self.snapshot["data_status"] = "COMPLETED_WITH_HELD_SYMBOLS"
+            self.snapshot["held_symbols"][symbol] = {"day": self.day, "reason": "MISSING_SOURCE"}
+        self.fixture.save()
+        self.update_receipt("latest-run.json", identity="NEW_A_CLOUD_DAILY_V1", latest_session=self.day,
+                            dry_run=False, detection_executed=True, same_run_replay=False)
+        self.update_receipt("latest-publication.json", schema="NEW_A_PRIVATE_PUBLICATION_RECEIPT_V1",
+                            as_of=self.day, same_dataset_replay=False, local_d1_emulation=False)
+
+    def test_closing_outcome_and_next_session_share_one_daily_post(self):
+        calendar = self.prepare_next_session(previous="2026-05-29")
+        self.add_closing_opening("5001", 1271.5)
+        self.add_closing_opening("5002", None)
+        self.add_closing_opening("5003", None, event=False)
+        self.snapshot["monitor_state"]["opening_cash_yen"] = 713158963
+        self.fixture.save()
+        self.update_receipt("latest-run.json", identity="NEW_A_CLOUD_DAILY_V1", latest_session=self.day,
+                            dry_run=False, detection_executed=True, same_run_replay=False)
+        self.update_receipt("latest-publication.json", schema="NEW_A_PRIVATE_PUBLICATION_RECEIPT_V1",
+                            as_of=self.day, same_dataset_replay=False, local_d1_emulation=False)
+        preview = self.call(dry_run=True)
+        self.assertEqual(preview["pending_discord_messages"], 1)
+        self.post.assert_not_called()
+        self.assertEqual(self.call()["external_sends"], 1)
+        self.assertEqual(self.call()["external_sends"], 0)
+        calendar.assert_called_once()
+        message = self.posts[0][0]
+        fields = {field["name"]: field["value"] for field in message["embeds"][0]["fields"]}
+        self.assertEqual(fields["終了後に確認した始値（日足始値）"],
+                         "5001　1,271.5円\n5002　始値保留\n5003　始値保留")
+        self.assertIn("2345", fields["翌営業日の買付候補（2026-06-03）"])
+        self.assertNotIn("713158963", json.dumps(message, ensure_ascii=False))
+        button = message["components"][0]["components"][0]
+        self.assertEqual(button, {
+            "type": 2, "style": 5, "label": "Cloudダッシュボードで試算を確認",
+            "url": self.report + "weak_early_beta_latest.html",
+        })
+
+    def test_near_limit_chart_inline_text_moves_to_shared_csv_when_daily_embed_would_overflow(self):
+        import csv
+        import io
+        from weak_early_beta.notify import chart_components
+        from weak_early_beta.new_a.notifications import FOOTER_PREFIX
+
+        lines = []
+        for idx in range(100):
+            symbol = f"{idx:04}"
+            url = chart_components(symbol)[0]["components"][0]["url"]
+            trial = [*lines, f"[{symbol}]({url})"]
+            heading = f"**検出一覧（{len(trial)}銘柄）**\n仕込み候補・監視開始（未約定）\n"
+            if len(heading + " ・ ".join(trial)) > 4096:
+                break
+            lines = trial
+        self.events(len(lines))
+        candidates = tuple(str(1000 + i) for i in range(170))
+        self.prepare_next_session(symbols=candidates, previous="2026-05-29")
+        for i in range(47):
+            self.add_closing_opening(str(5000 + i), 123456789.12)
+        self.assertEqual(self.call()["external_sends"], 1)
+        message, files = self.posts[0]
+        embed = message["embeds"][0]
+        other_chars = len(embed["title"]) + len(FOOTER_PREFIX) + 64 + sum(
+            len(field["name"]) + len(field["value"]) for field in embed["fields"]
+        )
+        unabridged = f"**検出一覧（{len(lines)}銘柄）**\n仕込み候補・監視開始（未約定）\n" + " ・ ".join(lines)
+        self.assertGreater(len(unabridged) + other_chars, 6000)
+        self.assertLessEqual(len(embed["description"]) + other_chars, 6000)
+        self.assertTrue(all(len(field["value"]) <= 1024 for field in embed["fields"]))
+        self.assertEqual(list(files), ["files[0]"])
+        rows = list(csv.reader(io.StringIO(files["files[0]"][1].decode("utf-8-sig"))))[1:]
+        self.assertEqual(len(rows), len(lines) + len(candidates) + 47)
+        self.assertTrue(any(row[:3] == ["終了後に確認した始値", self.day, "5000"] for row in rows))
+
+    def test_closing_outcome_alone_can_send_and_preserves_exact_reconciliation(self):
+        from unittest.mock import Mock
+        from weak_early_beta.new_a.outbox import Outbox
+
+        self.events(0)
+        self.prepare_next_session(symbols=(), previous="2026-05-29")
+        self.add_closing_opening("5001", 1000)
+        with patch.object(Outbox, "confirm_batch", side_effect=RuntimeError("interrupted after delivery")):
+            with self.assertRaisesRegex(RuntimeError, "interrupted"):
+                self.call()
+        original = self.posts[0][0]
+        edited = copy.deepcopy(original)
+        edited["components"][0]["components"][0]["url"] = "https://synthetic.invalid/wrong"
+        response = Mock(status_code=200)
+        response.json.return_value = [edited]
+        self.get.side_effect = None
+        self.get.return_value = response
+        with self.assertRaisesRegex(ValueError, "expected one exact"):
+            self.call(reconcile_only=True)
+        response.json.return_value = [edited, original]
+        recovered = self.call(reconcile_only=True)
+        self.assertTrue(recovered["reconciled_batch"])
+        self.assertEqual(self.post.call_count, 1)
+        self.assertEqual(self.call()["external_sends"], 0)
+
+    def test_closing_outcome_requires_exact_episode_and_original_same_day_observation(self):
+        self.events(0)
+        self.prepare_next_session(symbols=(), previous="2026-05-29")
+        self.add_closing_opening("5001", 900, previous="2026-05-28")
+        with self.assertRaisesRegex(ValueError, "preceding market-session episode"):
+            self.call()
+        self.snapshot["monitor_state"]["pending_references"][0]["trigger_date"] = "2026-05-29"
+        self.snapshot["events"][-1]["observed_at"] = "2026-06-01T16:58:00+09:00"
+        self.fixture.save()
+        self.update_receipt("latest-run.json", identity="NEW_A_CLOUD_DAILY_V1", latest_session=self.day,
+                            dry_run=False, detection_executed=True, same_run_replay=False)
+        self.update_receipt("latest-publication.json", schema="NEW_A_PRIVATE_PUBLICATION_RECEIPT_V1",
+                            as_of=self.day, same_dataset_replay=False, local_d1_emulation=False)
+        self.assertEqual(self.call()["external_sends"], 0)
         self.post.assert_not_called()
 
     def test_all_legacy_sent_preserves_existing_rows_and_stays_silent(self):

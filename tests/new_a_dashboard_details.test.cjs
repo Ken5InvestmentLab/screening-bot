@@ -205,3 +205,111 @@ test('history keeps all presentation rows and only displays modeled results for 
   assert.equal(index.get(older.identity).w, undefined);
   assert.equal(historyRecords(rows, null).size, rows.length);
 });
+
+const dailyOpenEvent = { ...key, session: date, kind: 'REFERENCE_OPEN',
+  price_status: 'HISTORICAL_REFERENCE_ONLY', execution_status: 'NOT_EXECUTED', reference_open: 1012.5 };
+const dailyOpenRow = { ...row, entry: { status: 'verified', basis: 'NEXT_SESSION_OPEN_REFERENCE',
+  date, price: dailyOpenEvent.reference_open } };
+const dailyOpen = { ...snapshot, events: [dailyOpenEvent] };
+const completedOpenModel = orders => ({
+  resolved: true, period: [key.candidate_date, date], trades: [],
+  open_positions: { 1234: { ...key, entry_date: date, entry_price_nominal: dailyOpenEvent.reference_open } },
+  orders,
+});
+const openingOrder = (status, extra = {}) => ({ ...key, order_date: date, status, ...extra });
+function openingRows(html) {
+  return new Map([...html.matchAll(/<tr data-daily-opening="([^"]+)">([\s\S]*?)<\/tr>/g)]
+    .map(([, identity, body]) => [identity, body]));
+}
+
+test('completed daily opening uses verified price and the same accepted model episode', () => {
+  const otherEpisode = { ...dailyOpenEvent, episode_id: 2, reference_open: 1030 };
+  const otherRow = { ...dailyOpenRow, identity: '1234|2026-11-17|2',
+    entry: { ...dailyOpenRow.entry, price: otherEpisode.reference_open } };
+  const day = { ...dailyOpen, events: [dailyOpenEvent, otherEpisode] };
+  const model = completedOpenModel([openingOrder('FILLED'), openingOrder('CASH_INSUFFICIENT', { episode_id: 2 })]);
+  const results = openingRows(currentMarkup([day], [dailyOpenRow, otherRow], { adapter, model }));
+  assert.match(results.get(dailyOpenRow.identity), /日足始値<\/strong> 1,012.5円/);
+  assert.match(results.get(dailyOpenRow.identity), /仮想保有開始/);
+  assert.match(results.get(otherRow.identity), /日足始値<\/strong> 1,030円/);
+  assert.match(results.get(otherRow.identity), /仮想保有なし（手数料込みの資金不足）/);
+  assert.doesNotMatch(results.get(otherRow.identity), /仮想保有開始/);
+});
+
+test('a confirmed opening price remains visible while its exact order or current model is unresolved', () => {
+  for (const model of [
+    null,
+    { ...completedOpenModel([openingOrder('FILLED')]), resolved: false },
+    { ...completedOpenModel([openingOrder('FILLED')]), period: [key.candidate_date, key.candidate_date] },
+    completedOpenModel([openingOrder('FILLED', { order_date: key.candidate_date })]),
+    completedOpenModel([openingOrder('CAPACITY', { episode_id: 2 })]),
+    completedOpenModel([openingOrder('FILLED'), openingOrder('CAPACITY')]),
+    { ...completedOpenModel([openingOrder('FILLED')]), open_positions: {} },
+  ]) {
+    const html = openingRows(currentMarkup([dailyOpen], [dailyOpenRow], { adapter, model })).get(row.identity);
+    assert.match(html, /日足始値<\/strong> 1,012.5円/);
+    assert.match(html, /判定保留/);
+    assert.doesNotMatch(html, /仮想保有なし|仮想保有開始/);
+  }
+  const calculating = openingRows(currentMarkup([dailyOpen], [dailyOpenRow], { adapter, modelPending: true })).get(row.identity);
+  assert.match(calculating, /判定を計算中/);
+});
+
+test('held, identity-unverified, stale, or mismatched prices never produce a definitive skipped outcome', () => {
+  const skips = completedOpenModel([openingOrder('LOT_EXCEEDS_ALLOCATION')]);
+  for (const [daily, published] of [
+    [{ ...dailyOpen, held_symbols: { 1234: { reason: 'SOURCE_QUARANTINED' } } }, dailyOpenRow],
+    [dailyOpen, { ...dailyOpenRow, chartAllowed: false }],
+    [dailyOpen, { ...dailyOpenRow, entry: { ...dailyOpenRow.entry, date: key.candidate_date } }],
+    [dailyOpen, { ...dailyOpenRow, entry: { ...dailyOpenRow.entry, price: 1200 } }],
+    [{ ...dailyOpen, events: [{ ...dailyOpenEvent, price_status: 'UNRESOLVED_OPEN' }] }, dailyOpenRow],
+  ]) {
+    const html = openingRows(currentMarkup([daily], [published], { adapter, model: skips })).get(row.identity);
+    assert.match(html, /日足始値<\/strong> 未確認/);
+    assert.match(html, /判定保留/);
+    assert.doesNotMatch(html, /仮想保有なし|仮想保有開始/);
+  }
+  const onePrice = { ...dailyOpen, events: [{ ...dailyOpenEvent, price_status: 'UNRESOLVED_OPEN' }] };
+  const model = completedOpenModel([openingOrder('UNFILLED_UNCERTAIN_ONE_PRICE')]);
+  const html = openingRows(currentMarkup([onePrice], [dailyOpenRow], { adapter, model })).get(row.identity);
+  assert.match(html, /判定保留（高値と安値が同値）/);
+});
+
+test('the opening panel is visible before history arrives and updates when the checked episode is loaded', () => {
+  const withCandidate = { ...dailyOpen, events: [dailyOpenEvent, { ...key, session: date, kind: 'ENTRY_CANDIDATE' }] };
+  const loading = currentMarkup([withCandidate], [], { modelPending: true });
+  assert.match(loading, /<section class="cloud-reference-events" aria-labelledby="new-a-daily-opening-heading">/);
+  const before = openingRows(loading).get(row.identity);
+  assert.match(before, /日足始値<\/strong> 未確認/);
+  assert.match(before, /判定を計算中/);
+  const loaded = currentMarkup([withCandidate], [dailyOpenRow], {
+    adapter, model: completedOpenModel([openingOrder('FILLED')]),
+  });
+  const panel = loaded.split('id="new-a-daily-opening-heading"')[1].split('</section>')[0];
+  assert.match(panel, /日足始値と仮想保有の結果/);
+  assert.match(openingRows(loaded).get(row.identity), /日足始値<\/strong> 1,012.5円[\s\S]*仮想保有開始/);
+  assert.match(loaded, /<\/section><details class="cloud-table-details cloud-reference-events"><summary>買付候補・その他の記録/);
+  assert.doesNotMatch(currentMarkup([{ ...dailyOpen, events: [{ ...dailyOpenEvent, session: key.candidate_date }] }], [dailyOpenRow]),
+    /日足始値と仮想保有の結果/);
+});
+
+test('a held due candidate with no same-episode reference event is shown as pending without a price', () => {
+  const held = { ...dailyOpen, held_symbols: { 1234: { reason: 'MISSING_SOURCE' } },
+    monitor_state: { pending_references: [
+      { ...key, reference_entry_date: date },
+      { ...key, reference_entry_date: date, episode_id: 2 },
+      { ...key, reference_entry_date: key.candidate_date, episode_id: 3 },
+      { ...key, reference_entry_date: date, symbol: '4567' },
+    ] },
+  };
+  const another = { ...dailyOpenRow, identity: '1234|2026-11-17|2' };
+  const html = currentMarkup([held], [dailyOpenRow, another], { adapter,
+    model: completedOpenModel([openingOrder('FILLED'), openingOrder('CAPACITY', { episode_id: 2 })]) });
+  const rows = openingRows(html);
+  assert.deepEqual([...rows.keys()], [row.identity, another.identity]);
+  assert.equal([...html.matchAll(/data-daily-opening="1234\|2026-11-17\|1"/g)].length, 1);
+  for (const result of rows.values()) {
+    assert.match(result, /日足始値<\/strong> 未確認[\s\S]*判定保留（データ照合）/);
+    assert.doesNotMatch(result, /1,012.5円|仮想保有開始|仮想保有なし/);
+  }
+});

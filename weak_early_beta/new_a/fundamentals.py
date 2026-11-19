@@ -20,6 +20,9 @@ HEX = re.compile(r"[0-9a-f]{64}")
 MODEL = "gpt-6.1-sol"
 EFFORT = "xhigh"
 RECEIPT_SCHEMA = "NEW_A_FORWARD_FUNDAMENTAL_RECEIPT_V1"
+HISTORICAL_SCHEMA = "NEW_A_LOCAL_HISTORICAL_OWNER_LEDGER_V1"
+MAX_HISTORICAL_LEDGER_BYTES = 128 * 1024 * 1024
+CODE = re.compile(r"[0-9A-Z]{4}")
 CAPITAL_RISK_VERSION = 1
 LONG_TERM_VERSION = 1
 
@@ -214,6 +217,75 @@ def _history(root, day):
     return records
 
 
+def _historical_sha(pointer):
+    if not pointer.exists():
+        return None
+    _check(pointer.resolve() == pointer and pointer.stat().st_size <= 1024,
+           "invalid historical fundamental pointer")
+    value = read(pointer)
+    _check(isinstance(value, dict) and set(value) == {"sha256"}
+           and isinstance(value["sha256"], str) and HEX.fullmatch(value["sha256"]),
+           "invalid historical fundamental digest")
+    return value["sha256"]
+
+
+def _historical_history(root, sha, rows, forward, day):
+    if sha is None:
+        return {}, None
+    path = root / "fundamentals" / "historical" / (sha + ".json")
+    _check(path.resolve() == path, "historical fundamental ledger escaped private history")
+    with path.open("rb") as source:
+        raw = source.read(MAX_HISTORICAL_LEDGER_BYTES + 1)
+    _check(len(raw) <= MAX_HISTORICAL_LEDGER_BYTES and hashlib.sha256(raw).hexdigest() == sha,
+           "historical fundamental ledger changed")
+    ledger = json.loads(raw)
+    del raw
+    _check(isinstance(ledger, dict) and ledger.get("schema") == HISTORICAL_SCHEMA and ledger.get("scope") == "owner-presentation"
+           and isinstance(ledger.get("profiles"), dict), "invalid historical fundamental ledger")
+    for key in ("frozen_snapshot_sha256", "frozen_archive_index_sha256",
+                "frozen_owner_manifest_sha256", "inventory_sha256"):
+        _check(isinstance(ledger.get(key), str) and HEX.fullmatch(ledger[key]),
+               "missing historical fundamental ledger provenance")
+    lookup = {row["identity"]: row for row in rows}
+    _check(len(lookup) == len(rows), "duplicate owner presentation identity")
+    matched = {}
+    overlap = 0
+    seen = set()
+    for key, profile in ledger["profiles"].items():
+        report = profile["presentation"]
+        date = report["signalDate"]
+        symbol = report["symbol"]
+        company = profile["company_name"]
+        _check(CODE.fullmatch(symbol) and dt.date.fromisoformat(date).isoformat() == date
+               and re.fullmatch(re.escape(f"{symbol}|{date}|") + r"[1-9][0-9]*", key)
+               and report["identity"] == f"{date}|{symbol}" and report["identity"] not in seen
+               and profile["cutoff"] == report["analysisCutoff"] == f"{date}T16:15:00+09:00"
+               and isinstance(company, str) and company.strip()
+               and report["auditStatus"] == "pass", "historical fundamental episode differs")
+        seen.add(report["identity"])
+        fields = report["fields"]
+        _check(set(report) == {"identity", "symbol", "signalDate", "analysisCutoff", "auditStatus", "fields"}
+               and isinstance(fields, list) and len(fields) == len(FIELD_ORDER)
+               and all(isinstance(field, dict) and set(field) == {"label", "text"}
+                       and field["label"] == label and isinstance(field["text"], str) and field["text"].strip()
+                       for label, field in zip(FIELD_ORDER, fields)), "invalid historical fundamental fields")
+        for name in ("report_sha256", "validation_sha256", "validator_sha256"):
+            _check(isinstance(profile.get(name), str) and HEX.fullmatch(profile[name]),
+                   "missing historical fundamental review evidence")
+        row = lookup.get(key)
+        if (row is None or date > day or row["symbol"] != symbol or row["signalDate"] != date
+                or row.get("companyName") != company or row.get("chartAllowed") is False
+                or row.get("identityStatus") == "PRELISTING_HISTORY_MAPPING_UNVERIFIED"):
+            continue
+        if key in forward or row.get("fundamental") is not None:
+            overlap += 1
+            continue
+        matched[key] = report
+    counts = {"ledgerSha256": sha, "available": len(seen), "attached": len(matched),
+              "alreadyVerified": overlap, "unmatched": len(seen) - len(matched) - overlap}
+    return matched, counts
+
+
 def _bundle(base, manifest, receipt, target, rows, analyses):
     matched = set()
     for row in rows:
@@ -286,6 +358,7 @@ def stage(repo, runtime, day, started_at, action, analysis_started=None, reports
     rows = _rows(base, manifest)
     stage_path = target / "fundamental-analysis"
     claim_path = stage_path / "claim.json"
+    historical_pin = stage_path / "historical-source.json"
     reports_path = stage_path / "reports.json"
     _check(stage_path.resolve() == stage_path and claim_path.resolve() == claim_path,
            "fundamental claim location escaped its immutable directory")
@@ -294,6 +367,9 @@ def stage(repo, runtime, day, started_at, action, analysis_started=None, reports
     _check(cutoff is not None, "missing analysis-start timestamp")
     claim = make_claim(snapshot, rows, cutoff)
     if action == "prepare":
+        if not historical_pin.exists():
+            sha = _historical_sha(root / "fundamentals" / "historical" / "latest.json")
+            _immutable(historical_pin, {"sha256": sha})
         _immutable(claim_path, claim)
         return {"claimed": claim["claimedCount"], "claimPath": str(claim_path), "reportsPath": str(reports_path)}
     _check(found == claim, "fundamental claim changed before publication")
@@ -314,11 +390,19 @@ def stage(repo, runtime, day, started_at, action, analysis_started=None, reports
         _immutable(positive, saved)
     elif positive.exists():
         raise ValueError("zero detections conflict with a retained fundamental receipt")
-    output, source = _bundle(base, manifest, receipt, target, rows, _history(root, day))
+    _check(historical_pin.resolve() == historical_pin, "historical pin escaped private run")
+    historical_sha = read(historical_pin)["sha256"] if historical_pin.exists() else None
+    _check(historical_sha is None or isinstance(historical_sha, str) and HEX.fullmatch(historical_sha),
+           "invalid saved historical fundamental digest")
+    forward = _history(root, day)
+    historical, counts = _historical_history(root, historical_sha, rows, forward, day)
+    output, source = _bundle(base, manifest, receipt, target, rows, {**historical, **forward})
     _check(read(latest) == run and (Path(runtime) / "daily.lock").read_text(encoding="utf-8").strip() == started_at,
            "detection or owner changed before final bundle handoff")
     result = {"ok": True, "status": "COMPLETE" if claim["claimedCount"] else "NO_NEW_SIGNALS",
               "imported": claim["claimedCount"], "posted": 0, "receiptSha256": saved["sha256"]}
+    if counts is not None:
+        result["historical"] = counts
     atomic_write(latest, {**run, "source_version": source, "bundle_directory": str(output), "fundamentals": result})
     return result
 

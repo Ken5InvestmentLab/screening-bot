@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 import unittest
 
 from weak_early_beta.new_a.files import atomic_write, digest, encode, file_sha, private_root, read
-from weak_early_beta.new_a.fundamentals import stage
+from weak_early_beta.new_a.fundamentals import HISTORICAL_SCHEMA, stage
 from weak_early_beta.new_a.publisher import LocalD1, publish_bundle, verify_dataset
 from weak_early_beta.historical_fundamentals import FIELD_ORDER
 
@@ -158,6 +158,62 @@ class NewAFundamentalTests(unittest.TestCase):
             self.finish(self.emit_reports(prepared, [report]))
         self.assertEqual(read(self.root / "latest-run.json")["bundle_directory"], str(self.base))
         self.assertFalse((self.root / "fundamentals" / "verified").exists())
+
+    def store_historical_ledger(self, profiles):
+        directory = self.root / "fundamentals" / "historical"
+        staged = directory / "verified-ledger.json"
+        atomic_write(staged, {
+            "schema": HISTORICAL_SCHEMA, "scope": "owner-presentation",
+            "frozen_snapshot_sha256": "a" * 64, "frozen_archive_index_sha256": "b" * 64,
+            "frozen_owner_manifest_sha256": "c" * 64, "inventory_sha256": "d" * 64,
+            "profiles": profiles,
+        })
+        sha = file_sha(staged)
+        staged.replace(directory / (sha + ".json"))
+        atomic_write(directory / "latest.json", {"sha256": sha})
+        return sha
+
+    def test_historical_report_is_bound_to_exact_episode_and_daily_input_pin(self):
+        episode = "3133|2026-11-18|1"
+        self.row["identity"] = episode
+        self.build("2026-11-19", [])
+        cutoff = self.day + "T16:15:00+09:00"
+        report = {
+            "identity": "2026-11-18|3133", "signalDate": self.day, "symbol": "3133",
+            "analysisCutoff": cutoff, "auditStatus": "pass",
+            "fields": [{"label": name, "text": "照合済み資料"} for name in FIELD_ORDER],
+        }
+        profile = {
+            "presentation": report, "company_name": "テスト社", "cutoff": cutoff,
+            "report_sha256": "1" * 64, "validation_sha256": "2" * 64, "validator_sha256": "3" * 64,
+        }
+        historical_sha = self.store_historical_ledger({episode: profile})
+        prepared = self.prepare()
+        self.assertEqual(prepared["claimed"], 0)
+        self.store_historical_ledger({"3133|2026-11-18|2": profile})
+        result = self.finish()
+        self.assertEqual(result["historical"], {
+            "ledgerSha256": historical_sha, "attached": 1, "available": 1,
+            "alreadyVerified": 0, "unmatched": 0,
+        })
+        output = Path(read(self.root / "latest-run.json")["bundle_directory"])
+        self.assertEqual(read(output / "presentation-000.json")[0]["fundamental"], report)
+        self.assertEqual(self.finish(), result)
+        self.build("2026-11-20", [])
+        self.prepare()
+        result = self.finish()
+        self.assertEqual(result["historical"]["attached"], 0)
+        self.assertEqual(result["historical"]["unmatched"], 1)
+
+    def test_historical_hash_mismatch_cannot_change_owner_bundle(self):
+        self.build("2026-11-19", [])
+        sha = self.store_historical_ledger({})
+        self.prepare()
+        path = self.root / "fundamentals" / "historical" / (sha + ".json")
+        path.write_text("{}", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "historical fundamental ledger changed"):
+            self.finish()
+        self.assertEqual(read(self.root / "latest-run.json")["bundle_directory"], str(self.base))
         (self.runtime / "daily.lock").write_text("other-owner", encoding="utf-8")
         with self.assertRaisesRegex(ValueError, "lock owner"):
             self.prepare()

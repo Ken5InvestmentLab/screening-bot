@@ -3,9 +3,9 @@
  const partReadLimit=8;
  const response=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json','cache-control':'private, no-store'}});
  function create({fetch:network,createWorker,crypto=globalThis.crypto,pinnedManifest=null,onSimulationPhase=()=>{}}){
-  let worker=null,ready=null,early=null,loading=null,next=0,generation=0;const jobs=new Map();
+  let worker=null,ready=null,early=null,loading=null,next=0,generation=0,episodeOrder=[];const jobs=new Map();
   function resetWorker(){
-   generation++;loading?.abort();loading=null;worker?.terminate();worker=null;ready=null;
+   generation++;loading?.abort();loading=null;worker?.terminate();worker=null;ready=null;episodeOrder=[];
    for(const j of jobs.values())j.reject(Error('authorization_reset'));
    jobs.clear();
   }
@@ -52,7 +52,7 @@
     const quoteChunks=manifest.quotes.map(d=>loaded.get(d.name));
     worker=createWorker();worker.onmessage=e=>{const j=jobs.get(e.data.id);if(!j)return;jobs.delete(e.data.id);e.data.error?j.reject(Error(e.data.error)):j.resolve(e.data);};worker.onerror=()=>{if(started===generation)resetWorker();};
     const result=await rpc({kind:'initialize',manifest:{...manifest,input},quoteChunks},quoteChunks);
-    stillCurrent();loading=null;return result;
+    stillCurrent();episodeOrder=input.episodes;loading=null;return result;
    })();ready=preparing;
    try{return await preparing;}catch(e){if(started===generation)resetWorker();throw e;}
   }
@@ -75,7 +75,7 @@
     delete value.id;return response(200,value);
    }catch(e){if(e.status===401||e.status===403)clear();return response(e.status||503,{error:e.status===401?'login_required':e.status===403?'owner_required':'local_simulation_unavailable'});}
   }
-  return{transport,preload,clear};
+  return{transport,preload,clear,episodeOrder:()=>episodeOrder};
  }
  const api={create};if(typeof module!=='undefined'&&module.exports)module.exports=api;else globalThis.AFiniteBrowserTransport=api;
 })();

@@ -36,6 +36,20 @@ const snapshot = {
 const closed = { ...key, entry_date: '2026-11-17', entry_price_nominal: 1000,
   exit_date: date, profit: 9320, return: 0.0932 };
 
+test('owner monitoring previews the eight most recent watches and retains every watch', () => {
+  const watchSelection = Array.from({ length: 10 }, (_, i) => ({
+    symbol: String(1800 + i), candidate_date: '2026-11-' + String(i + 1).padStart(2, '0'),
+    episode_id: i + 1, watch_status: 'WATCHING', selection_reason: null,
+  }));
+  const html = currentMarkup([{
+    ...snapshot, events: [],
+    monitor_state: { watches: Object.fromEntries(watchSelection.map(watch => [watch.symbol, { episode: watch }])) },
+  }], [], { watchSelection });
+  assert.equal([...html.matchAll(/<tr data-current-watch>/g)].length, 8);
+  assert.deepEqual([...html.matchAll(/<tr data-current-watch hidden><td>(\d{4})/g)].map(match => match[1]), ['1801', '1800']);
+  assert.match(html, /残り 2銘柄を表示/);
+});
+
 test('dashboard details use exact episode, verified quote and individual model result', () => {
   const html = currentMarkup([snapshot], [row], { adapter, model: { trades: [closed] } });
   assert.match(html, /銘柄の詳細/);
@@ -182,7 +196,8 @@ test('candidate, reset and exit schedule do not count as target-day transitions'
 test('data on hold is distinct from watching and virtual holding', () => {
   const watchSelection = [{ ...key, watch_status: 'WATCHING', selection_reason: null }];
   const html = currentMarkup([{ ...snapshot, held_symbols: { 1234: { reason: 'MISSING_SOURCE' } } }], [row], { watchSelection });
-  assert.match(html, /監視中<\/span><span class="badge cloud-status-held">データ保留/);
+  assert.match(html, /<tr data-current-watch>.*?<span class="badge cloud-status-held">データ保留/);
+  assert.doesNotMatch(html, /<span class="badge">監視中<\/span>/);
 });
 
 test('confirmed holding gains, losses, and flat returns appear outside details', () => {

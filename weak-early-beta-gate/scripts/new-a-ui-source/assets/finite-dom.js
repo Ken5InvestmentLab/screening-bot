@@ -6,7 +6,7 @@
  if(!app||!legacy)return;
  const byId=id=>document.getElementById(id);
  const content=byId('cloud-analytics-content');
- const rows=Array.from(document.querySelectorAll('#detection-table tbody tr[data-date]'));
+ let rows=[];
  let drawn=null,displayKey,history=new Map(),dailyLimit=50,latest=null;
  const busy=s=>['loading','saving','calculating'].includes(s.phase);
  function refCell(date,price,status){
@@ -38,7 +38,7 @@
    '<div data-label="成績" class="number cloud-history-result">'+result+(exit?'<div class="cloud-exit-details"><small>'+app.esc(exit)+'</small>'+exitDetails+'</div>':'')+'</div></div>'+
    '<button type="button" class="history-mobile-toggle" data-cloud-history-details aria-expanded="false">詳細を見る</button></td>';
  }
- let historyExitPolicy=null,historyTrialPolicy=null;
+ let historyExitPolicy=null,historyTrialPolicy=null,historyLoad=null,historyLoaded=false,historyChanged=false;
  function rebuildHistory(model){
   historyExitPolicy=model?.exit_policy;
   historyTrialPolicy=model?.trial_policy;
@@ -46,13 +46,44 @@
   for(const row of rows){row.dataset.finiteHydrate='pending';row.replaceChildren();}
   hydrateVisible();
  }
- function showHistory(){
+ function openHistory(){
+  if(historyLoaded||historyLoad||globalThis.AFiniteRevoked)return;
+  if(historyChanged){location.reload();return;}
+  const data=globalThis.AOwnerPageData;
+  const trigger=byId('new-a-history-open'),status=byId('new-a-history-status'),content=byId('new-a-history-content');
   const tbody=document.querySelector('#detection-table tbody');
-  if(tbody)tbody.hidden=false;
-  const section=byId('history');
-  section.hidden=false;
-  byId('new-a-history-jump').hidden=false;
-  if(location.hash==='#history')section.scrollIntoView();
+  trigger.setAttribute('aria-expanded','true');
+  trigger.disabled=true;
+  status.textContent='検出履歴を読み込んでいます。';
+  status.hidden=false;
+  content.setAttribute('aria-busy','true');
+  historyLoad=data.historyMarkup().then(markup=>{
+   if(globalThis.AFiniteRevoked||globalThis.AOwnerPageData!==data)return;
+   tbody.innerHTML=markup;
+   rows=Array.from(tbody.querySelectorAll('tr[data-date]'));
+   legacy.replaceHistoryRows(rows);
+   historyLoaded=true;
+   rebuildHistory(latest?.accepted?.result??null);
+   if(latest?.accepted&&!data.dashboardRows.length)renderHome(latest.accepted);
+   content.hidden=false;
+   status.hidden=true;
+   trigger.hidden=true;
+   if(document.activeElement===trigger||document.activeElement===byId('new-a-history-jump')){
+    byId('new-a-history-heading').focus({preventScroll:true});
+   }
+   if(location.hash==='#history')byId('history').scrollIntoView();
+  }).catch(error=>{
+   data.onReadError(error);
+   if(globalThis.AFiniteRevoked)return;
+   trigger.setAttribute('aria-expanded','false');
+   historyChanged=error.message==='source_version_changed';
+   trigger.textContent=historyChanged?'ページを再読み込み':'再試行';
+   status.textContent=historyChanged?'検出データが更新されました。':'検出履歴を読み込めませんでした。';
+  }).finally(()=>{
+   historyLoad=null;
+   trigger.disabled=false;
+   content.setAttribute('aria-busy','false');
+  });
  }
  function hydrateVisible(){
   for(const row of rows)if(!row.hidden&&row.dataset.finiteHydrate==='pending'){
@@ -93,6 +124,28 @@
    const node=byId(id);
    if(node){node.replaceChildren();node.hidden=true;}
   }
+ }
+ function renderHome(simulation){
+  byId('new-a-model-holdings')?.remove();
+  const data=globalThis.AOwnerPageData;
+  const current=data.current?.[0];
+  const asOf=current?.as_of;
+  const sameDate=Boolean(asOf&&simulation.dashboard_closes?.date===asOf);
+  const dashboardYear=sameDate&&simulation.dashboard_year?.period[1]===asOf?simulation.dashboard_year:null;
+  const model=sameDate?(dashboardYear||simulation.result):null;
+  const currentModel=model?.period?.[1]===asOf?model:null;
+  const preparedCloses=simulation.dashboard_closes;
+  const watchSelection=sameDate?simulation.result.watches:null;
+  data.renderDashboard?.({model:currentModel,preparedCloses,dashboardYear,watchSelection});
+  const presentation=globalThis.AOwnerPresentation;
+  const displayRows=data.rows.length?data.rows:data.dashboardRows;
+  const details=current&&presentation.stockDetails(current,displayRows,globalThis.ANewPresentation,currentModel,preparedCloses,dashboardYear);
+  const performance=current&&presentation.holdingPerformance(current,displayRows,globalThis.ANewPresentation,preparedCloses);
+  const holdings=app.renderHoldings(simulation,{rows:displayRows,calendar:data.manifest.input_header.calendar,details,performance,model,asOf});
+  const events=byId('new-a-current');
+  if(events)events.insertAdjacentHTML('afterend',holdings);
+  else byId('new-a-dashboard').insertAdjacentHTML('beforeend',holdings);
+  return currentModel;
  }
  function update(state){
   const saved=globalThis.AOwnerSavedSettings;
@@ -139,25 +192,16 @@
    drawDaily(simulation.result);
   }
   if(isHome){
-   byId('new-a-model-holdings')?.remove();
    const data=globalThis.AOwnerPageData;
-   const current=data.current?.[0];
-   const asOf=current?.as_of;
-   const sameDate=Boolean(asOf&&simulation.dashboard_closes?.date===asOf);
-   const dashboardYear=sameDate&&simulation.dashboard_year?.period[1]===asOf?simulation.dashboard_year:null;
-   const model=sameDate?(dashboardYear||simulation.result):null;
-   const currentModel=model?.period?.[1]===asOf?model:null;
-   const preparedCloses=simulation.dashboard_closes;
-   const watchSelection=sameDate?simulation.result.watches:null;
-   data.renderDashboard?.({model:currentModel,preparedCloses,dashboardYear,watchSelection});
-   const presentation=globalThis.AOwnerPresentation;
-   const details=current&&presentation.stockDetails(current,data.rows,globalThis.ANewPresentation,currentModel,preparedCloses,dashboardYear);
-   const performance=current&&presentation.holdingPerformance(current,data.rows,globalThis.ANewPresentation,preparedCloses);
-   const holdings=app.renderHoldings(simulation,{rows:data.rows,calendar:data.manifest.input_header.calendar,details,performance,model,asOf});
-   const events=byId('new-a-current');
-   if(events)events.insertAdjacentHTML('afterend',holdings);
-   else byId('new-a-dashboard').insertAdjacentHTML('beforeend',holdings);
-   rebuildHistory(simulation.result);
+   const currentModel=renderHome(simulation);
+   if(historyLoaded)rebuildHistory(simulation.result);
+   if(data.current[0]&&!data.rows.length){
+    data.loadDashboardRows(data.current[0],currentModel).then(displayRows=>{
+     if(globalThis.AFiniteRevoked||latest?.accepted!==simulation||!displayRows.length||data.rows.length)return;
+     data.dashboardRows=displayRows;
+     renderHome(simulation);
+    }).catch(data.onReadError);
+   }
   }
  }
  const controller=app.createController({trialPreset:'balanced',recentAnalytics:isAnalytics,dashboardPrices:isHome,transport:globalThis.AFiniteTransport,onChange:update,calculateOnLoad:isAnalytics||isHome});
@@ -182,6 +226,16 @@
  });
  const tbody=document.querySelector('#detection-table tbody');
  if(tbody)new MutationObserver(hydrateVisible).observe(tbody,{subtree:true,attributes:true,attributeFilter:['hidden']});
- if(isHome){rebuildHistory(null);showHistory();}
+ if(isHome){
+  const historySection=byId('history'),jump=byId('new-a-history-jump');
+  historySection.hidden=false;
+  jump.hidden=false;
+  byId('new-a-history-open').addEventListener('click',openHistory);
+  jump.addEventListener('click',openHistory);
+  const openLinkedHistory=()=>{if(location.hash==='#history')openHistory();};
+  window.addEventListener('hashchange',openLinkedHistory);
+  if(new URLSearchParams(location.search).get('q'))openHistory();
+  openLinkedHistory();
+ }
  controller.load();
 })();

@@ -27,6 +27,12 @@ const hook = `
       syncDisplayControls();
       filter({resetLimit:true});
     },
+    replaceHistoryRows(loaded) {
+      rows.length=0;
+      for(const row of loaded)rows.push(row);
+      lastHistorySort=undefined;
+      filter({resetLimit:true});
+    },
     clearHistory() {
       for (const row of rows) {
         for (const key of Object.keys(row.dataset)) delete row.dataset[key];

@@ -12,23 +12,36 @@
   if(total!==first.bytes_total)throw Error('current_fragment_total');const bytes=new Uint8Array(total);let offset=0;for(const part of parts){bytes.set(part,offset);offset+=part.length;}if(await hash(bytes,crypto)!==first.display_sha256)throw Error('current_fragment_hash');const display=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));if(display?.schema!=='NEW_A_OWNER_DAILY_DISPLAY_V1')throw Error('current_fragment_schema');return[display];
  }
  function validateManifest(m){if(!m||m.schema!=='A_BROWSER_PRIVATE_INPUT_V1'||m.audience!=='EXISTING_CLOUD_OWNER_ONLY'||!/^a-[a-f0-9]{20,64}$/.test(m.dataset_id)||!m.input_header||m.input_header.source_version!==m.source_version||!m.collections||kinds.some(k=>!Array.isArray(m.collections[k])))throw Error('private_manifest');const all=[...Object.values(m.collections).flat(),...m.quotes];if(all.length>512||new Set(all.map(d=>d.name)).size!==all.length||all.some(d=>!/^(episodes|intents|watches|presentation|current_daily|quotes)-\d{3}\.json$/.test(d.name)||d.dataset_id!==undefined&&!/^a-[a-f0-9]{20,64}$/.test(d.dataset_id)||!Number.isSafeInteger(d.bytes)||d.bytes<2||d.bytes>196608||!Number.isSafeInteger(d.rows)||d.rows<0||!/^[a-f0-9]{64}$/.test(d.sha256)))throw Error('private_manifest_bounds');return m;}
- async function readPresentation(network,crypto,onCurrent){
+ async function readManifest(network){
   const r=await network('/api/cloud/new-a-finite/input/manifest.json',{credentials:'same-origin',cache:'no-store'});
   if(!r.ok)throw Error(r.status===401||r.status===403?'authorization_required':'private_unavailable');
-  const manifest=validateManifest(await r.json());
+  return validateManifest(await r.json());
+ }
+ async function readCurrent(network,crypto){
+  const manifest=await readManifest(network);
+  const reads=new Map();
+  function readPart(d){
+   const previous=reads.get(d.name);
+   if(previous)return previous;
+   const reading=(async()=>{
+    const part=await network('/api/cloud/new-a-finite/input/'+(d.dataset_id||manifest.dataset_id)+'/'+d.name,{credentials:'same-origin',cache:'no-store'});
+    if(!part.ok)throw Error(part.status===401||part.status===403?'authorization_required':'private_unavailable');
+    const bytes=await part.arrayBuffer();
+    if(bytes.byteLength!==d.bytes||await hash(bytes,crypto)!==d.sha256)throw Error('private_integrity');
+    const rows=JSON.parse(new TextDecoder().decode(bytes));
+    if(!Array.isArray(rows)||rows.length!==d.rows)throw Error('private_rows');
+    return rows;
+   })().catch(error=>{reads.delete(d.name);throw error;});
+   reads.set(d.name,reading);
+   return reading;
+  }
   async function readParts(descriptors){
    let next=0;
    const loaded=new Array(descriptors.length);
    async function load(){
     while(next<descriptors.length){
-     const index=next++,d=descriptors[index];
-     const part=await network('/api/cloud/new-a-finite/input/'+(d.dataset_id||manifest.dataset_id)+'/'+d.name,{credentials:'same-origin',cache:'no-store'});
-     if(!part.ok)throw Error(part.status===401||part.status===403?'authorization_required':'private_unavailable');
-     const bytes=await part.arrayBuffer();
-     if(bytes.byteLength!==d.bytes||await hash(bytes,crypto)!==d.sha256)throw Error('private_integrity');
-     const rows=JSON.parse(new TextDecoder().decode(bytes));
-     if(!Array.isArray(rows)||rows.length!==d.rows)throw Error('private_rows');
-     loaded[index]=rows;
+     const index=next++;
+     loaded[index]=await readPart(descriptors[index]);
     }
    }
    await Promise.all(Array.from({length:Math.min(4,descriptors.length)},load));
@@ -36,14 +49,50 @@
   }
   const current=await assembleCurrent(await readParts(manifest.collections.current_daily),crypto);
   if(current[0]?.schema==='NEW_A_OWNER_DAILY_DISPLAY_V1'&&(!/^[a-f0-9]{64}$/.test(manifest.daily_snapshot_sha256)||current[0].source_snapshot_sha256!==manifest.daily_snapshot_sha256))throw Error('daily_snapshot_mismatch');
-  onCurrent?.(current,manifest);
-  const rows=await readParts(manifest.collections.presentation);
-  return {manifest,rows,current};
+  const presentation=manifest.collections.presentation;
+  async function readDashboardRows(episodes,identities){
+   // The bundle and its fundamental update retain the same sorted episode order.
+   // Even for an older bundle, each display row must match the requested identity.
+   if(episodes.length!==presentation.reduce((total,part)=>total+part.rows,0))return [];
+   const wanted=new Set();
+   let offset=0;
+   for(const part of presentation){
+    const end=offset+part.rows;
+    for(let index=offset;index<end;index++){
+     if(identities.has(episodeKey(episodes[index]))){wanted.add(part);break;}
+    }
+    offset=end;
+   }
+   return (await readParts([...wanted])).filter(row=>identities.has(row.identity));
+  }
+  async function readHistory(){
+   const active=await readManifest(network);
+   if(active.dataset_id!==manifest.dataset_id||active.source_version!==manifest.source_version)throw Error('source_version_changed');
+   return readParts(presentation);
+  }
+  return {manifest,current,readDashboardRows,readHistory};
  }
  function inputFor(rows,manifest){return {schema:'A_LEGACY_UI_INPUT_V1',status:'ready',scopeLabel:'監視開始',asOfDate:manifest.input_header.limits?.completeThrough,accountRegimes:[],measurement:{kind:'A_SIGNAL_LEGACY_D5_D6',anchorBasis:'candidateDate',entryBasis:'EXPLICIT_VERIFIED_ENTRY'},rows};}
  function presentationMarkup(rows,manifest,adapter){adapter.validateInput(inputFor(rows,manifest));const ordered=[...rows].sort((a,b)=>b.signalDate.localeCompare(a.signalDate)||a.symbol.localeCompare(b.symbol)||a.identity.localeCompare(b.identity));return ordered.map((r,i)=>adapter.lightweightRowHtml(r,i)).join('');}
  const episodeKey=entry=>entry?.symbol&&entry?.candidate_date&&entry?.episode_id!=null
   ?[entry.symbol,entry.candidate_date,entry.episode_id].join('|'):null;
+ function dashboardIdentities(snapshot,model,episodes){
+  const keys=new Set([
+   ...(snapshot.events??[]).filter(event=>event.session===snapshot.as_of).map(episodeKey),
+   ...Object.values(snapshot.monitor_state?.watches??{}).map(watch=>episodeKey(watch.episode)),
+   ...(snapshot.monitor_state?.pending_references??[]).filter(ref=>ref.reference_entry_date===snapshot.as_of).map(episodeKey),
+   ...(model?.trades??[]).filter(trade=>trade.entry_date===snapshot.as_of||trade.exit_date===snapshot.as_of).map(episodeKey),
+   ...Object.entries(model?.open_positions??{}).map(([symbol,position])=>episodeKey({...position,symbol})),
+  ]);
+  const held=new Set(Object.keys(snapshot.held_symbols??{}));
+  for(let index=episodes.length-1;index>=0&&held.size;index--){
+   const episode=episodes[index];
+   if(held.delete(episode.symbol))keys.add(episodeKey(episode));
+  }
+  keys.delete(null);
+  return keys;
+ }
+ const watchPreviewSize=8;
  const transitions={
   WATCH_STARTED:{label:'監視開始',tone:'watch-start'},
   WATCH_TERMINAL:{label:'監視終了',tone:'watch-end'},
@@ -178,7 +227,8 @@
   const eligible=Array.isArray(watchSelection)?new Set(watchSelection
    .filter(watch=>watch.watch_status==='WATCHING'&&watch.selection_reason===null)
    .map(episodeKey)):null;
-  const watches=eligible?Object.values(s.monitor_state?.watches??{}).filter(watch=>eligible.has(episodeKey(watch.episode))):[];
+  const watches=eligible?Object.values(s.monitor_state?.watches??{}).filter(watch=>eligible.has(episodeKey(watch.episode)))
+   .sort((a,b)=>b.episode.candidate_date.localeCompare(a.episode.candidate_date)||a.episode.symbol.localeCompare(b.episode.symbol)):[];
   const events=s.events??[],held=s.held_symbols??{};
   const detailFor=stockDetails(s,rows,adapter,model,preparedCloses,dashboardYear);
   const names=new Map();
@@ -248,7 +298,7 @@
    '<tr><td>'+stock(e.symbol)+'</td><td>'+referenceLabels[e.kind]+(reasons[e.reason]?' · '+esc(reasons[e.reason]):'')+detailFor(e)+'</td></tr>').join('');
   const watchRows=watches.map((w,i)=>{
    const symbol=w.episode?.symbol, hold=held[symbol], detail=hold?heldReason[hold.reason]||'確認待ち':'';
-   return '<tr data-current-watch'+(i>=20?' hidden':'')+'><td>'+stock(symbol)+'</td><td>'+esc(w.episode?.candidate_date||'—')+'</td><td><span class="badge">監視中</span>'+(detail?'<span class="badge cloud-status-held">データ保留</span><small class="cloud-table-meta"> '+esc(detail)+'</small>':'')+detailFor(w.episode)+'</td></tr>';
+   return '<tr data-current-watch'+(i>=watchPreviewSize?' hidden':'')+'><td>'+stock(symbol)+'</td><td>'+esc(w.episode?.candidate_date||'—')+'</td><td>'+(detail?'<span class="badge cloud-status-held">データ保留</span><small class="cloud-table-meta"> '+esc(detail)+'</small>':'')+detailFor(w.episode)+'</td></tr>';
   }).join('');
   const watchStatus=eligible?watches.length+'銘柄':modelPending?'計算中':'未確認';
   const noWatches=eligible?'監視中の銘柄なし':modelPending?'監視対象を計算しています。':'監視対象を確認できません。';
@@ -256,7 +306,7 @@
   const table=(head,body)=>'<div class="table-wrap"><table class="scenario-table"><thead><tr>'+head.map(h=>'<th scope="col">'+h+'</th>').join('')+'</tr></thead><tbody>'+body+'</tbody></table></div>';
   const openingSection=openingRows?'<section class="cloud-reference-events" aria-labelledby="new-a-daily-opening-heading"><h3 id="new-a-daily-opening-heading">日足始値と仮想保有の結果</h3>'+table(['銘柄','始値・判定'],openingRows)+'</section>':'';
   return '<section class="panel" id="new-a-current" aria-labelledby="new-a-events-heading"><div class="cloud-section-head"><h2 id="new-a-events-heading">対象日の動き</h2><div class="cloud-meta"><span class="badge">対象 '+esc(s.as_of||'—')+'</span>'+(observed?'<span class="badge">観測 '+esc(observed)+' JST</span>':'')+(s.observation_kind==='DELAYED_SCHEDULED_OBSERVATION'?'<span class="badge">遅延実行</span>':'')+'</div></div><ul class="cloud-transition-summary" aria-label="対象日の件数">'+totals+'</ul><div class="cloud-meta">'+(live||delayed?'<span class="badge">新規検出 '+newCount+'銘柄</span>':'<span class="badge">照合</span>')+'<span class="badge">データ保留 '+Object.keys(held).length+'銘柄</span></div><div class="cloud-stock-grid">'+(eventCards||'<p class="cloud-empty">'+(modelPending?'監視の開始・終了はありません':'確認済みの開始・終了はありません')+'</p>')+'</div>'+openingSection+(referenceRows?'<details class="cloud-table-details cloud-reference-events"><summary>買付候補・その他の記録</summary>'+table(['銘柄','記録'],referenceRows)+'</details>':'')+'</section>'+
-   '<section class="panel" aria-labelledby="new-a-watch-heading"><div class="cloud-section-head"><h2 id="new-a-watch-heading">現在の監視</h2><span class="badge">'+watchStatus+'</span></div>'+(watchRows?table(['銘柄','監視開始日','状況'],watchRows):'<p class="cloud-empty">'+noWatches+'</p>')+(watches.length>20?'<button class="settings-secondary" type="button" id="new-a-current-more">残り '+(watches.length-20)+'銘柄を表示</button>':'')+(heldRows?'<details class="cloud-table-details"><summary>データ保留 '+Object.keys(held).length+'銘柄</summary>'+table(['銘柄','理由','対象日'],heldRows)+'</details>':'')+'</section>';
+   '<section class="panel" aria-labelledby="new-a-watch-heading"><div class="cloud-section-head"><h2 id="new-a-watch-heading">現在の監視</h2><span class="badge">'+watchStatus+'</span></div>'+(watchRows?table(['銘柄','監視開始日','詳細'],watchRows):'<p class="cloud-empty">'+noWatches+'</p>')+(watches.length>watchPreviewSize?'<button class="settings-secondary" type="button" id="new-a-current-more">残り '+(watches.length-watchPreviewSize)+'銘柄を表示</button>':'')+(heldRows?'<details class="cloud-table-details"><summary>データ保留 '+Object.keys(held).length+'銘柄</summary>'+table(['銘柄','理由','対象日'],heldRows)+'</details>':'')+'</section>';
  }
  function openFundamental(button){
   const dialog=button.nextElementSibling;
@@ -273,7 +323,7 @@
   dialog.showModal();
   button.setAttribute('aria-expanded','true');
  }
- const api={validateManifest,assembleCurrent,readPresentation,inputFor,presentationMarkup,currentMarkup,stockDetails,holdingPerformance,openFundamental};
+ const api={validateManifest,assembleCurrent,readCurrent,inputFor,presentationMarkup,dashboardIdentities,currentMarkup,stockDetails,holdingPerformance,openFundamental};
  if(typeof module!=='undefined'&&module.exports){module.exports=api;return;}
  global.AOwnerPresentation=api;
  if(typeof document==='undefined')return;
@@ -431,30 +481,41 @@
     watchesExpanded=true;
     showAllWatches()?.querySelector('summary,td')?.focus();
    });
-   const reading=readPresentation(network,global.crypto,(current,manifest)=>{
-    renderDashboard(current,[],{modelPending:true});
-    showLoadStatus('検出履歴を読み込んでいます。');
-    // The displayed snapshot pins the inputs, which still pass through the
-    // protected no-store route individually while history is fetched.
+   const reading=readCurrent(network,global.crypto).then(result=>{
+    renderDashboard(result.current,[],{modelPending:true});
+    showLoadStatus('株価データを読み込んでいます。');
     preload[0].then(()=>{
      if(pageLoad.signal.aborted||global.AFiniteBrowser)return;
-     return configureTransport(manifest).preload();
+     return configureTransport(result.manifest).preload();
     }).catch(error=>{if(error.status===401||error.status===403)unavailable();});
+    return result;
    });
    [data]=await Promise.all([reading,script('presentation-adapter.generated.js'),...preload]);
    if(pageLoad.signal.aborted)return;
    const adapter=global.ANewPresentation;
-   data.renderDashboard=options=>renderDashboard(data.current,data.rows,{adapter,...options});
-   renderDashboard(data.current,data.rows,{adapter,modelPending:true});
-   const tbody=document.querySelector('#detection-table tbody');
-   tbody.hidden=true;
-   tbody.innerHTML=presentationMarkup(data.rows,data.manifest,adapter);
+   data.rows=[];
+   data.dashboardRows=[];
+   data.renderDashboard=options=>renderDashboard(data.current,data.rows.length?data.rows:data.dashboardRows,{adapter,...options});
+   data.historyMarkup=async()=> {
+    const rows=await data.readHistory();
+    if(global.AFiniteRevoked)throw Error('authorization_reset');
+    const markup=presentationMarkup(rows,data.manifest,adapter);
+    data.rows=rows;
+    return markup;
+   };
+   data.loadDashboardRows=async(snapshot,model)=>{
+    const episodes=global.AFiniteBrowser.episodeOrder();
+    return data.readDashboardRows(episodes,dashboardIdentities(snapshot,model,episodes));
+   };
+   data.onReadError=error=>{
+    if(error.message==='authorization_required')unavailable();
+   };
   }else await Promise.all(preload);
   global.AOwnerPageData=data;
   const payload=document.createElement('script');
   payload.type='application/json';
   payload.id='cloud-analytics-data';
-  const years=[...new Set(data.rows.map(r=>Number(r.signalDate.slice(0,4))))].sort(),scopes={all:{label:'全期間',years}};
+  const years=[...new Set((data.manifest?.input_header?.calendar??[]).map(day=>Number(day.slice(0,4))))].sort(),scopes={all:{label:'全期間',years}};
   for(const y of years)scopes[String(y)]={label:y+'年',years:[y]};
   payload.textContent=JSON.stringify({version:2,page,scopes,variants:{},modeNames:{A_BASE:'監視開始'},generated:data.manifest?.input_header?.limits?.completeThrough||'',aInputStatus:'ready'});
   document.body.append(payload);

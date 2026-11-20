@@ -312,38 +312,49 @@ test('normal large current display reassembles UTF-8 fragments; missing/order/ta
  const restored=await api.assembleCurrent(fragments,webcrypto);assert.equal(sha(JSON.stringify(restored[0])),sha(JSON.stringify(display)));assert.equal(Object.keys(restored[0].monitor_state.watches).length,250);
  for(const broken of [fragments.slice(1),[...fragments].reverse(),fragments.map((f,i)=>i?f:{...f,payload_base64:'~'+f.payload_base64.slice(1)}),fragments.map(f=>({...f,display_sha256:'0'.repeat(64)})),fragments.map(f=>({...f,bytes_total:8*1024*1024+1}))])await assert.rejects(()=>api.assembleCurrent(broken,webcrypto));
  const parts=new Map(),ds=fragments.map((f,i)=>{const name='current_daily-'+String(i).padStart(3,'0')+'.json',text=JSON.stringify([f]);parts.set(name,text);return{name,bytes:Buffer.byteLength(text),sha256:sha(text),rows:1};}),version=sha('synthetic input'),manifest={schema:'A_BROWSER_PRIVATE_INPUT_V1',audience:'EXISTING_CLOUD_OWNER_ONLY',source_version:version,dataset_id:'a-'+'1'.repeat(24),input_header:{source_version:version},collections:{episodes:[],intents:[],watches:[],presentation:[],current_daily:ds},quotes:[],daily_snapshot_sha256:'0'.repeat(64)};
- await assert.rejects(()=>api.readPresentation(async url=>url.endsWith('/manifest.json')?Response.json(manifest):new Response(parts.get(url.split('/').pop())),webcrypto),/daily_snapshot_mismatch/);
+ await assert.rejects(()=>api.readCurrent(async url=>url.endsWith('/manifest.json')?Response.json(manifest):new Response(parts.get(url.split('/').pop())),webcrypto),/daily_snapshot_mismatch/);
 });
-test('verified current snapshot is available while history is pending',async()=>{
+test('the current view uses only its matched details and reads all history on demand',async()=>{
  const context={module:{exports:{}},TextDecoder};
  vm.createContext(context);
  vm.runInContext(fs.readFileSync(path.join(gate,'scripts/new-a-ui-source/assets/owner-loader.js'),'utf8'),context);
  const api=context.module.exports;
  const source_version=sha('ordered read'),snapshotHash=sha('current snapshot');
  const display={schema:'NEW_A_OWNER_DAILY_DISPLAY_V1',source_snapshot_sha256:snapshotHash};
- const datePart=JSON.stringify([display]),historyPart=JSON.stringify([{identity:'current'}]);
+ const datePart=JSON.stringify([display]);
+ const historyRows=[{identity:'1234|2024-01-01|1'},{identity:'5678|2025-02-03|2'}];
+ const historyParts=historyRows.map(row=>JSON.stringify([row]));
  const descriptor=(name,text)=>({name,bytes:Buffer.byteLength(text),sha256:sha(text),rows:1});
- const date=descriptor('current_daily-000.json',datePart),history=descriptor('presentation-000.json',historyPart);
+ const date=descriptor('current_daily-000.json',datePart);
+ const history=historyParts.map((text,index)=>descriptor('presentation-00'+index+'.json',text));
  const manifest={schema:'A_BROWSER_PRIVATE_INPUT_V1',audience:'EXISTING_CLOUD_OWNER_ONLY',source_version,
   dataset_id:'a-'+'1'.repeat(24),input_header:{source_version},daily_snapshot_sha256:snapshotHash,
-  collections:{episodes:[],intents:[],watches:[],presentation:[history],current_daily:[date]},quotes:[]};
- const requests=[],observed=[];
- const historyResponse=Promise.withResolvers(),historyRequested=Promise.withResolvers();
- const network=async path=>{
+  collections:{episodes:[],intents:[],watches:[],presentation:history,current_daily:[date]},quotes:[]};
+ const requests=[];
+ let active=manifest,authorized=true;
+ const network=async (path,options)=>{
+  assert.equal(options.cache,'no-store');
   const name=path.split('/').pop();requests.push(name);
-  if(name==='manifest.json')return Response.json(manifest);
+  if(name==='manifest.json')return authorized?Response.json(active):new Response(null,{status:403});
   if(name===date.name)return new Response(datePart);
-  assert.equal(name,history.name);historyRequested.resolve();return historyResponse.promise;
+  assert.ok(path.includes(manifest.dataset_id));
+  return new Response(historyParts[history.findIndex(part=>part.name===name)]);
  };
- const pending=api.readPresentation(network,webcrypto,current=>observed.push(JSON.stringify(current)));
- await historyRequested.promise;
- assert.deepEqual(requests,['manifest.json',date.name,history.name]);
- assert.deepEqual(observed,[datePart]);
- historyResponse.resolve(new Response(historyPart));
- assert.equal(JSON.stringify((await pending).rows),historyPart);
- const denied=[];
- await assert.rejects(api.readPresentation(async url=>url.endsWith('manifest.json')?Response.json(manifest):new Response(null,{status:403}),webcrypto,current=>denied.push(current)),/authorization_required/);
- assert.deepEqual(denied,[]);
+ const view=await api.readCurrent(network,webcrypto);
+ assert.deepEqual(requests,['manifest.json',date.name]);
+ assert.equal(JSON.stringify(view.current),datePart);
+ const episodes=[{symbol:'1234',candidate_date:'2024-01-01',episode_id:1},{symbol:'5678',candidate_date:'2025-02-03',episode_id:2}];
+ const key=new Set([historyRows[1].identity]);
+ assert.equal(JSON.stringify(await view.readDashboardRows(episodes,key)),historyParts[1]);
+ assert.deepEqual(requests,['manifest.json',date.name,history[1].name]);
+ assert.equal(JSON.stringify(await view.readHistory()),JSON.stringify(historyRows));
+ assert.deepEqual(requests,['manifest.json',date.name,history[1].name,'manifest.json',history[0].name]);
+ assert.equal(JSON.stringify(await view.readDashboardRows([...episodes].reverse(),key)),'[]');
+ active={...manifest,dataset_id:'a-'+'2'.repeat(24)};
+ await assert.rejects(view.readHistory(),/source_version_changed/);
+ authorized=false;
+ await assert.rejects(view.readHistory(),/authorization_required/);
+ await assert.rejects(api.readCurrent(network,webcrypto),/authorization_required/);
 });
 test('dashboard identifies the snapshot day, a delayed observation and independent held stocks',()=>{
  const c={module:{exports:{}}};
@@ -365,7 +376,8 @@ test('dashboard identifies the snapshot day, a delayed observation and independe
  assert.match(html,/新規検出 1銘柄/);
  assert.match(html,/監視開始 <b>1件/);
  assert.match(html,/データ保留 3銘柄/);
- for(const label of ['取得未確認','価格照合','取引制限','監視中'])assert(html.includes(label));
+ for(const label of ['取得未確認','価格照合','取引制限'])assert(html.includes(label));
+ assert.doesNotMatch(html,/<span class="badge">監視中<\/span>/);
  assert.doesNotMatch(html,/今日の新規検出|最終観測/);
  assert.doesNotMatch(currentMarkup([{...snapshot,observation_kind:'CATCHUP_NOT_NEW'}]),/新規検出 /);
  assert.match(currentMarkup([]),/監視状況を確認できません/);

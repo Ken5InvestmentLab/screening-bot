@@ -13,7 +13,14 @@ function dashboardKpis(entries) {
   '<div class="kpi"><small>' + label + '</small><b>' + number(value) + (value == null ? '' : unit)
    + '</b></div>').join('') + '</div>';
 }
-function metrics(m){return '<div class="kpis">'+[['純損益',m?.net_profit,'円'],['最大下落率',m?.max_drawdown_pct,'%'],['勝率',m?.win_rate_pct,'%'],['決済件数',m?.trade_count,'件']].map(([k,v,u])=>'<div class="kpi"><span>'+k+'</span><b>'+number(v)+(v==null?'':u)+'</b></div>').join('')+'</div>';}
+function metrics(m, annualized) {
+ const items=[['純損益',m?.net_profit,'円'],['最大下落率',m?.max_drawdown_pct,'%'],
+  ['勝率',m?.win_rate_pct,'%'],['決済件数',m?.trade_count,'件']];
+ if(annualized!==undefined)items.splice(1,0,['年率換算損益率',annualized,'%','累積損益率を経過年数で割った値']);
+ return '<div class="kpis">'+items.map(([label,value,unit,hint])=>'<div class="kpi"><span'
+  +(hint?' title="'+hint+'"':'')+'>'+label+'</span><b>'+number(value)+(value==null?'':unit)
+  +'</b></div>').join('')+'</div>';
+}
 function chart(rows){
  if(!Array.isArray(rows)||!rows.length)return '<p class="note">日次推移はまだありません。</p>';
  const valid=rows.filter(r=>typeof r.equity_yen==='number'&&Number.isFinite(r.equity_yen));if(!valid.length)return '<p class="note">日次推移は未確定です。</p>';
@@ -25,6 +32,21 @@ const fundamentalLabels = ['材料インパクト','事業概要','足元材料'
 const day = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
   && Number.isFinite(Date.parse(value + 'T00:00:00Z'))
   && new Date(value + 'T00:00:00Z').toISOString().slice(0,10) === value;
+// The chart and summary represent the same selected preset and data generation.
+function annualizedProfitPct(current, rows) {
+ if(current.resolved!==true||!Array.isArray(rows)||!day(current.from)||!day(current.through)
+   ||current.through<=current.from)return null;
+ const first=rows[0],last=rows.at(-1);
+ if(first?.date!==current.from||last?.date!==current.through)return null;
+ const start=first.equity_yen,end=last.equity_yen,profit=current.metrics?.net_profit;
+ // The projection rounds each money amount independently to two decimal places.
+ if(!Number.isFinite(start)||start<=0||!Number.isFinite(end)||end<0||!Number.isFinite(profit)
+   ||Math.abs(end-start-profit)>0.02)return null;
+ const elapsed=Date.parse(current.through+'T00:00:00Z')-Date.parse(current.from+'T00:00:00Z');
+ const years=elapsed/(365.2425*86_400_000);
+ const annualized=profit/start*100/years;
+ return Number.isFinite(annualized)?annualized:null;
+}
 const exactKeys = (value, keys) => value !== null && typeof value === 'object' && !Array.isArray(value)
   && Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value,key));
 function fundamentalItem(page, row) {
@@ -177,7 +199,7 @@ function view({mode,access,asOf,presets,selected,rows,chartRows,personal,dashboa
  if(access!=='premium')throw Error('access_unavailable');
  const current=presets.find(x=>x.preset===selected);if(!current)throw Error('preset_unavailable');
  if(mode==='home')return premiumHome({asOf,selected,rows,chartRows,dashboard,historyPage},current);
- return heading(mode, asOf)+'<section class="panel"><label>見方を変える <select id="member-preset">'+presets.map(x=>'<option value="'+esc(x.preset)+'"'+(x.preset===selected?' selected':'')+'>'+esc(names[x.preset]??x.preset)+'</option>').join('')+'</select></label><p class="note">共通条件による仮想試算です。売買や通知の設定は変更しません。</p>'+metrics(current.resolved?current.metrics:null)+'</section><section class="panel"><h2>日次資金推移</h2>'+chart(chartRows)+'</section>'+(mode==='analytics'?'<section class="panel"><h2>あなたの保存条件による試算</h2>'+(personal?metrics(personal):'<p role="status">現在のデータ・保存条件に一致する結果を準備中、または未確定です。以前の結果では代用しません。</p>')+'</section><section class="panel"><h2>3つの見方の比較</h2>'+presets.map(x=>'<h3>'+esc(names[x.preset]??x.preset)+'</h3>'+metrics(x.resolved?x.metrics:null)).join('')+'</section>':'<section class="panel"><h2>検出履歴</h2>'+history(rows)+'</section>');
+ return heading(mode, asOf)+'<section class="panel"><label>見方を変える <select id="member-preset">'+presets.map(x=>'<option value="'+esc(x.preset)+'"'+(x.preset===selected?' selected':'')+'>'+esc(names[x.preset]??x.preset)+'</option>').join('')+'</select></label><p class="note">共通条件による仮想試算です。売買や通知の設定は変更しません。</p>'+metrics(current.resolved?current.metrics:null,mode==='analytics'?annualizedProfitPct(current,chartRows):undefined)+'</section><section class="panel"><h2>日次資金推移</h2>'+chart(chartRows)+'</section>'+(mode==='analytics'?'<section class="panel"><h2>あなたの保存条件による試算</h2>'+(personal?metrics(personal):'<p role="status">現在のデータ・保存条件に一致する結果を準備中、または未確定です。以前の結果では代用しません。</p>')+'</section><section class="panel"><h2>3つの見方の比較</h2>'+presets.map(x=>'<h3>'+esc(names[x.preset]??x.preset)+'</h3>'+metrics(x.resolved?x.metrics:null)).join('')+'</section>':'<section class="panel"><h2>検出履歴</h2>'+history(rows)+'</section>');
 }
 g.NewAMemberPresentation={metrics,chart,history,view,lockedPage,freeHome,fundamentalItem,fundamentalMarkup};
 if(typeof module!=='undefined')module.exports=g.NewAMemberPresentation;

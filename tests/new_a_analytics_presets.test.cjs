@@ -144,6 +144,25 @@ test('Analytics shows the newest verified year separately when an old one-price 
  assert(html.indexOf('2026年の成績')<html.indexOf('全期間の成績'));
 });
 
+test('owner Analytics annualizes the period return using opening capital and elapsed calendar days',()=>{
+ const F=controllerFactory(),d=workerFixture().simulate(),r=d.result;
+ const period=['2025-01-02','2026-01-02'];
+ const metrics={...r.metrics,initialCash:10_000_000,endEquity:11_400_000,netProfit:1_400_000};
+ const report=(patch={},metricsPatch={})=>F.render({...d,result:{...r,period,...patch,metrics:{...metrics,...metricsPatch}}});
+ const value=label=>new RegExp('年率換算損益率</small><b>'+label+'</b>');
+ assert.match(report(),value('14\\.01%'));
+ assert.match(report({period:['2025-01-02','2026-01-03']},{endEquity:9_000_000,netProfit:-1_000_000}),value('-9\\.98%'));
+ assert.match(report({}, {endEquity:10_000_000,netProfit:0}),value('0%'));
+ assert.match(report({}, {endEquity:0,netProfit:-10_000_000}),value('-100\\.07%'));
+ for(const patch of [{resolved:false},{period:[]},{period:[period[0],period[0]]},{period:[period[1],period[0]]},
+  {period:['2025-02-29',period[1]]},{period:['invalid',period[1]]}]){
+  assert.match(report(patch),value('未確定'));
+ }
+ for(const metricsPatch of [{endEquity:null},{endEquity:-1},{initialCash:0},{initialCash:null}]){
+  assert.match(report({},metricsPatch),value('未確定'));
+ }
+});
+
 test('preset result mismatch is rejected before it can replace accepted metrics',async()=>{
  const F=controllerFactory(),worker=workerFixture();
  const transport=async(url,options)=>({ok:true,json:async()=>options.method==='GET'?{schema_version:1,has_saved_preferences:true,has_saved_finite_preferences:true,revision:1,default_proposal_verified:false,preferences:prefs}:{...worker.simulate('profit'),request_id:JSON.parse(options.body).request_id}});
@@ -325,7 +344,7 @@ test('unresolved analytics shows the actual stop date and incomplete metrics',()
  d.result={...d.result,resolved:false,metrics:{...d.result.metrics,netProfit:null,maxDrawdown:null,winRate:null},unresolved:[{date:'2026-11-27',symbol:'1100',reason:'UNRESOLVED_SCHEDULED_EXIT'}]};
  const html=F.render(d);
  assert.match(html,/2026-11-27以降の資金推移は未計算/);
- assert.equal((html.match(/<b>未確定<\/b>/g)||[]).length,3);
+ assert.equal((html.match(/<b>未確定<\/b>/g)||[]).length,4);
  assert.doesNotMatch(html,/検出履歴/);
 });
 

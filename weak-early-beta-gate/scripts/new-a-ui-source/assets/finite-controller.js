@@ -156,20 +156,39 @@
    return '<li><span>'+esc(r.year)+'年</span><span class="cloud-annual-track" aria-hidden="true"><span class="cloud-annual-bar'+(v<0?' loss':'')+'" style="width:'+width+'%;left:'+left+'%"></span></span><strong>'+yen(v)+'</strong></li>';
   }).join('')+'</ul>';
  }
+ // Match the earlier Cloud's simple annualization using elapsed calendar years.
+ const yearMilliseconds=365.2425*86_400_000;
+ function annualizedProfitRate(result){
+  if(result.resolved!==true||result.period?.length!==2)return null;
+  const {initialCash,endEquity}=result.metrics;
+  if(!Number.isFinite(initialCash)||initialCash<=0||!Number.isFinite(endEquity)||endEquity<0)return null;
+  const [start,end]=result.period.map(value=>{
+   if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value))return NaN;
+   const date=new Date(value+'T00:00:00Z');
+   return Number.isFinite(date.getTime())&&date.toISOString().slice(0,10)===value?date.getTime():NaN;
+  });
+  if(!(end>start))return null;
+  const annualized=(endEquity-initialCash)/initialCash*(yearMilliseconds/(end-start));
+  return Number.isFinite(annualized)?annualized:null;
+ }
+ const annualizedKpi=result=>['年率換算損益率',pct(annualizedProfitRate(result)),
+  '累積損益率を経過年数で割った値'];
+ const metricKpi=([label,value,hint])=>'<div class="kpi"><small'+(hint?' title="'+hint+'"':'')
+  +'>'+label+'</small><b>'+value+'</b></div>';
  function recentAnalyticsPanel(recent){
   if(!recent)return '';
   const year=recent.period[0].slice(0,4),m=recent.metrics;
   const note=recent.resolved?'年初から独立して試算。全期間の資金・保有は引き継ぎません。':
    '年初から独立して試算。'+(recent.first_unresolved_date?recent.first_unresolved_date+'以降は保留です。':'未確定の価格があります。');
-  const metrics=[['純損益',yen(m.netProfit)],['勝率',pct(m.winRate)],['決済済み',number(m.closed)+'件']];
+  const metrics=[['純損益',yen(m.netProfit)],annualizedKpi(recent),['勝率',pct(m.winRate)],['決済済み',number(m.closed)+'件']];
   return '<section class="panel" aria-labelledby="analytics-latest-year"><div class="cloud-section-head"><h2 id="analytics-latest-year">'+esc(year)+'年の成績</h2><div class="cloud-meta"><span class="badge">'+esc(recent.period.join(' 〜 '))+'</span></div></div>'+
-   '<p class="note">'+esc(note)+'</p><div class="kpis">'+metrics.map(([label,value])=>'<div class="kpi"><small>'+label+'</small><b>'+value+'</b></div>').join('')+'</div>'+
+   '<p class="note">'+esc(note)+'</p><div class="kpis">'+metrics.map(metricKpi).join('')+'</div>'+
    '<div class="cloud-chart" id="new-a-latest-year-chart"></div></section>';
  }
  function render(d){
   if(!d)return '';
   const r=d.result,m=r.metrics,p=d.preferences;
-  const cards=[['純損益',yen(m.netProfit)],['勝率',pct(m.winRate)],['最大下落率',pct(m.maxDrawdown)],['決済済み',number(m.closed)+'件']];
+  const cards=[['純損益',yen(m.netProfit)],annualizedKpi(r),['勝率',pct(m.winRate)],['最大下落率',pct(m.maxDrawdown)],['決済済み',number(m.closed)+'件']];
   const details=[['元本',yen(m.initialCash)],['期末純資産',yen(m.endEquity)],['必要資金',yen(m.requiredCash)],['確定損益',yen(m.realizedProfit)],['評価損益',yen(m.unrealizedProfit)],['仮想買付',number(m.fills)+'件'],['仮想保有',number(m.open)+'件'],['監視開始',number(r.watches.length)+'件'],['支持反発',number(r.watches.filter(w=>w.trigger_date).length)+'件'],['平均騰落率',m.meanReturnPct==null?'未確定':number(m.meanReturnPct)+'%'],['中央値',m.medianReturnPct==null?'未確定':number(m.medianReturnPct)+'%'],['平均利益',yen(m.averageWinYen)],['平均損失',yen(m.averageLossYen)],['利益合計',yen(m.totalWinYen)],['損失合計',yen(m.totalLossYen)],['未解決',number(m.unresolvedCount)+'件']];
   const stats=details.map(([label,value])=>'<div><dt>'+esc(label)+'</dt><dd>'+value+'</dd></div>').join('');
   const trial=r.trial_policy?trialLabel(r.trial_policy):exitLabel(p.exit_endpoint,null,r.exit_policy);
@@ -178,7 +197,7 @@
   const badges=Object.entries(r.counts).filter(([,v])=>v).map(([k,v])=>'<span class="badge">'+esc(status(k))+' '+number(v)+'</span>').join(' ');
   return recentAnalyticsPanel(d.latest_year)+'<section class="panel" aria-labelledby="analytics-overview"><div class="cloud-section-head"><h2 id="analytics-overview">'+(d.latest_year?'全期間の成績':'過去成績')+'</h2><div class="cloud-meta"><span class="badge">仮想試算</span><span class="badge">'+esc(r.period?.join(' 〜 ')||'期間未確認')+'</span></div></div>'+
    '<p class="note" id="new-a-trial-summary">'+esc(trial)+'</p>'+unresolved+
-   '<div class="kpis">'+cards.map(([label,value])=>'<div class="kpi"><small>'+label+'</small><b>'+value+'</b></div>').join('')+'</div>'+
+   '<div class="kpis">'+cards.map(metricKpi).join('')+'</div>'+
    '<details class="cloud-kpi-detail"><summary>成績の内訳</summary><dl class="scenario-stats">'+stats+'</dl><div class="cloud-meta">'+badges+'</div></details>'+
    '<details class="cloud-kpi-detail"><summary>適用中の設定</summary>'+applied+'<a href="./weak_early_beta_settings.html">設定を開く</a></details>'+
    '</section><section class="panel" aria-labelledby="analytics-equity"><h2 id="analytics-equity">日次資金推移</h2><div class="cloud-chart" id="new-a-daily-chart"></div><details class="cloud-table-details"><summary>日次表</summary><div id="new-a-daily-table"></div><button id="new-a-daily-more" class="settings-secondary" type="button">次の50営業日</button></details></section>'+

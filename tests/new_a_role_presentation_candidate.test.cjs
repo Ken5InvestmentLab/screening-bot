@@ -95,6 +95,33 @@ test('changing dashboard radio reloads the selected chart and restores keyboard 
  a.equal(rendered[1].selected,'defensive');
  a.ok(focused);
 });
+test('Premium Analytics annualizes only the selected resolved projection over its actual calendar days',()=>{
+ const from='2025-01-02',through='2026-01-02';
+ const chartRows=[{date:from,equity_yen:10_000_000},{date:through,equity_yen:11_400_000}];
+ const selected={...presets[0],from,through,metrics:{...metrics,net_profit:1_400_000}};
+ const pages={mode:'analytics',access:'premium',asOf:through,presets:[selected,...presets.slice(1)],
+  selected:selected.preset,rows:[],chartRows,personal:metrics};
+ const value=label=>new RegExp('年率換算損益率</span><b>'+label+'</b>');
+ const html=ui.view(pages);
+ a.match(html,value('14\\.01%'));
+ a.equal((html.match(/年率換算損益率/g)||[]).length,1);
+ a.match(html,/累積損益率を経過年数で割った値/);
+ a.doesNotMatch(ui.view(premiumHome),/年率換算損益率/);
+
+ const loss={...selected,metrics:{...selected.metrics,net_profit:-1_000_000}};
+ a.match(ui.view({...pages,presets:[loss],chartRows:[chartRows[0],{...chartRows[1],equity_yen:9_000_000}]}),value('-10\\.01%'));
+ const cases=[
+  {chartRows:[]},
+  {chartRows:[chartRows[0]]},
+  {chartRows:[{...chartRows[0],equity_yen:0},chartRows[1]]},
+  {chartRows:[chartRows[0],{...chartRows[1],equity_yen:null}]},
+  {chartRows:[chartRows[0],{...chartRows[1],equity_yen:11_500_000}]},
+  {chartRows:[chartRows[0],{...chartRows[1],date:'2026-01-01'}]},
+  {presets:[{...selected,resolved:false,metrics:null}]},
+  {presets:[{...selected,from:'2025-02-29'}]},
+ ];
+ for(const patch of cases)a.match(ui.view({...pages,...patch}),value('未確定'));
+});
 test('analytics compares all 3 presets; missing personal result not fabricated',()=>{const html=ui.view({mode:'analytics',access:'premium',asOf:'2026-11-19',presets,selected:'defensive',rows:[],chartRows:[],personal:null});for(const s of ['守り','中間','利益優先','準備中','以前の結果では代用しません'])a.ok(html.includes(s));});
 test('free presentation shows server-provided closed history and one existing purchase action',()=>{
  const html=ui.view({mode:'home',access:'free',asOf:'2026-11-19',presets,selected:'medium',rows:[{date:'2026-11-18',symbol:'1234',state:'HOLD_ENDED'}],chartRows:[],personal:metrics,dashboard:{today:[{symbol:'TODAY_ONLY'}],watching:[{symbol:'WATCH_ONLY'}]}});

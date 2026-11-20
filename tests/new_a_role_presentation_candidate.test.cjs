@@ -1,4 +1,5 @@
 const {test}=require('node:test'),a=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+const {webcrypto}=require('node:crypto');
 const src=path.join(__dirname,'../weak-early-beta-gate/scripts/new-a-ui-source/assets');
 const context={module:{exports:{}},TextEncoder,URL};vm.runInNewContext(fs.readFileSync(path.join(src,'member-presentation.js'),'utf8'),context);const ui=context.module.exports;
 const metrics={net_profit:1200,max_drawdown_pct:-3.25,win_rate_pct:60,trade_count:5};const presets=['defensive','medium','return_priority'].map(preset=>({preset,from:'2026-01-01',through:'2026-11-19',resolved:true,metrics}));
@@ -76,9 +77,9 @@ test('dashboard does not substitute stale or unresolved holding counts',()=>{
  a.match(ui.view({...premiumHome,chartRows:[{...latest,equity_yen:null,holding_count:null}]}),/保有件数<\/small><b>未確定/);
  a.match(ui.view({...premiumHome,dashboard:{today:[],watching:[]}}),/仮想保有開始 <b>未確定/);
 });
-test('changing dashboard radio reloads the selected chart and restores keyboard focus',async()=>{
- const body={dataset:{page:'home'}}, requested=[], rendered=[];
- let change, focused=false;
+async function renderLevelPage({mode,session,storage,access='premium'}) {
+ const body={dataset:{page:mode}}, requested=[];
+ let change, focused=false, rendered=Promise.withResolvers();
  const preset={
   addEventListener(type,listener){if(type==='change')change=listener;},
   querySelector(selector){a.equal(selector,'input:checked');return {focus(){focused=true;}};},
@@ -92,28 +93,69 @@ test('changing dashboard radio reloads the selected chart and restores keyboard 
   getElementById:id=>elements[id],querySelectorAll:()=>[],
  };
  vm.runInNewContext(fs.readFileSync(path.join(src,'member-loader.js'),'utf8'),{
-  document,AbortController,AbortSignal,addEventListener(){},setInterval(){},
-  NewAMemberPresentation:{view(value){rendered.push(value);return '';}},
+  document,AbortController,AbortSignal,TextEncoder,crypto:webcrypto,sessionStorage:storage,
+  addEventListener(){},setInterval(){},
+  NewAMemberPresentation:{view(value){rendered.resolve(value);return '';}},
   async fetch(route){
    const url=new URL(route,'https://fixture.invalid');
    if(url.pathname.endsWith('/session'))return new Response(null,{status:204,headers:{
-    'x-cloud-member-session':'1'.repeat(64),'x-cloud-member-access':'premium',
+    'x-cloud-member-session':session,'x-cloud-member-access':access,
    }});
    if(url.pathname.endsWith('/chart.json'))requested.push(url.searchParams.get('preset'));
    return Response.json({as_of:premiumHome.asOf,generation:'2'.repeat(64),presets,rows:[],pages:1});
   },
  });
- const flush=()=>new Promise(resolve=>setImmediate(resolve));
- await flush();
- a.equal(rendered[0].selected,'medium');
- a.equal(status.textContent,'');
- const radio={value:'defensive'};
- document.activeElement=radio;
- change({target:radio});
- await flush();
- a.deepEqual(requested,['medium','defensive']);
- a.equal(rendered[1].selected,'defensive');
- a.ok(focused);
+ const initial=await rendered.promise;
+ return {
+  initial,status,requested,
+  async choose(value){
+   rendered=Promise.withResolvers();
+   const radio={value};
+   document.activeElement=radio;
+   change({target:radio});
+   return {view:await rendered.promise,focused};
+  },
+ };
+}
+test('both pages default to 利益優先 and retain the chosen radio for the same verified tab session', {timeout:3000}, async()=>{
+ const stored=new Map();
+ const storage={getItem:key=>stored.get(key),setItem:(key,value)=>stored.set(key,value)};
+ const session='1'.repeat(64);
+ const home=await renderLevelPage({mode:'home',session,storage});
+ a.equal(home.initial.selected,'return_priority');
+ a.equal(home.status.textContent,'');
+ const changed=await home.choose('defensive');
+ a.equal(changed.view.selected,'defensive');
+ a.ok(changed.focused);
+ a.deepEqual(home.requested,['return_priority','defensive']);
+ a.deepEqual([...stored.values()],['defensive']);
+ a.ok(![...stored.keys()].some(key=>key.includes(session)));
+ const analytics=await renderLevelPage({mode:'analytics',session,storage});
+ a.equal(analytics.initial.selected,'defensive');
+ const recent=await analytics.choose('medium');
+ a.equal(recent.view.selected,'medium');
+ a.ok(recent.focused);
+ a.deepEqual(analytics.requested,['defensive','medium']);
+ const returnHome=await renderLevelPage({mode:'home',session,storage});
+ a.equal(returnHome.initial.selected,'medium');
+
+ const anotherUser=await renderLevelPage({mode:'analytics',session:'a'.repeat(64),storage});
+ a.equal(anotherUser.initial.selected,'return_priority');
+ a.deepEqual(anotherUser.requested,['return_priority']);
+ let freeStorageReads=0;
+ const freeStorage={getItem(){freeStorageReads++;return 'defensive';}};
+ const free=await renderLevelPage({mode:'home',session,storage:freeStorage,access:'free'});
+ a.equal(free.initial.access,'free');
+ a.equal(freeStorageReads,0);
+ a.deepEqual(free.requested,[]);
+});
+test('the radio remains usable when the browser blocks tab storage', {timeout:3000}, async()=>{
+ const storage={getItem(){throw Error('blocked');},setItem(){throw Error('blocked');}};
+ const analytics=await renderLevelPage({mode:'analytics',session:'1'.repeat(64),storage});
+ a.equal(analytics.initial.selected,'return_priority');
+ const chosen=await analytics.choose('defensive');
+ a.equal(chosen.view.selected,'defensive');
+ a.ok(chosen.focused);
 });
 test('Premium Analytics annualizes only the selected resolved projection over its actual calendar days',()=>{
  const from='2025-01-02',through='2026-01-02';
@@ -125,6 +167,12 @@ test('Premium Analytics annualizes only the selected resolved projection over it
  const html=ui.view(pages);
  a.match(html,value('14\\.01%'));
  a.match(html,/<h2>日次資金推移<\/h2><div class="research-chart"/);
+ const operatingLevel=html.match(/<fieldset id="member-preset"[\s\S]*?<\/fieldset>/)?.[0];
+ const home=ui.view({...premiumHome,selected:selected.preset});
+ a.ok(operatingLevel);
+ a.ok(home.includes(operatingLevel));
+ a.doesNotMatch(html,/見方を変える|<select/);
+ a.match(html,/<h2>運用レベルの比較<\/h2>/);
  a.equal((html.match(/年率換算損益率/g)||[]).length,1);
  a.match(html,/累積損益率を経過年数で割った値/);
  a.doesNotMatch(ui.view(premiumHome),/年率換算損益率/);

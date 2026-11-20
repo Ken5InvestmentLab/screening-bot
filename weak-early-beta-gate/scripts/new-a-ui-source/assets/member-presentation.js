@@ -168,7 +168,7 @@ function currentWatch(rows) {
     + (rest.length ? '<details class="cloud-table-details"><summary>残り' + rest.length + '銘柄</summary>'
       + watchTable(rest, '残りの監視銘柄') + '</details>' : '');
 }
-function dashboardLevel(selected) {
+function operatingLevel(selected) {
   return '<fieldset id="member-preset" class="member-level"><legend>運用レベル</legend><div class="member-level-options">'
     + Object.entries(names).map(([value, label]) => '<label><input type="radio" name="new-a-dashboard-level" value="'
       + value + '"' + (value === selected ? ' checked' : '') + '><span>' + label + '</span></label>').join('')
@@ -185,7 +185,7 @@ function premiumHome({asOf, selected, rows, chartRows, dashboard, historyPage}, 
   return '<section class="panel today-summary" aria-labelledby="member-today-title">'
     + '<p class="note">データ更新日 <time datetime="' + esc(asOf) + '">' + esc(asOf) + '</time></p>'
     + '<div class="cloud-section-head"><h1 id="member-today-title">ダッシュボード</h1>'
-    + dashboardLevel(selected) + '</div>' + summary + '</section>'
+    + operatingLevel(selected) + '</div>' + summary + '</section>'
     + '<section class="panel" id="new-a-current" aria-labelledby="member-activity-heading"><div class="cloud-section-head">'
     + '<h2 id="member-activity-heading">対象日の動き</h2></div>'
     + movementSummary(dashboard.today) + movementCards(dashboard.today) + '</section>'
@@ -206,7 +206,7 @@ function view({mode,access,asOf,presets,selected,rows,chartRows,personal,dashboa
  if(access!=='premium')throw Error('access_unavailable');
  const current=presets.find(x=>x.preset===selected);if(!current)throw Error('preset_unavailable');
  if(mode==='home')return premiumHome({asOf,selected,rows,chartRows,dashboard,historyPage},current);
- return heading(mode, asOf)+'<section class="panel"><label>見方を変える <select id="member-preset">'+presets.map(x=>'<option value="'+esc(x.preset)+'"'+(x.preset===selected?' selected':'')+'>'+esc(names[x.preset]??x.preset)+'</option>').join('')+'</select></label><p class="note">共通条件による仮想試算です。売買や通知の設定は変更しません。</p>'+metrics(current.resolved?current.metrics:null,mode==='analytics'?annualizedProfitPct(current,chartRows):undefined)+'</section><section class="panel"><h2>日次資金推移</h2>'+chart(chartRows)+'</section>'+(mode==='analytics'?'<section class="panel"><h2>あなたの保存条件による試算</h2>'+(personal?metrics(personal):'<p role="status">現在のデータ・保存条件に一致する結果を準備中、または未確定です。以前の結果では代用しません。</p>')+'</section><section class="panel"><h2>3つの見方の比較</h2>'+presets.map(x=>'<h3>'+esc(names[x.preset]??x.preset)+'</h3>'+metrics(x.resolved?x.metrics:null)).join('')+'</section>':'<section class="panel"><h2>検出履歴</h2>'+history(rows)+'</section>');
+ return heading(mode, asOf)+'<section class="panel">'+operatingLevel(selected)+'<p class="note">共通条件による仮想試算です。売買や通知の設定は変更しません。</p>'+metrics(current.resolved?current.metrics:null,mode==='analytics'?annualizedProfitPct(current,chartRows):undefined)+'</section><section class="panel"><h2>日次資金推移</h2>'+chart(chartRows)+'</section>'+(mode==='analytics'?'<section class="panel"><h2>あなたの保存条件による試算</h2>'+(personal?metrics(personal):'<p role="status">現在のデータ・保存条件に一致する結果を準備中、または未確定です。以前の結果では代用しません。</p>')+'</section><section class="panel"><h2>運用レベルの比較</h2>'+presets.map(x=>'<h3>'+esc(names[x.preset]??x.preset)+'</h3>'+metrics(x.resolved?x.metrics:null)).join('')+'</section>':'<section class="panel"><h2>検出履歴</h2>'+history(rows)+'</section>');
 }
 g.NewAMemberPresentation={metrics,chart,history,view,lockedPage,freeHome,fundamentalItem,fundamentalMarkup};
 if(typeof module!=='undefined')module.exports=g.NewAMemberPresentation;

@@ -6,6 +6,7 @@
   const unavailable = '現在読み込めません';
   const changed = 'データが更新されました。再試行してください。';
   const presets = new Set(['defensive', 'medium', 'return_priority']);
+  const defaultPreset = 'return_priority';
   const isToken = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
   const requiresLogin = response => response.type === 'opaqueredirect' || response.status === 401;
   const denied = response => requiresLogin(response) || response.status === 403;
@@ -45,7 +46,8 @@
   const status = document.getElementById('member-state');
   const retry = document.getElementById('member-retry');
   const out = document.getElementById('member-content');
-  let selected = 'medium';
+  let selected = defaultPreset;
+  let presetStorageKey = null;
   let page = 1;
   let snapshot = null;
   let memberSession = null;
@@ -54,6 +56,22 @@
   let accessCheck;
   let fundamentalPage = null;
   let openFundamental = null;
+
+  async function restorePreset(session) {
+    try {
+      const storage = g.sessionStorage;
+      if (!storage) return;
+      // Scope the in-tab display choice without storing the authenticated session tag.
+      const digest = new Uint8Array(await g.crypto.subtle.digest('SHA-256', new TextEncoder().encode(session)));
+      if (memberSession !== session) return;
+      const scope = Array.from(digest, byte => byte.toString(16).padStart(2, '0')).join('');
+      presetStorageKey = 'cloud-operating-level:' + scope;
+      const saved = storage.getItem(presetStorageKey);
+      if (presets.has(saved)) selected = saved;
+    } catch {
+      // The picker still works on the current page when storage is unavailable.
+    }
+  }
 
   function updateNavigation() {
     for (const link of document.querySelectorAll('[data-member-premium-nav]')) {
@@ -69,6 +87,8 @@
     snapshot = null;
     memberSession = null;
     memberAccess = null;
+    selected = defaultPreset;
+    presetStorageKey = null;
     updateNavigation();
     page = 1;
     out.replaceChildren();
@@ -104,8 +124,11 @@
           clearDisplay(accessDenied);
           return false;
         }
+        const newSession = memberSession === null;
         memberSession = session;
         memberAccess = access;
+        if (newSession && access === 'premium') await restorePreset(session);
+        if (memberSession !== session) return false;
         updateNavigation();
         return true;
       } catch {
@@ -307,11 +330,13 @@
         const { value } = event.target;
         if (!presets.has(value) || value === selected) return;
         selected = value;
+        if (presetStorageKey) {
+          try { g.sessionStorage.setItem(presetStorageKey, selected); } catch {}
+        }
         load({ restorePresetFocus: event.target === document.activeElement });
       });
       if (restorePresetFocus && document.activeElement === document.body) {
-        const activePreset = mode === 'home' ? preset?.querySelector('input:checked') : preset;
-        activePreset?.focus();
+        preset?.querySelector('input:checked')?.focus();
       }
       if (history) addPagination(history.pages);
     } catch (error) {

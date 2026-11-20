@@ -108,6 +108,7 @@ function element(type) {
     children: [],
     attributes: {},
     isConnected: true,
+    get lastElementChild() { return this.children.at(-1); },
     get textContent() { return content; },
     set textContent(value) { content = value; this.children = []; },
     events: {},

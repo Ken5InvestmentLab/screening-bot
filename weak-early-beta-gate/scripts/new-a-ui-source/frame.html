@@ -2,9 +2,6 @@
 <title>{{TITLE}} | 天底極致 Cloud 2.0</title>{{INITIAL_THEME_SCRIPT}}<style>
 #detection-table{width:100%;min-width:0;table-layout:fixed}#detection-table thead th:nth-child(1){width:34%}#detection-table thead th:nth-child(n+2){width:16.5%}
 
-#cloud-notification-settings label,.cloud-notification-settings label{display:block;margin:12px 0}
-#cloud-notification-settings input[type="checkbox"],.cloud-notification-settings input[type="checkbox"]{width:auto;min-width:20px;min-height:20px;margin-right:10px;vertical-align:middle}
-#cloud-notification-settings summary,.cloud-notification-settings summary{min-height:44px;padding:10px 0;cursor:pointer;font-weight:700}
 #cloud-settings-status[data-state="error"]{color:var(--warn)}
 .cloud-settings button{min-height:44px;padding:8px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel-solid);color:var(--ink)}
 @media(max-width:620px){.cloud-settings .filters .filter-field{grid-column:1/-1}}
@@ -289,16 +286,17 @@ body[data-page="settings"] .topbar a[aria-disabled="true"]{opacity:.55;cursor:wa
  .cloud-stock-grid>article{padding:9px}
  .cloud-stock-grid .cloud-empty{grid-column:1/-1}
 }
-#new-a-notification-settings #cloud-device-test{display:none!important}
-.new-a-notification-options{display:grid;gap:8px;margin:16px 0 0;padding:12px;border:1px solid var(--line);border-radius:10px}
-.new-a-notification-options input[type="checkbox"]{width:1em;min-height:0;accent-color:var(--blue)}
 .actions > :is(button,a).cloud-stock-action{box-sizing:border-box;inline-size:calc(4em + 16px);min-block-size:32px;justify-content:center;font-size:12px;line-height:1.2;padding:4px 7px;white-space:nowrap}
 .actions .cloud-stock-action:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 @media(max-width:760px){.actions > :is(button,a).cloud-stock-action{inline-size:calc(4em + 22px);min-block-size:44px;font-size:14px;padding:8px 10px}}
 @media(max-width:350px){.cloud-stock-grid{grid-template-columns:1fr}}
 @media(max-width:760px){[data-finite-table="holdings"] td[data-label="評価損益"]{grid-column:1/-1}}
+.cloud-settings-current .filter-field{margin:0}
+.cloud-settings-current [role="tabpanel"][hidden]{display:none}
+.cloud-settings-dialog .cloud-settings{margin:0}
+#cloud-settings-status:empty{display:none}
 </style>
-<script src="/auth/guard.js" defer></script><script src="/new-a-assets/owner-loader.js" defer></script></head><body data-page="{{PAGE}}"><header class="topbar"><a class="skip-link" href="#main-content">本文へ</a><nav class="nav" aria-label="ページ移動"><a class="brand" href="./weak_early_beta_latest.html" aria-label="天底極致-Cloud 2.0- ダッシュボードへ"><img class="brand-logo brand-logo-light" src="/new-a-assets/report-assets/cloud-logo-light.png" alt="天底極致-Cloud 2.0-"><img class="brand-logo brand-logo-dark" src="/new-a-assets/report-assets/cloud-logo-dark.png" alt=""></a><div class="cloud-main-nav"><span class="cloud-primary-nav"><a class="nav-link" href="./weak_early_beta_latest.html">ダッシュボード</a><a class="nav-link" href="./weak_early_beta_analytics.html">アナリティクス</a><a class="nav-link" href="./weak_early_beta_settings.html">設定</a></span></div><details class="cloud-more-menu"><summary class="nav-control">その他</summary><div class="cloud-navigation" aria-label="その他のページ"><a class="nav-link" href="./weak_early_beta_guide.html">ヘルプ</a><a class="nav-link" href="./weak_early_beta_silence.html">Silence</a><a class="nav-link" href="./weak_early_beta_dive.html">Dive</a><a class="nav-link" href="./weak_early_beta_shadow.html">Shadow</a><a class="nav-link" href="./weak_early_beta_fusion.html">Fusion</a><a class="nav-link" href="./weak_early_beta_balance.html">Balance</a></div></details></nav></header><main id="main-content" tabindex="-1">{{VIEW}}</main><footer class="site-footer"><div class="site-footer-inner">
+<script src="/auth/guard.js" defer></script><script src="/new-a-assets/owner-loader.js" defer></script></head><body data-page="{{PAGE}}"><header class="topbar"><a class="skip-link" href="#main-content">本文へ</a><nav class="nav" aria-label="ページ移動"><a class="brand" href="./weak_early_beta_latest.html" aria-label="天底極致-Cloud 2.0- ダッシュボードへ"><img class="brand-logo brand-logo-light" src="/new-a-assets/report-assets/cloud-logo-light.png" alt="天底極致-Cloud 2.0-"><img class="brand-logo brand-logo-dark" src="/new-a-assets/report-assets/cloud-logo-dark.png" alt=""></a><div class="cloud-main-nav"><span class="cloud-primary-nav"><a class="nav-link" href="./weak_early_beta_latest.html">ダッシュボード</a><a class="nav-link" href="./weak_early_beta_analytics.html">アナリティクス</a><a class="nav-link" href="./weak_early_beta_settings.html" {{SETTINGS_TRIGGER}}>設定</a></span></div><details class="cloud-more-menu"><summary class="nav-control">その他</summary><div class="cloud-navigation" aria-label="その他のページ"><a class="nav-link" href="./weak_early_beta_guide.html">ヘルプ</a><a class="nav-link" href="./weak_early_beta_silence.html">Silence</a><a class="nav-link" href="./weak_early_beta_dive.html">Dive</a><a class="nav-link" href="./weak_early_beta_shadow.html">Shadow</a><a class="nav-link" href="./weak_early_beta_fusion.html">Fusion</a><a class="nav-link" href="./weak_early_beta_balance.html">Balance</a></div></details></nav></header><main id="main-content" tabindex="-1">{{VIEW}}</main>{{SETTINGS_DIALOG}}<footer class="site-footer"><div class="site-footer-inner">
 <p class="footer-copy">© 2026 Ken5 Investment Lab. All rights reserved.</p>
 <div class="footer-links" aria-label="公式リンク">
 <a class="footer-link" href="https://discord.gg/PX3cCQTxAz" target="_blank" rel="noopener noreferrer" aria-label="Discord">

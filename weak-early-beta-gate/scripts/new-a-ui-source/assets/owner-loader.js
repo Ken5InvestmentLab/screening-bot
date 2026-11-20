@@ -308,6 +308,8 @@
  const pageLoad=new AbortController();
  function unavailable(){
   pageLoad.abort();
+  global.CloudSettingsDialog?.close(true);
+  global.AOwnerSavedSettings=null;
   global.AFiniteBrowser?.clear();
   global.AFiniteRevoked=true;
   global.AOwnerPageData=null;
@@ -326,7 +328,49 @@
   let data={manifest:null,rows:[],current:[]};
   const dashboard=document.getElementById('new-a-dashboard');
   const preload=[script('browser-transport.js'),script('finite-controller.js')];
-  function configureTransport(manifest){
+  let settingsAssets;
+  function openSettings(target,status,context) {
+   settingsAssets ??= Promise.all([...preload,script('member-settings.js'),script('owner-settings.js')])
+    .catch(error=>{settingsAssets=undefined;throw error;});
+   return settingsAssets.then(()=>{
+    if(!context.active()||global.AFiniteRevoked)return;
+    let localBrowser;
+    context.signal?.addEventListener('abort',()=>localBrowser?.clear(),{once:true});
+    const transport=(url,options)=>{
+     if(url!=='/api/cloud/new-a-finite/simulate')return network(url,{...options,signal:context.signal});
+     const browser=global.AFiniteBrowser??(localBrowser??=makeBrowser(null));
+     return browser.transport(url,options);
+    };
+    return global.mountOwnerSettings(target,status,{...context,transport,dashboardPrices:page==='home',recentAnalytics:page==='analytics',
+     onRevoked:unavailable,
+     onSaved(state,trialChanged){
+      const previous=global.AOwnerSavedSettings;
+      const sameTrial=previous&&previous.trialPreset===state.trialPreset
+       &&Object.entries(state.applied).every(([key,value])=>previous.applied[key]===value);
+      global.AOwnerSavedSettings=trialChanged||!sameTrial?state:{...state,accepted:previous.accepted};
+      global.AFiniteApplySavedSettings?.();
+     },
+    });
+   });
+  }
+  global.CloudSettingsDialog?.connect(openSettings,()=>!global.AFiniteRevoked);
+  if(page==='settings'){
+   const target=document.getElementById('cloud-settings-direct'),status=document.getElementById('cloud-settings-status');
+   function confirmLeave(event){event.preventDefault();event.returnValue=true;}
+   function setBusy(saving){
+    if(saving)global.addEventListener('beforeunload',confirmLeave);
+    else global.removeEventListener('beforeunload',confirmLeave);
+   }
+   const load=()=>{
+    showLoadStatus('');
+    openSettings(target,status,{active:()=>!pageLoad.signal.aborted,signal:pageLoad.signal,setBusy}).catch(()=>{
+     if(!pageLoad.signal.aborted)showLoadStatus('設定を読み込めませんでした。',load);
+    });
+   };
+   load();
+   return;
+  }
+  function makeBrowser(manifest){
    const browser=global.AFiniteBrowserTransport.create({
     fetch:network,pinnedManifest:manifest,createWorker:()=>new Worker('/new-a-assets/new-a-finite-worker.generated.js'),
     onSimulationPhase:phase=>{
@@ -334,6 +378,10 @@
      showLoadStatus(phase==='prices'?'株価データを読み込んでいます。':task+'を計算しています。');
     },
    });
+   return browser;
+  }
+  function configureTransport(manifest){
+   const browser=makeBrowser(manifest);
    global.AFiniteBrowser=browser;
    global.AFiniteTransport=browser.transport;
    return browser;
@@ -410,17 +458,6 @@
   await script('new-a-legacy-interactions.generated.js');
   if(pageLoad.signal.aborted)return;
   await script('finite-dom.js');
-  if(page==='settings'&&!global.AFiniteRevoked){
-   try{
-    await script('owner-notifications.js');
-    await global.AOwnerNotifications.mount({document,window:global,fetch:network,loadPush:()=>scriptAt('/weak-early-beta-push.js')});
-   }catch(_){
-    if(!global.AFiniteRevoked){
-     document.getElementById('new-a-notification-settings').hidden=false;
-     document.getElementById('new-a-notification-status').textContent='通知設定を読み込めませんでした。';
-    }
-   }
-  }
  }
  start().catch(unavailable);
 })(typeof globalThis!=='undefined'?globalThis:this);

@@ -1,77 +1,231 @@
-(function(g){'use strict';
-const specs=[['view_preferences','trial_preset','試算プリセット',['','defensive','balanced','profit']],['view_preferences','theme','テーマ',['dark','light','system']],['view_preferences','font_size','文字サイズ',['small','standard','large']],['view_preferences','page_size','1ページの件数',[20,50,100]],['preferences','price_cap_yen','株価上限（円）'],['preferences','exit_endpoint','比較する決済条件',['d5_close','d6_open','a20_close']],['preferences','base_shares','仮想株数'],['preferences','cost_percent','費用率（%）'],['preferences','year_scope','集計年',['all','2023','2024','2025','2026']],['preferences','allocation','配分方法',['all','unique','stacked']],['preferences','initial_cash_yen','仮想初期資金'],['preferences','max_positions','仮想同時保有上限'],['preferences','per_order_cap_yen','仮想1銘柄上限']];
-const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
-function state(){let saved=null,draft=null,busy=false;return {load:s=>{saved=structuredClone(s);draft=structuredClone(s);busy=false;},edit:(group,key,value)=>{if(busy||!saved)throw Error('locked');if(!specs.some(x=>x[0]===group&&x[1]===key))throw Error('field');draft[group][key]=value;},cancel:()=>{if(busy)throw Error('locked');draft=structuredClone(saved);return draft;},draft:()=>structuredClone(draft),begin:()=>{if(!saved||busy)throw Error('locked');busy=true;return {expected_revision:saved.revision,save_binding:saved.save_binding,preferences:draft.preferences,view_preferences:draft.view_preferences};},verify:s=>{if(!busy||s.revision!==saved.revision+1||!equal(s.preferences,draft.preferences)||!equal(s.view_preferences,draft.view_preferences))throw Error('receipt_mismatch');saved=structuredClone(s);draft=structuredClone(s);busy=false;},fail:()=>{busy=false;}};}
-g.NewAMemberSettings={state,specs};if(typeof module!=='undefined')module.exports=g.NewAMemberSettings;
-g.mountMemberSettings=async function(out,status,{signal,active,session,verifyAccess,accessDenied}){
- const model=state(),form=document.createElement('form'),inputs=[];const endpoint='/api/cloud/new-a-view/preferences';
- for(const [group,name,label,values]of specs){const l=document.createElement('label');l.textContent=label+' ';const f=document.createElement(values?'select':'input');if(values){for(const value of values){const o=document.createElement('option');o.value=String(value);o.textContent=String(value);f.append(o)}}else{f.type='number';f.step='any';}f.name=name;l.append(f);form.append(l);inputs.push({f,group,name,numeric:!values||name==='page_size'});}
- const save=document.createElement('button'),cancel=document.createElement('button');save.type='submit';save.textContent='自分の設定を保存';cancel.type='button';cancel.textContent='取消';form.append(save,cancel);out.replaceChildren(form);
- const lock=x=>{for(const {f}of inputs)f.disabled=x;save.disabled=cancel.disabled=x;};
- const paint=()=>{const d=model.draft();for(const {f,group,name}of inputs)f.value=d[group][name]??'';};
- async function request(options={}){
-  const response=await fetch(endpoint,{credentials:'same-origin',cache:'no-store',redirect:'manual',signal,...options,
-   headers:{...options.headers,'x-cloud-member-session':session}});
-  const reauthenticate=response.type==='opaqueredirect'||response.status===401;
-  if(reauthenticate||response.status===403){
-   if(active())accessDenied(reauthenticate);
-   throw Error('access_denied');
+/* Account settings common to the current Cloud trial and display. */
+(function (g) {
+ 'use strict';
+ const specs = [
+  { group:'view_preferences', key:'trial_preset', label:'試算プリセット', options:[
+   ['defensive','守り'], ['balanced','中間'], ['profit','利益優先'], ['','現在の条件'],
+  ] },
+  { group:'preferences', key:'initial_cash_yen', label:'初期資金（円）', min:1, max:1e12, step:1 },
+  { group:'preferences', key:'max_positions', label:'同時保有上限（銘柄）', min:1, max:1000, step:1 },
+  { group:'preferences', key:'per_order_cap_yen', label:'1注文の購入上限（円）', min:1, max:1e12, step:1 },
+  { group:'preferences', key:'cost_percent', label:'売買手数料（片道％）', min:0, max:10, step:.01 },
+  { group:'view_preferences', key:'theme', label:'テーマ', display:true, options:[
+   ['dark','ダーク'], ['light','ライト'], ['system','端末に合わせる'],
+  ] },
+  { group:'view_preferences', key:'font_size', label:'文字サイズ', display:true, options:[
+   ['small','小さめ'], ['standard','標準'], ['large','大きめ'],
+  ] },
+  { group:'view_preferences', key:'page_size', label:'一覧件数', display:true, options:[
+   [20,'20件'], [50,'50件'], [100,'100件'],
+  ] },
+ ];
+ const equal = (a,b) => JSON.stringify(a) === JSON.stringify(b);
+ function state() {
+  let saved = null, draft = null, busy = false;
+  return {
+   load(s) { saved = structuredClone(s); draft = structuredClone(s); busy = false; },
+   edit(group,key,value) {
+    if (busy || !saved) throw Error('locked');
+    if (!specs.some(item => item.group === group && item.key === key)) throw Error('field');
+    draft[group][key] = value;
+   },
+   cancel() {
+    if (busy) throw Error('locked');
+    draft = structuredClone(saved);
+    return draft;
+   },
+   draft: () => structuredClone(draft),
+   begin() {
+    if (!saved || busy) throw Error('locked');
+    busy = true;
+    return { expected_revision:saved.revision, save_binding:saved.save_binding,
+     preferences:draft.preferences, view_preferences:draft.view_preferences };
+   },
+   verify(s) {
+    if (!busy || s.revision !== saved.revision + 1 || !equal(s.preferences,draft.preferences)
+      || !equal(s.view_preferences,draft.view_preferences)) throw Error('receipt_mismatch');
+    saved = structuredClone(s); draft = structuredClone(s); busy = false;
+   },
+   fail() { busy = false; },
+  };
+ }
+ function createForm(out) {
+  const form = document.createElement('form');
+  form.className = 'cloud-settings-current';
+  const tablist = document.createElement('div');
+  tablist.className = 'settings-tabs';
+  tablist.setAttribute('role','tablist');
+  tablist.setAttribute('aria-label','設定の項目');
+  function tab(key,label) {
+   const button = document.createElement('button');
+   button.type = 'button';
+   button.id = 'cloud-setting-tab-' + key;
+   button.textContent = label;
+   button.setAttribute('role','tab');
+   button.setAttribute('aria-controls','cloud-setting-pane-' + key);
+   const panel = document.createElement('div');
+   panel.id = 'cloud-setting-pane-' + key;
+   panel.className = 'filters';
+   panel.setAttribute('role','tabpanel');
+   panel.setAttribute('aria-labelledby',button.id);
+   return { button, panel };
   }
-  return response;
- }
- async function read(){
-  const response=await request();
-  if(!response.ok)throw Error('load');
-  const saved=await response.json();
-  if(!await verifyAccess())throw Error('access_denied');
-  return saved;
- }
- async function reload(){
-  lock(true);
-  const saved=await read();
-  if(!active())return;
-  model.load(saved);
-  paint();
-  lock(false);
- }
- cancel.addEventListener('click',()=>{
-  if(!active())return;
-  model.cancel();
-  paint();
-  status.textContent='保存済みの設定に戻しました。';
- });
- form.addEventListener('submit',async event=>{
-  event.preventDefault();
-  if(!active()||save.disabled)return;
-  for(const {f,group,name,numeric}of inputs)model.edit(group,name,f.value===''?null:numeric?Number(f.value):f.value);
-  const body=model.begin();
-  lock(true);
-  status.textContent='保存中';
-  try{
-   const response=await request({method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
-   if(!active())return;
-   if(response.status===409){
-    await reload();
-    if(active())status.textContent='別の更新がありました。保存済み設定を再読込しました。';
-    return;
+  const trial = tab('trial','試算方法');
+  const display = tab('display','表示');
+  const tabs = [trial,display];
+  function selectTab(selected) {
+   for (const item of tabs) {
+    item.button.setAttribute('aria-selected',String(item === selected));
+    item.button.tabIndex = item === selected ? 0 : -1;
+    item.panel.hidden = item !== selected;
    }
-   if(!response.ok){
-    model.fail();
-    lock(false);
-    status.textContent='保存できません。入力を保持しています。';
-    return;
-   }
-   const saved=await read();
-   if(!active())return;
-   model.verify(saved);
-   paint();
-   lock(false);
-   status.textContent='保存を確認しました。個別試算は準備でき次第反映します。';
-  }catch{
-    if(active()&&await verifyAccess()&&active())status.textContent='保存結果を確認できません。重複保存せず再読込してください。';
   }
- });
- await reload();
- if(active())status.textContent='自分の表示・仮想試算だけを変更します。';
-};
+  for (const [i,item] of tabs.entries()) {
+   item.button.addEventListener('click',() => selectTab(item));
+   item.button.addEventListener('keydown',event => {
+    if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+    event.preventDefault();
+    const next = event.key === 'Home' ? tabs[0] : event.key === 'End' ? tabs.at(-1) : tabs[1-i];
+    selectTab(next);
+    next.button.focus();
+   });
+   tablist.append(item.button);
+  }
+  form.append(tablist, trial.panel, display.panel);
+  selectTab(trial);
+  const fields = specs.map(spec => {
+   const label = document.createElement('label');
+   label.className = 'filter-field';
+   const caption = document.createElement('span');
+   caption.textContent = spec.label;
+   const field = document.createElement(spec.options ? 'select' : 'input');
+   field.name = spec.key;
+   if (spec.options) {
+    for (const [value, text] of spec.options) {
+     const option = document.createElement('option');
+     option.value = String(value);
+     option.textContent = text;
+     field.append(option);
+    }
+   } else {
+    field.type = 'number';
+    field.required = true;
+    field.min = String(spec.min);
+    field.max = String(spec.max);
+    field.step = String(spec.step);
+    field.inputMode = spec.step === 1 ? 'numeric' : 'decimal';
+   }
+   label.append(caption,field);
+   (spec.display ? display.panel : trial.panel).append(label);
+   return { spec, field };
+  });
+  const actions = document.createElement('div');
+  actions.className = 'settings-actions';
+  const cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.className = 'settings-secondary';
+  cancel.textContent = 'キャンセル';
+  const save = document.createElement('button');
+  save.type = 'submit';
+  save.className = 'settings-primary';
+  save.textContent = '設定を保存';
+  actions.append(cancel,save);
+  form.append(actions);
+  out.replaceChildren(form);
+  return {
+   form, cancel, save,
+   lock(locked) {
+    for (const {field} of fields) field.disabled = locked;
+    save.disabled = cancel.disabled = locked;
+   },
+   paint(saved) {
+    for (const {spec,field} of fields) {
+     const value = saved[spec.group][spec.key];
+     field.value = value ?? '';
+     if (spec.key === 'trial_preset') field.lastElementChild.hidden = value != null;
+    }
+   },
+   edits() {
+    return fields.map(({spec,field}) => {
+     const value = field.value === '' ? null : !spec.options || spec.key === 'page_size' ? Number(field.value) : field.value;
+     return [spec.group,spec.key,value];
+    });
+   },
+  };
+ }
+ g.NewAMemberSettings = { state, specs, createForm };
+ if (typeof module !== 'undefined') module.exports = g.NewAMemberSettings;
+ g.mountMemberSettings = async function(out,status,{ signal,active,session,verifyAccess,accessDenied,setBusy=()=>{},close,onSaved=()=>{} }) {
+  const model = state();
+  const ui = createForm(out);
+  const endpoint = '/api/cloud/new-a-view/preferences';
+  async function request(options = {}) {
+   const response = await fetch(endpoint,{ credentials:'same-origin',cache:'no-store',redirect:'manual',signal,
+    ...options,headers:{...options.headers,'x-cloud-member-session':session} });
+   const reauthenticate = response.type === 'opaqueredirect' || response.status === 401;
+   if (reauthenticate || response.status === 403) {
+    if (active()) accessDenied(reauthenticate);
+    throw Error('access_denied');
+   }
+   return response;
+  }
+  async function read() {
+   const response = await request();
+   if (!response.ok) throw Error('load');
+   const saved = await response.json();
+   if (!active() || !await verifyAccess()) throw Error('access_denied');
+   return saved;
+  }
+  async function reload() {
+   ui.lock(true);
+   const saved = await read();
+   if (!active()) return;
+   model.load(saved);
+   ui.paint(saved);
+   ui.lock(false);
+  }
+  ui.cancel.addEventListener('click',() => {
+   if (!active()) return;
+   if (close) return close();
+   ui.paint(model.cancel());
+   status.textContent = '';
+  });
+  ui.form.addEventListener('submit',async event => {
+   event.preventDefault();
+   if (!active() || ui.save.disabled) return;
+   for (const [group,key,value] of ui.edits()) model.edit(group,key,value);
+   const body = model.begin();
+   ui.lock(true);
+   setBusy(true);
+   status.textContent = '設定を保存しています。';
+   try {
+    const response = await request({ method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(body) });
+    if (!active()) return;
+    if (response.status === 409) {
+     await reload();
+     if (active()) status.textContent = '別の更新がありました。保存済みの設定を読み直しました。';
+     return;
+    }
+    if (!response.ok) {
+     model.fail();
+     ui.lock(false);
+     status.textContent = '保存できませんでした。入力内容を保持しています。';
+     return;
+    }
+    const saved = await read();
+    if (!active()) return;
+    model.verify(saved);
+    ui.paint(saved);
+    ui.lock(false);
+    onSaved(saved);
+    status.textContent = '設定を保存しました。';
+   } catch {
+    if (active() && await verifyAccess() && active()) status.textContent = '保存結果を確認できませんでした。開き直して確認してください。';
+   } finally {
+    if (active()) setBusy(false);
+   }
+  });
+  await reload();
+  if (active()) status.textContent = '';
+ };
 })(globalThis);

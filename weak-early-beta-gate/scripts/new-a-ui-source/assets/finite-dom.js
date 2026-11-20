@@ -1,4 +1,4 @@
-/* Bind the owner-only frame to its calculation, history and account settings. */
+/* Bind the owner-only frame to its calculation and history. */
 (function(){
  'use strict';
  const page=document.body.dataset.page, isHome=page==='home', isAnalytics=page==='analytics';
@@ -6,81 +6,9 @@
  if(!app||!legacy)return;
  const byId=id=>document.getElementById(id);
  const content=byId('cloud-analytics-content');
- const settings=byId('cloud-settings-page');
- const settingsLinks=settings?[...document.querySelectorAll('.topbar .nav a[href]')]:[];
  const rows=Array.from(document.querySelectorAll('#detection-table tbody tr[data-date]'));
- const fields={initial_cash_yen:'new-a-initial-cash',max_positions:'new-a-max-positions',per_order_cap_yen:'new-a-per-order-cap',base_shares:'cloud-base-shares',cost_percent:'cloud-cost-percent',exit_endpoint:'cloud-exit-endpoint',year_scope:'cloud-year-scope',allocation:'cloud-allocation'};
- let drawn=null,displayKey,history=new Map(),dailyLimit=50,latest=null,settingsSaving=false;
+ let drawn=null,displayKey,history=new Map(),dailyLimit=50,latest=null;
  const busy=s=>['loading','saving','calculating'].includes(s.phase);
- const trial=()=>byId('new-a-trial-preset').value;
- const defaultPrefs=legacy.initialDisplay();
- function readTrial(){
-  const values={};
-  for(const [key,id] of Object.entries(fields)){
-   const field=byId(id);
-   if(!field.value)throw Error('空欄を入力してください。');
-   values[key]=field.type==='number'?field.valueAsNumber:field.value;
-  }
-  const preset=byId('cloud-price-preset').value;
-  values.price_cap_yen=preset==='unlimited'?null:preset==='custom'?byId('cloud-price-custom').valueAsNumber:Number(preset);
-  return app.validate(values);
- }
- function readView(){
-  return {trial_preset:trial()==='custom'?null:trial(),theme:byId('cloud-theme').value,font_size:byId('cloud-font-size').value,page_size:Number(byId('cloud-page-size').value)};
- }
- function syncPriceControl(){
-  const custom=byId('cloud-price-preset').value==='custom';
-  byId('cloud-price-custom-field').hidden=!custom;
-  byId('cloud-price-custom').disabled=!custom;
- }
- function syncExitControl(){
-  const active=trial()==='custom';
-  const field=byId('cloud-exit-endpoint');
-  field.closest('label').hidden=!active;
-  field.disabled=!active;
- }
- function syncTrial(p,preset){
-  for(const [key,id] of Object.entries(fields))byId(id).value=String(p[key]);
-  const cap=p.price_cap_yen;
-  byId('cloud-price-preset').value=cap===null?'unlimited':[1000,2000,3000,5000].includes(cap)?String(cap):'custom';
-  byId('cloud-price-custom').value=cap===null?'':String(cap);
-  byId('new-a-trial-preset').value=preset??'custom';
-  syncPriceControl();
-  syncExitControl();
- }
- function syncDisplay(v){
-  byId('cloud-theme').value=v?.theme??defaultPrefs.theme;
-  byId('cloud-font-size').value=v?.font_size??defaultPrefs.fontSize;
-  byId('cloud-page-size').value=String(v?.page_size??defaultPrefs.pageSize);
- }
- function setSettingsStatus(text,error=false){
-  const status=byId('cloud-settings-status');
-  status.textContent=text;
-  status.dataset.state=error?'error':'';
- }
- function confirmLeaveWhileSaving(event){
-  event.preventDefault();
-  event.returnValue=true;
- }
- function blockSettingsNavigation(event){
-  if(settingsLinks.includes(event.target.closest?.('a[href]')))event.preventDefault();
- }
- function setSettingsSaving(saving){
-  if(settingsSaving===saving)return;
-  settingsSaving=saving;
-  for(const link of settingsLinks){
-   if(saving)link.setAttribute('aria-disabled','true');
-   else link.removeAttribute('aria-disabled');
-  }
-  if(saving){
-   document.addEventListener('click',blockSettingsNavigation,true);
-   window.addEventListener('beforeunload',confirmLeaveWhileSaving);
-   byId('cloud-settings-status').focus({preventScroll:true});
-  }else{
-   document.removeEventListener('click',blockSettingsNavigation,true);
-   window.removeEventListener('beforeunload',confirmLeaveWhileSaving);
-  }
- }
  function refCell(date,price,status){
   if(!date||!price)return '—';
   return app.esc(date)+'<small>'+app.yen(Number(price))+' · '+(status==='reference_price_only'?'価格のみ参照':'参照')+'</small>';
@@ -153,33 +81,30 @@
  }
  function clearPrivateDisplay(){
   globalThis.AFiniteRevoked=true;
+  globalThis.CloudSettingsDialog?.close(true);
+  globalThis.AOwnerSavedSettings=null;
   globalThis.AOwnerPageData=null;
   globalThis.AFiniteBrowser?.clear();
   history.clear();
   if(isHome)byId('new-a-history-jump').hidden=true;
   legacy.clearHistory();
   rows.length=0;
-  for(const id of ['new-a-dashboard','new-a-model-holdings','cloud-analytics-content','history','cloud-settings-page','new-a-notification-settings']){
+  for(const id of ['new-a-dashboard','new-a-model-holdings','cloud-analytics-content','history']){
    const node=byId(id);
    if(node){node.replaceChildren();node.hidden=true;}
   }
  }
  function update(state){
+  const saved=globalThis.AOwnerSavedSettings;
+  if(saved&&state.phase!=='denied'&&state.phase!=='session-changed'&&state.revision<=saved.revision){
+   state=saved.accepted?saved:{...state,viewPreferences:saved.viewPreferences};
+  }
   latest=state;
   const working=busy(state);
   const key=JSON.stringify(state.viewPreferences);
-  if(state.revision!==null&&key!==displayKey){
+  if((state.revision!==null||state.viewPreferences)&&key!==displayKey){
    legacy.applyAccountDisplay(state.viewPreferences);
    displayKey=key;
-  }
-  if(settings){
-   for(const control of settings.querySelectorAll('select,input,button'))control.disabled=working||state.revision===null;
-   if(!working&&state.revision!==null){
-    if(!state.dirty){syncTrial(state.draft,state.trialPreset);syncDisplay(state.viewPreferences);}
-    syncPriceControl();syncExitControl();
-   }
-   setSettingsStatus(state.message,state.phase==='error'||state.phase==='denied');
-   setSettingsSaving(state.phase==='saving');
   }
   content?.setAttribute('aria-busy',String(working));
   if(state.phase==='denied'||state.phase==='session-changed'){
@@ -191,22 +116,20 @@
   if(state.phase==='error'){
    if(content&&!state.accepted)content.hidden=true;
    if(isHome&&!state.accepted)globalThis.AOwnerPageData?.renderDashboard?.({});
-   if(!settings||state.revision===null){
-    const message=isAnalytics?(state.accepted?'過去成績を更新できませんでした。':'過去成績を読み込めませんでした。'):isHome?'監視対象と仮想保有を確認できませんでした。':'設定を読み込めませんでした。';
-    globalThis.AOwnerLoadStatus?.(message,()=>{
-     globalThis.AOwnerLoadStatus?.('読み込んでいます。');
-     controller.load();
-    });
-   }
+   const message=isAnalytics?(state.accepted?'過去成績を更新できませんでした。':'過去成績を読み込めませんでした。'):isHome?'監視対象と仮想保有を確認できませんでした。':'設定を読み込めませんでした。';
+   globalThis.AOwnerLoadStatus?.(message,()=>{
+    globalThis.AOwnerLoadStatus?.('読み込んでいます。');
+    controller.load();
+   });
    return;
   }
   if(state.phase==='ready'){
    globalThis.AOwnerLoadStatus?.('');
    if(content)content.hidden=false;
   }
-  if(!state.accepted||drawn===state.accepted.request_id)return;
+  if(!state.accepted||drawn===state.accepted)return;
   const simulation=state.accepted;
-  drawn=simulation.request_id;
+  drawn=simulation;
   if(isAnalytics){
    content.innerHTML=app.render(simulation);
    byId('new-a-daily-chart').innerHTML=equityChart(simulation.result.daily,simulation.result.resolved);
@@ -240,64 +163,7 @@
  const controller=app.createController({trialPreset:'balanced',recentAnalytics:isAnalytics,dashboardPrices:isHome,transport:globalThis.AFiniteTransport,onChange:update,calculateOnLoad:isAnalytics||isHome});
  globalThis.AFiniteUIController=controller;
 
- if(settings){
-  const tabs=[...settings.querySelectorAll('[role="tab"]')];
-  const switchTab=tab=>{
-   for(const item of tabs){
-    const selected=item===tab;
-    item.tabIndex=selected?0:-1;
-    item.setAttribute('aria-selected',String(selected));
-    byId(item.getAttribute('aria-controls')).hidden=!selected;
-   }
-   byId('cloud-research-reset').textContent=tab.id==='settings-tab-display'?'表示をリセット':'試算方法をリセット';
-  };
-  for(const [i,tab] of tabs.entries()){
-   tab.addEventListener('click',()=>switchTab(tab));
-   tab.addEventListener('keydown',event=>{
-    const offset={ArrowLeft:-1,ArrowRight:1}[event.key];
-    const next=event.key==='Home'?tabs[0]:event.key==='End'?tabs.at(-1):offset?tabs[(i+offset+tabs.length)%tabs.length]:null;
-    if(!next)return;
-    event.preventDefault();
-    switchTab(next);
-    next.focus();
-   });
-  }
-  const markChanged=()=>{
-   syncPriceControl();
-   try{controller.edit(readTrial());}catch(e){setSettingsStatus(e.message,true);}
-  };
-  settings.addEventListener('change',()=>{
-   if(busy(latest))return;
-   syncExitControl();
-   markChanged();
-  });
-  byId('cloud-settings-cancel').addEventListener('click',()=>{
-   if(busy(latest))return;
-   controller.cancel();
-   const state=controller.state();
-   syncTrial(state.draft,state.trialPreset);
-   syncDisplay(state.viewPreferences);
-  });
-  byId('cloud-research-reset').addEventListener('click',()=>{
-   if(busy(latest))return;
-   if(byId('settings-tab-display').getAttribute('aria-selected')==='true'){
-    syncDisplay(null);
-    markChanged();
-    return;
-   }
-   controller.reset();
-   controller.setTrialPreset('balanced');
-   syncTrial(controller.state().draft,'balanced');
-  });
-  byId('cloud-settings-save').addEventListener('click',async()=>{
-   if(busy(latest))return;
-   try{
-    const conditions=readTrial(),view=readView();
-    controller.edit(conditions);
-    await controller.save(view);
-   }catch(e){setSettingsStatus(e.message,true);}
-  });
- }
+ globalThis.AFiniteApplySavedSettings=()=>{if(latest)update(latest);};
  document.addEventListener('click',event=>{
   const id=event.target.closest('button')?.id, snapshot=latest;
   if(!id||!snapshot)return;

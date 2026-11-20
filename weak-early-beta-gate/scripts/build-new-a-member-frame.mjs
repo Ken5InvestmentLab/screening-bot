@@ -26,7 +26,7 @@ body[data-cloud-mode=member] form label{display:block;margin:14px 0}
 body[data-cloud-mode=member] form select,body[data-cloud-mode=member] form input{max-width:100%;min-height:44px}
 `;
 
-export async function buildNewAMemberFrame(gate, html) {
+export async function buildNewAMemberFrame(gate, html, settingsModal, settingsTrigger) {
   const ownerGuard = '<script src="/auth/guard.js" defer></script>';
   const ownerLoader = '<script src="/new-a-assets/owner-loader.js" defer></script>';
   const memberScripts = ['member-presentation', 'member-loader']
@@ -43,12 +43,15 @@ export async function buildNewAMemberFrame(gate, html) {
   const generated = [
     '// Build-only data-free member shell. Do not commit generated files.',
     'const SHELL=' + JSON.stringify(shell) + ';',
+    'const SETTINGS_DIALOG=' + JSON.stringify(settingsModal) + ';',
+    'const SETTINGS_TRIGGER=' + JSON.stringify(settingsTrigger) + ';',
     'export function memberFrame(path: string, tier: "premium" | "free" = "premium"): string {',
     '  const page = path === "/weak_early_beta_analytics.html" ? "analytics" : path === "/weak_early_beta_settings.html" ? "settings" : "home";',
     '  const title = page === "analytics" ? "アナリティクス" : page === "settings" ? "設定" : "ダッシュボード";',
-    '  const view = \'<p id="member-state" role="status">読込中</p><button id="member-retry" hidden>再試行</button><div id="member-content"></div>\';',
+    '  const content = \'<p id="member-state" role="status">読込中</p><button id="member-retry" hidden>再試行</button><div id="member-content"></div>\';',
+    '  const view = page === "settings" && tier === "premium" ? \'<section class="panel cloud-settings" aria-labelledby="cloud-settings-title"><h1 id="cloud-settings-title">設定</h1>\' + content + \'</section>\' : content;',
     '  const settings = page === "settings" && tier === "premium" ? \'<script src="/new-a-assets/member-settings.js" defer></script>\' : "";',
-    '  return SHELL.replaceAll("{{INITIAL_THEME}}", "dark").replace("{{INITIAL_THEME_SCRIPT}}", "").replaceAll("{{TITLE}}", title).replaceAll("{{PAGE}}", page).replace("{{MEMBER_SETTINGS_SCRIPT}}", settings).replace("{{VIEW}}", view);',
+    '  return SHELL.replaceAll("{{INITIAL_THEME}}", "dark").replace("{{INITIAL_THEME_SCRIPT}}", "").replaceAll("{{TITLE}}", title).replaceAll("{{PAGE}}", page).replace("{{MEMBER_SETTINGS_SCRIPT}}", settings).replace("{{SETTINGS_DIALOG}}", page !== "settings" && tier === "premium" ? SETTINGS_DIALOG : "").replace("{{SETTINGS_TRIGGER}}", page !== "settings" && tier === "premium" ? SETTINGS_TRIGGER : "").replace("{{VIEW}}", view);',
     '}',
     '',
   ].join('\n');

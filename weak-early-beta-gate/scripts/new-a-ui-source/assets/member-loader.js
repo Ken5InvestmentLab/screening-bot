@@ -62,6 +62,7 @@
   }
 
   function clearDisplay(message, reauthenticate = false) {
+    g.CloudSettingsDialog?.close(true);
     clearFundamentalPage();
     attempt?.abort();
     attempt = undefined;
@@ -201,17 +202,31 @@
     }
   }
 
+  let settingsScript;
   function prepareSettings() {
     if (typeof g.mountMemberSettings === 'function') return;
-    // A role can be restored while a previously locked settings page is open.
-    return new Promise((resolve, reject) => {
+    settingsScript ??= new Promise((resolve, reject) => {
       const script = document.createElement('script');
       script.src = '/new-a-assets/member-settings.js';
       script.onload = resolve;
-      script.onerror = () => reject(Error(unavailable));
+      script.onerror = () => { settingsScript = undefined; script.remove(); reject(Error(unavailable)); };
       document.head.append(script);
     });
+    return settingsScript;
   }
+
+  async function openSettings(target, message, context) {
+    const session = memberSession;
+    const active = () => context.active() && memberSession === session && memberAccess === 'premium';
+    await prepareSettings();
+    if (!active()) return;
+    await g.mountMemberSettings(target, message, {
+      ...context, active, session, verifyAccess,
+      accessDenied: reauthenticate => clearDisplay(accessDenied, reauthenticate),
+    });
+  }
+
+  g.CloudSettingsDialog?.connect(openSettings, () => memberAccess === 'premium');
 
   async function load({ restorePresetFocus = false } = {}) {
     clearFundamentalPage();
@@ -234,12 +249,7 @@
         return;
       }
       if (mode === 'settings') {
-        await prepareSettings();
-        if (!active()) return;
-        await g.mountMemberSettings(out, status, {
-          signal, active, session: memberSession, verifyAccess,
-          accessDenied: reauthenticate => clearDisplay(accessDenied, reauthenticate),
-        });
+        await openSettings(out, status, { signal, active });
         return;
       }
 
@@ -330,6 +340,7 @@
   });
   g.addEventListener('pagehide', () => {
     dismissFundamental();
+    g.CloudSettingsDialog?.close(true);
     out.hidden = true;
   });
   g.addEventListener('pageshow', event => {

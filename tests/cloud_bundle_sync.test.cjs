@@ -22,7 +22,7 @@ test('actual sync builds the exact data-free public inventory and a worker-only 
  const memberScripts = ['member-loader.js', 'member-presentation.js', 'member-settings.js'];
  const scripts = [
   'browser-transport.js', 'finite-controller.js', 'finite-dom.js', 'initial-display.js',
-  'owner-loader.js', 'owner-notifications.js', ...memberScripts,
+  'owner-loader.js', 'owner-notifications.js', 'owner-settings.js', ...memberScripts,
   'weak-early-beta-theme-init.js', 'weak-early-beta-scenarios.js', 'new-a-legacy-interactions.generated.js',
   'presentation-adapter.generated.js', 'new-a-finite-worker.generated.js',
  ];
@@ -46,16 +46,20 @@ test('actual sync builds the exact data-free public inventory and a worker-only 
  const freeHome = renderMemberFrame('/weak_early_beta_latest.html', 'free');
  const freeSettings = renderMemberFrame('/weak_early_beta_settings.html', 'free');
  const premiumSettings = renderMemberFrame('/weak_early_beta_settings.html', 'premium');
+ const premiumHome = renderMemberFrame('/weak_early_beta_latest.html', 'premium');
  assert.match(freeHome, /href="\.\/weak_early_beta_analytics\.html" data-member-premium-nav hidden/);
  assert.match(freeHome, /href="\.\/weak_early_beta_settings\.html" data-member-premium-nav hidden/);
  assert.doesNotMatch(freeHome + freeSettings, /src="\/new-a-assets\/member-settings\.js"/);
+ assert.match(premiumHome, /<dialog id="cloud-settings-dialog"/);
+ assert.match(premiumHome, /aria-haspopup="dialog" aria-controls="cloud-settings-dialog"/);
+ assert.doesNotMatch(freeHome + freeSettings + premiumSettings, /<dialog id="cloud-settings-dialog"/);
  assert.match(premiumSettings, /src="\/new-a-assets\/member-settings\.js"/);
  const scan = spawnSync(process.execPath, [path.join(f.gate, 'scripts/verify-new-a-code-only.mjs')], {encoding: 'utf8'});
  assert.equal(scan.status, 0, scan.stderr);
 });
 for(const fault of ['path','audience','metadata','key','size','private-data','asset-date','unknown-public'])test(`code-only sync refuses ${fault} before touching existing public assets`,async t=>{const f=await fixture(t,fault);assert.notEqual(f.result.status,0);assert.deepEqual(await inventory(f.publicDir),f.before);});
 test('same original calculator and shared finite Worker are code assets; private inputs stay outside sync',async t=>{const f=await fixture(t);assert.equal(f.result.status,0,f.result.stderr);const calculator=await fs.readFile(path.join(f.publicDir,'new-a-assets/weak-early-beta-scenarios.js'));assert.equal(calculator.toString('utf8'),(await fs.readFile(path.join(baseline,'reports/weak-early-beta-scenarios.js'),'utf8')).replace(/\r\n?/g,'\n'));const worker=await fs.readFile(path.join(f.publicDir,'new-a-assets/new-a-finite-worker.generated.js'),'utf8');assert(worker.includes('createDatasetRuntime'));assert(!worker.includes('SYNTHETIC_PRIVATE'));const first=await inventory(f.publicDir),again=spawnSync(process.execPath,[path.join(f.gate,'scripts/sync-report.mjs')],{encoding:'utf8'});assert.equal(again.status,0,again.stderr);assert.deepEqual(await inventory(f.publicDir),first);});
-test('generated owner frames use descriptive history and period labels',async t=>{
+test('generated owner frames use descriptive history labels and direct settings fallback',async t=>{
  const f=await fixture(t);
  assert.equal(f.result.status,0,f.result.stderr);
  const framePath=path.join(f.gate,'.cache/new-a/frame.generated.mjs');
@@ -64,7 +68,11 @@ test('generated owner frames use descriptive history and period labels',async t=
  const dashboard=ownerFrame('/weak_early_beta_latest.html',owner);
  const settings=ownerFrame('/weak_early_beta_settings.html',owner);
  assert.match(dashboard,/<div>試算条件<\/div>/);
- assert.match(settings,/<option value="all">全期間<\/option>/);
+ assert.match(dashboard,/<dialog id="cloud-settings-dialog"/);
+ assert.match(dashboard,/aria-haspopup="dialog" aria-controls="cloud-settings-dialog"/);
+ assert.match(settings,/<h1 id="cloud-settings-title">設定<\/h1>/);
+ assert.match(settings,/id="cloud-settings-direct"/);
+ assert.doesNotMatch(settings,/<dialog id="cloud-settings-dialog"|プッシュ通知|cloud-year-scope|cloud-price-preset/);
  assert.doesNotMatch(dashboard+settings,/>A<|>該当モード<|A検出の記録期間|新A/);
 });
 test('Windows CRLF and Git/Linux LF source checkouts produce identical code-only assets and member frames', async t => {

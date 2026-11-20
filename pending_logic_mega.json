@@ -1,0 +1,126 @@
+{
+  "method": "mega_report_pending",
+  "description": "Pending report-only Mega mode scoring. Apply only after explicit approval.",
+  "proposed_at": "2026-11-20T10:41:57Z",
+  "evaluation_policy": {
+    "calendar_days": 365,
+    "timezone": "Asia/Tokyo",
+    "feature_source": "first_final_snapshot_then_signal_received_cutoff",
+    "current_selection": "published_mode_or_stable_score_then_conditions_fallback",
+    "win_rate": "exclude_zero_percent_draws"
+  },
+  "modes": {
+    "mega5_rebound": {
+      "label": "Mega5 短期リバウンド",
+      "eval_days": 5,
+      "target": 0.2,
+      "current": {
+        "conditions": [
+          "vol20",
+          "rci9_os",
+          "pre_down3"
+        ],
+        "backtest": {
+          "n": 18,
+          "decisive_n": 18,
+          "avg_raw": 0.056,
+          "wr_raw": 0.388889,
+          "median_raw": -0.0295,
+          "m10_raw": 5,
+          "target_hits": 4,
+          "target_rate": 0.222222
+        },
+        "validation": {
+          "n": 8,
+          "decisive_n": 8,
+          "avg_raw": -0.05525,
+          "wr_raw": 0.25,
+          "median_raw": -0.051,
+          "m10_raw": 3,
+          "target_hits": 0,
+          "target_rate": 0.0
+        },
+        "live": {
+          "n": 0,
+          "decisive_n": 0,
+          "avg_raw": 0.0,
+          "wr_raw": 0.0,
+          "median_raw": 0.0,
+          "m10_raw": 0,
+          "target_hits": 0,
+          "target_rate": 0.0
+        }
+      },
+      "candidate": {
+        "conditions": [
+          "body_pullback10",
+          "rsi5070",
+          "rci9_os"
+        ],
+        "backtest": {
+          "n": 13,
+          "decisive_n": 13,
+          "avg_raw": 0.082385,
+          "wr_raw": 0.538462,
+          "median_raw": 0.033,
+          "m10_raw": 3,
+          "target_hits": 3,
+          "target_rate": 0.230769
+        },
+        "validation": {
+          "n": 8,
+          "decisive_n": 8,
+          "avg_raw": -0.05525,
+          "wr_raw": 0.25,
+          "median_raw": -0.051,
+          "m10_raw": 3,
+          "target_hits": 0,
+          "target_rate": 0.0
+        },
+        "live": {
+          "n": 0,
+          "decisive_n": 0,
+          "avg_raw": 0.0,
+          "wr_raw": 0.0,
+          "median_raw": 0.0,
+          "m10_raw": 0,
+          "target_hits": 0,
+          "target_rate": 0.0
+        },
+        "simulation_backtest": {
+          "n": 12,
+          "decisive_n": 12,
+          "avg_raw": 0.167917,
+          "wr_raw": 0.583333,
+          "median_raw": 0.0195,
+          "m10_raw": 2,
+          "target_hits": 4,
+          "target_rate": 0.333333
+        },
+        "simulation_validation": {
+          "n": 5,
+          "decisive_n": 5,
+          "avg_raw": 0.1292,
+          "wr_raw": 0.2,
+          "median_raw": -0.063,
+          "m10_raw": 1,
+          "target_hits": 1,
+          "target_rate": 0.2
+        }
+      },
+      "adoption_reasons": [
+        "確定成績が改善 (目標Hit +11.1pt / 平均 +11.2pt / 勝率 +19.4pt)",
+        "検証期間で大きな悪化なし",
+        "未確定銘柄サンプルが少ないため、確定成績と検証期間を優先",
+        "未確定平均・-10%以下件数・中央値・直近lockbox強制ゲートを通過",
+        "勝率悪化・単一銘柄依存ゲート通過",
+        "差分品質ゲート通過"
+      ],
+      "overfit_checks": {
+        "min_n_ratio": 0.6,
+        "live_avg_tolerance": 0.05,
+        "live_wr_tolerance": 0.15
+      }
+    }
+  }
+}

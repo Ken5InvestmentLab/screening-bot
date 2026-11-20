@@ -16,7 +16,7 @@ const premiumHome = {
 };
 test('Premium restores the vertical dashboard panels with the original top KPI layout',()=>{
  const html=ui.view({...premiumHome,chartRows:[{date:premiumHome.asOf,equity_yen:9500,holding_count:2}]});
- const order=['ダッシュボード','運用レベル','純損益','最大DD','勝率','保有件数','対象日の動き',
+ const order=['データ更新日','ダッシュボード','運用レベル','純損益','最大DD','勝率','保有件数','対象日の動き',
   '234A','456A','567A','現在の監視','345A','検出履歴','1234'];
  let previous=-1;
  for(const label of order){
@@ -31,7 +31,26 @@ test('Premium restores the vertical dashboard panels with the original top KPI l
  a.match(html,/cloud-transition--hold-start/);
  a.match(html,/cloud-transition--hold-end/);
  a.match(html,/aria-label="対象日の件数".*監視開始 <b>1件.*仮想保有開始 <b>1件.*仮想保有終了 <b>1件/);
- a.doesNotMatch(html,/<select|owner-only|39213|決済件数|新A|（A）|運用レベルは|仮想保有の動き/);
+ a.match(html,/<p class="note">データ更新日 <time datetime="2026-11-19">2026-11-19<\/time><\/p>/);
+ a.equal((html.match(/データ更新日/g)||[]).length,1);
+ a.doesNotMatch(html,/<select|owner-only|39213|決済件数|新A|（A）|運用レベルは|仮想保有の動き|日次資金推移|対象 <time/);
+});
+test('current monitoring shows eight recent rows and a closed native disclosure for remaining rows',()=>{
+ const watching=Array.from({length:11},(_,i)=>({symbol:String(9000+i),date:'2026-11-'+(19-i),state:'WATCHING'}));
+ const report=rows=>ui.view({...premiumHome,dashboard:{...premiumHome.dashboard,watching:rows}});
+ const section=html=>html.slice(html.indexOf('<section class="panel" aria-labelledby="member-watching-heading">'))
+  .split('</section>')[0];
+ const watch=section(report(watching));
+ a.match(watch,/現在の監視.*11銘柄/);
+ a.doesNotMatch(watch,/状況|監視中<\/span>/);
+ const disclosure='<details class="cloud-table-details"><summary>残り3銘柄</summary>';
+ a.ok(watch.includes(disclosure));
+ const [visible, remaining]=watch.split(disclosure);
+ a.equal((visible.match(/<tr><td/g)||[]).length,8);
+ a.equal((remaining.match(/<tr><td/g)||[]).length,3);
+ watching.forEach(({symbol},index)=>a.match(index<8?visible:remaining,new RegExp('>'+symbol+'</td>')));
+ a.doesNotMatch(section(report(watching.slice(0,8))),/<details/);
+ a.match(section(report([])),/監視中の銘柄なし/);
 });
 test('dashboard level offers three native radio choices and the current choice matches the selected KPI',()=>{
  const changed=presets.map(item=>item.preset==='return_priority'
@@ -87,6 +106,7 @@ test('changing dashboard radio reloads the selected chart and restores keyboard 
  const flush=()=>new Promise(resolve=>setImmediate(resolve));
  await flush();
  a.equal(rendered[0].selected,'medium');
+ a.equal(status.textContent,'');
  const radio={value:'defensive'};
  document.activeElement=radio;
  change({target:radio});
@@ -104,6 +124,7 @@ test('Premium Analytics annualizes only the selected resolved projection over it
  const value=label=>new RegExp('年率換算損益率</span><b>'+label+'</b>');
  const html=ui.view(pages);
  a.match(html,value('14\\.01%'));
+ a.match(html,/<h2>日次資金推移<\/h2><div class="research-chart"/);
  a.equal((html.match(/年率換算損益率/g)||[]).length,1);
  a.match(html,/累積損益率を経過年数で割った値/);
  a.doesNotMatch(ui.view(premiumHome),/年率換算損益率/);

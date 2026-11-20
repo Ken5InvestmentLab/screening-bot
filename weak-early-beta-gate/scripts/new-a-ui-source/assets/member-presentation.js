@@ -153,13 +153,20 @@ function movementCards(rows) {
       + movementBadge(state) + '</div>').join('') + '</div></article>').join('');
   return '<div class="cloud-stock-grid">' + (cards || '<p class="cloud-empty">確認済みの開始・終了はありません</p>') + '</div>';
 }
+function watchTable(rows, label) {
+  return '<div class="table-wrap"><table class="scenario-table" aria-label="' + label + '">'
+    + '<thead><tr><th scope="col">銘柄</th><th scope="col">監視開始日</th></tr></thead><tbody>'
+    + rows.map(({symbol, date}) => '<tr><td data-label="銘柄">' + esc(symbol) + '</td>'
+      + '<td data-label="監視開始日"><time datetime="' + esc(date) + '">' + esc(date) + '</time></td></tr>')
+      .join('') + '</tbody></table></div>';
+}
 function currentWatch(rows) {
   if (!rows.length) return '<p class="cloud-empty">監視中の銘柄なし</p>';
-  return '<div class="table-wrap"><table class="scenario-table"><thead><tr><th scope="col">銘柄</th>'
-    + '<th scope="col">監視開始日</th><th scope="col">状況</th></tr></thead><tbody>'
-    + rows.map(({symbol, date, state}) => '<tr><td data-label="銘柄">' + esc(symbol) + '</td>'
-      + '<td data-label="監視開始日"><time datetime="' + esc(date) + '">' + esc(date) + '</time></td>'
-      + '<td data-label="状況">' + movementBadge(state) + '</td></tr>').join('') + '</tbody></table></div>';
+  const visible = 8;
+  const rest = rows.slice(visible);
+  return watchTable(rows.slice(0, visible), '直近の監視銘柄')
+    + (rest.length ? '<details class="cloud-table-details"><summary>残り' + rest.length + '銘柄</summary>'
+      + watchTable(rest, '残りの監視銘柄') + '</details>' : '');
 }
 function dashboardLevel(selected) {
   return '<fieldset id="member-preset" class="member-level"><legend>運用レベル</legend><div class="member-level-options">'
@@ -176,16 +183,15 @@ function premiumHome({asOf, selected, rows, chartRows, dashboard, historyPage}, 
   const summary = dashboardKpis([['純損益',m?.net_profit,'円'],['最大DD',m?.max_drawdown_pct,'%'],
     ['勝率',m?.win_rate_pct,'%'],['保有件数',holdingCount,'件']]);
   return '<section class="panel today-summary" aria-labelledby="member-today-title">'
+    + '<p class="note">データ更新日 <time datetime="' + esc(asOf) + '">' + esc(asOf) + '</time></p>'
     + '<div class="cloud-section-head"><h1 id="member-today-title">ダッシュボード</h1>'
     + dashboardLevel(selected) + '</div>' + summary + '</section>'
     + '<section class="panel" id="new-a-current" aria-labelledby="member-activity-heading"><div class="cloud-section-head">'
-    + '<h2 id="member-activity-heading">対象日の動き</h2><div class="cloud-meta"><span class="badge">対象 '
-    + '<time datetime="' + esc(asOf) + '">' + esc(asOf) + '</time></span></div></div>'
+    + '<h2 id="member-activity-heading">対象日の動き</h2></div>'
     + movementSummary(dashboard.today) + movementCards(dashboard.today) + '</section>'
     + '<section class="panel" aria-labelledby="member-watching-heading"><div class="cloud-section-head">'
     + '<h2 id="member-watching-heading">現在の監視</h2><span class="badge">' + dashboard.watching.length + '銘柄</span></div>'
     + currentWatch(dashboard.watching) + '</section>'
-    + '<section class="panel"><h2>日次資金推移</h2>' + chart(chartRows) + '</section>'
     + '<section class="panel"><h2>検出履歴</h2>' + history(rows,historyPage) + '</section>';
 }
 function freeHome(rows = null) {

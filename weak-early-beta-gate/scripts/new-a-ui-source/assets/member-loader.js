@@ -298,7 +298,7 @@
         personal: personal?.metrics,
         dashboard,
       });
-      status.textContent = free ? '' : '共通データ ' + source.as_of;
+      status.textContent = free || mode === 'home' ? '' : '共通データ ' + source.as_of;
       const preset = document.getElementById('member-preset');
       preset?.addEventListener('change', event => {
         const { value } = event.target;

@@ -382,3 +382,33 @@ class PresentationSuccessorReviewTest(unittest.TestCase):
                     changed = self.commit("Unreviewed fundamental impact successor")
                     with self.assertRaisesRegex(ValueError, reason):
                         review.review_member_release_source(self.repo, baseline, changed)
+
+    def test_cloud_ui_successor_pins_new_assets_and_keeps_role_only(self):
+        self.config["vars"]["CLOUD_MEMBER_AUDIENCE"] = "role_only"
+        self.write(review.CONFIG, json.dumps(self.config).encode())
+        reviewed = review._CLOUD_UI_PRODUCT_PATHS
+        additions = review._CLOUD_UI_ADDITIONS
+        paths = reviewed | review._SUCCESSOR_REVIEW_PATHS
+        self.assertTrue(additions and additions < reviewed)
+        for path in paths - additions:
+            self.write(path, b"predecessor " + path.encode())
+        baseline = self.commit("Accepted Cloud UI predecessor")
+        for path in paths:
+            self.write(path, b"reviewed Cloud UI " + path.encode())
+        candidate = self.commit("Reviewed Cloud UI and local regression checks")
+        checked = review._product_digest(self.repo, candidate, reviewed)
+        with (patch.object(review, "_CLOUD_UI_BASELINE", baseline),
+              patch.object(review, "_CLOUD_UI_PRODUCT_SHA256", checked)):
+            result = review.review_member_release_source(self.repo, baseline, candidate)
+            self.assertEqual(result["schema"], review.CLOUD_UI_REVIEW_SCHEMA)
+            self.assertEqual(result["member_audience"], "role_only")
+            self.assertTrue(result["owner_only_gate_preserved"])
+            for path, error in ((min(additions), "reviewed frontend or test bytes"),
+                                ("unreviewed-asset.js", "mode or inventory"),
+                                (review.ENTRY, "authorization")):
+                with self.subTest(path=path):
+                    self.git("reset", "--hard", candidate)
+                    self.write(path, b"unreviewed change")
+                    changed = self.commit("Unreviewed successor")
+                    with self.assertRaisesRegex(ValueError, error):
+                        review.review_member_release_source(self.repo, baseline, changed)

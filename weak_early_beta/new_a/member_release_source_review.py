@@ -21,6 +21,7 @@ ROLE_ONLY_REVIEW_SCHEMA = "NEW_A_MEMBER_ROLE_ONLY_SUCCESSOR_SOURCE_REVIEW_V1"
 JOURNAL_REVIEW_SCHEMA = "NEW_A_MEMBER_JOURNAL_SUCCESSOR_SOURCE_REVIEW_V1"
 FUNDAMENTAL_POPUP_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_POPUP_SUCCESSOR_SOURCE_REVIEW_V1"
 FUNDAMENTAL_IMPACT_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_IMPACT_SUCCESSOR_SOURCE_REVIEW_V1"
+CLOUD_UI_REVIEW_SCHEMA = "NEW_A_MEMBER_CLOUD_UI_SUCCESSOR_SOURCE_REVIEW_V1"
 _PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumのアクセス権を購入する</a>'.encode()
 _NEW_PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumアクセス権を購入する</a>'.encode()
 _SUCCESSOR_REVIEW_PATHS = frozenset({
@@ -138,7 +139,36 @@ _FUNDAMENTAL_IMPACT_REVIEWED_PATHS = frozenset({
     "tests/new_a_role_presentation_candidate.test.cjs",
 })
 _FUNDAMENTAL_IMPACT_REVIEWED_SHA256 = "e1a500af4f1160265639f5b86a911c1fc3cd19383bd1d08f5fea0e51dcba3904"
+_CLOUD_UI_BASELINE = "e063e97722eaa1edc5fdbe7bdb12d079e29603b1"
+_CLOUD_UI_ADDITIONS = frozenset({
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/owner-settings.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/settings-dialog.js",
+})
+_CLOUD_UI_PRODUCT_PATHS = _CLOUD_UI_ADDITIONS | frozenset({
+    "tests/cloud_bundle_sync.test.cjs",
+    "tests/new_a_analytics_presets.test.cjs",
+    "tests/new_a_dashboard_details.test.cjs",
+    "tests/new_a_member_consistency.test.cjs",
+    "tests/new_a_owner_connection.test.cjs",
+    "tests/new_a_role_presentation_candidate.test.cjs",
+    "tests/new_a_role_settings_candidate.test.cjs",
+    "weak-early-beta-gate/scripts/build-new-a-frame.mjs",
+    "weak-early-beta-gate/scripts/build-new-a-member-frame.mjs",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/browser-transport.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/finite-controller.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/finite-dom.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/member-loader.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/member-presentation.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/member-settings.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/owner-loader.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/frame.html",
+    "weak-early-beta-gate/scripts/new-a-ui-source/history-body.html",
+    "weak-early-beta-gate/scripts/new-a-ui-source/patch-legacy-interactions.mjs",
+    "weak-early-beta-gate/scripts/new-a-ui-source/settings-body.html",
+})
+_CLOUD_UI_PRODUCT_SHA256 = "5915482eefe7eaa5be1240fc42735e747777323462c5ed83635239e9dee3d957"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
+    CLOUD_UI_REVIEW_SCHEMA,
     ROLE_ONLY_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA, FUNDAMENTAL_POPUP_REVIEW_SCHEMA, FUNDAMENTAL_IMPACT_REVIEW_SCHEMA,
 })
 MEMBER_BINDING = {
@@ -160,7 +190,7 @@ def unique_replace(data, old, new):
     return data.replace(old, new)
 
 
-def _successor_paths(repo, baseline, candidate, *, allowed_addition=None):
+def _successor_paths(repo, baseline, candidate, *, allowed_additions=()):
     raw = git(repo, "diff", "--raw", "--no-abbrev", "--no-renames", "-z", baseline, candidate, "--")
     records = raw.split(b"\0")[:-1]
     paths = set()
@@ -170,7 +200,7 @@ def _successor_paths(repo, baseline, candidate, *, allowed_addition=None):
         if len(fields) != 5:
             raise ValueError("Member successor changes an existing file mode or inventory")
         regular_edit = fields[:2] == [b":100644", b"100644"] and fields[-1] == b"M"
-        approved_addition = (name == allowed_addition and fields[:2] == [b":000000", b"100644"]
+        approved_addition = (name in allowed_additions and fields[:2] == [b":000000", b"100644"]
                              and fields[2] == b"0" * 40 and fields[-1] == b"A")
         if not regular_edit and not approved_addition:
             raise ValueError("Member successor changes an existing file mode or inventory")
@@ -232,7 +262,14 @@ def _check_role_only_successor(repo, candidate, paths):
 
 
 def _member_successor(repo, baseline, candidate):
-    if baseline == _FUNDAMENTAL_IMPACT_BASELINE:
+    if baseline == _CLOUD_UI_BASELINE:
+        paths = _successor_paths(repo, baseline, candidate, allowed_additions=_CLOUD_UI_ADDITIONS)
+        if paths != _CLOUD_UI_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
+            raise ValueError("Cloud UI successor differs from the reviewed frontend or test scope")
+        if _product_digest(repo, candidate, _CLOUD_UI_PRODUCT_PATHS) != _CLOUD_UI_PRODUCT_SHA256:
+            raise ValueError("Cloud UI successor differs from the reviewed frontend or test bytes")
+        schema = CLOUD_UI_REVIEW_SCHEMA
+    elif baseline == _FUNDAMENTAL_IMPACT_BASELINE:
         paths = _successor_paths(repo, baseline, candidate)
         if paths != _FUNDAMENTAL_IMPACT_REVIEWED_PATHS | _SUCCESSOR_REVIEW_PATHS:
             raise ValueError("Fundamental impact successor differs from the reviewed frontend or test scope")
@@ -255,11 +292,11 @@ def _member_successor(repo, baseline, candidate):
             raise ValueError("Journal successor differs from the reviewed runner bytes")
         schema = JOURNAL_REVIEW_SCHEMA
     elif baseline == _ROLE_ONLY_BASELINE:
-        paths = _successor_paths(repo, baseline, candidate, allowed_addition=_ROLE_ONLY_MIGRATION)
+        paths = _successor_paths(repo, baseline, candidate, allowed_additions=(_ROLE_ONLY_MIGRATION,))
         _check_role_only_successor(repo, candidate, paths)
         schema = ROLE_ONLY_REVIEW_SCHEMA
     elif baseline == _FUNDAMENTAL_BASELINE:
-        paths = _successor_paths(repo, baseline, candidate, allowed_addition=_FUNDAMENTAL_MIGRATION)
+        paths = _successor_paths(repo, baseline, candidate, allowed_additions=(_FUNDAMENTAL_MIGRATION,))
         _check_fundamental_successor(repo, candidate, paths)
         schema = FUNDAMENTAL_REVIEW_SCHEMA
     else:
@@ -312,7 +349,8 @@ def review_member_release_source(repo, baseline, candidate):
         if (expected_config != candidate_config_bytes or common_config.get("name") != acceptance.SERVICE
                 or common_config["vars"].get("CLOUD_MEMBER_VIEW_ENABLED") != "true" or prior_members != [MEMBER_BINDING]):
             raise ValueError("Member successor changes the approved Worker configuration or member D1")
-        if (baseline in {_JOURNAL_BASELINE, _FUNDAMENTAL_POPUP_BASELINE, _FUNDAMENTAL_IMPACT_BASELINE}
+        if (baseline in {_JOURNAL_BASELINE, _FUNDAMENTAL_POPUP_BASELINE, _FUNDAMENTAL_IMPACT_BASELINE,
+                         _CLOUD_UI_BASELINE}
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "role_only"):
             raise ValueError("Version-bound member successor requires the existing role-only audience")
         return _member_successor(repo, baseline, candidate)

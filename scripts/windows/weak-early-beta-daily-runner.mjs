@@ -114,39 +114,80 @@ function npmInvocation(config, script = 'check', platform = process.platform) {
   if (!fs.existsSync(npmCli)) throw new Error(`Windows npm CLI not found: ${npmCli}`);
   return { exe: config.nodePath, args: [npmCli, 'run', script] };
 }
-async function run(exe, args, { cwd, env, log, capture = false, timeoutMs = 12_000_000 }) {
+async function run(exe, args, { cwd, env, log, timeoutMs = 12_000_000 }) {
   fs.mkdirSync(path.dirname(log), { recursive: true });
   fs.writeFileSync(`${log}.stdout`, '');
   fs.writeFileSync(`${log}.stderr`, '');
+  const journal = fields => atomicJson(`${log}.process.json`, {
+    identity: 'CLOUD_CHILD_PROCESS_V1', ...fields,
+  }, { retryReplacing: true });
+  const starting = { parentPid: process.pid, executable: path.basename(exe), startedAt: new Date().toISOString() };
+  journal({ ...starting, status: 'planned' });
   return await new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
+    let failure;
+    let spawnFailure;
     const stdoutDecoder = new StringDecoder('utf8');
     const stderrDecoder = new StringDecoder('utf8');
-    atomicJson(`${log}.process.json`, { identity: 'CLOUD_CHILD_PROCESS_V1', parentPid: process.pid, executable: path.basename(exe), startedAt: new Date().toISOString(), status: 'planned' });
-    const child = spawn(exe, args, { cwd, env, windowsHide: true, stdio: capture ? ['ignore', 'pipe', 'pipe'] : ['ignore', 'pipe', 'pipe'] });
-    atomicJson(`${log}.process.json`, { identity: 'CLOUD_CHILD_PROCESS_V1', pid: child.pid || null, parentPid: process.pid, executable: path.basename(exe), startedAt: new Date().toISOString(), status: 'running' });
-    child.stdout.on('data', chunk => {
-      stdout += stdoutDecoder.write(chunk);
-      fs.appendFileSync(`${log}.stdout`, chunk);
-    });
-    child.stderr.on('data', chunk => {
-      stderr += stderrDecoder.write(chunk);
-      fs.appendFileSync(`${log}.stderr`, chunk);
-    });
-    const timer = setTimeout(() => {
-      if (process.platform === 'win32') {
+    const child = spawn(exe, args, { cwd, env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+    const ownedChildRunning = () => child.pid && child.exitCode === null && child.signalCode === null;
+    const stopChild = () => {
+      if (!ownedChildRunning()) return;
+      const killDirectly = () => {
+        if (!ownedChildRunning()) return;
+        try { child.kill('SIGKILL'); }
+        catch (error) { failure ??= error; }
+      };
+      if (process.platform !== 'win32') {
+        killDirectly();
+        return;
+      }
+      try {
         const killer = spawn('taskkill.exe', ['/PID', String(child.pid), '/T', '/F'], { windowsHide: true, stdio: 'ignore' });
-        killer.on('error', () => child.kill());
-      } else child.kill('SIGTERM');
-      reject(new Error(`timeout: ${path.basename(log)}`));
-    }, timeoutMs);
-    child.on('error', error => { clearTimeout(timer); atomicJson(`${log}.process.json`, { identity: 'CLOUD_CHILD_PROCESS_V1', pid: child.pid || null, completedAt: new Date().toISOString(), status: 'spawn_failed', error: error.code || 'unknown' }); reject(error); });
-    child.on('close', code => {
-      clearTimeout(timer);
-      atomicJson(`${log}.process.json`, { identity: 'CLOUD_CHILD_PROCESS_V1', pid: child.pid || null, completedAt: new Date().toISOString(), status: 'exited', code });
-      resolve({ code, stdout: stdout + stdoutDecoder.end(), stderr: stderr + stderrDecoder.end() });
+        killer.once('error', killDirectly);
+        killer.once('close', code => { if (code !== 0) killDirectly(); });
+      } catch {
+        killDirectly();
+      }
+    };
+    const stopOnFailure = error => {
+      if (failure) return;
+      failure = error;
+      stopChild();
+    };
+    const stream = (name, childStream, consume) => childStream?.on('data', chunk => {
+      try {
+        consume(chunk);
+        fs.appendFileSync(`${log}.${name}`, chunk);
+      } catch (error) {
+        stopOnFailure(error);
+      }
     });
+    stream('stdout', child.stdout, chunk => { stdout += stdoutDecoder.write(chunk); });
+    stream('stderr', child.stderr, chunk => { stderr += stderrDecoder.write(chunk); });
+    child.on('error', error => {
+      failure ??= error;
+      if (!child.pid) spawnFailure = error;
+    });
+    const timer = setTimeout(() => stopOnFailure(new Error(`timeout: ${path.basename(log)}`)), timeoutMs);
+    child.once('close', code => {
+      clearTimeout(timer);
+      try {
+        journal({ pid: child.pid || null, completedAt: new Date().toISOString(),
+          ...(spawnFailure ? { status: 'spawn_failed', error: spawnFailure.code || 'unknown' } : { status: 'exited', code }) });
+      } catch (error) {
+        failure ??= error;
+      }
+      if (failure) reject(failure);
+      else resolve({ code, stdout: stdout + stdoutDecoder.end(), stderr: stderr + stderrDecoder.end() });
+    });
+    try {
+      // Capture the terminal outcome even if storing the running PID fails.
+      journal({ ...starting, pid: child.pid || null, status: 'running' });
+    } catch (error) {
+      stopOnFailure(error);
+    }
   });
 }
 async function requireOk(exe, args, options) {

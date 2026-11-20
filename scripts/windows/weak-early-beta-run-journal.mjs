@@ -2,14 +2,29 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
 
+const replacementContention = new Set(['EPERM', 'EACCES', 'EBUSY']);
+const replacementDelays = [25, 50, 100, 200, 400];
+const replacementWait = new Int32Array(new SharedArrayBuffer(4));
+
 // Small durable records are independent of streamed console output/session IDs.
-export function atomicJson(file, value) {
+export function atomicJson(file, value, { retryReplacing = false } = {}) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   const temporary = `${file}.${randomUUID()}.tmp`;
   const fd = fs.openSync(temporary, 'wx');
   try { fs.writeFileSync(fd, JSON.stringify(value, null, 2) + '\n'); fs.fsyncSync(fd); }
   finally { fs.closeSync(fd); }
-  fs.renameSync(temporary, file);
+  // Retry only replacement of the same flushed file. Keep both records
+  // available for reconciliation if the destination cannot be replaced.
+  for (let attempt = 0; ; attempt++) {
+    try {
+      fs.renameSync(temporary, file);
+      return;
+    } catch (error) {
+      const delay = replacementDelays[attempt];
+      if (!retryReplacing || !delay || !replacementContention.has(error.code)) throw error;
+      Atomics.wait(replacementWait, 0, 0, delay);
+    }
+  }
 }
 
 export function appendEvent(file, event) {

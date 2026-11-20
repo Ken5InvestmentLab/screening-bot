@@ -51,6 +51,108 @@ test('child capture preserves UTF-8 split across stdout and stderr chunks', asyn
   assert.deepEqual(fs.readFileSync(log + '.stderr'), Buffer.from('日次通知'));
 });
 
+test('transient process journal contention preserves the child and its exact terminal result', async t => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'cloud-process-contention-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const log = path.join(directory, 'contention');
+  const journal = log + '.process.json';
+  const replace = fs.renameSync;
+  const attempts = { planned: 0, running: 0, exited: 0 };
+  const firstTemporary = new Map();
+  t.mock.method(fs, 'renameSync', (temporary, destination) => {
+    if (destination !== journal) return replace(temporary, destination);
+    const { status } = JSON.parse(fs.readFileSync(temporary, 'utf8'));
+    attempts[status]++;
+    if (status !== 'planned') {
+      const expectedOld = status === 'running' ? 'planned' : 'running';
+      assert.equal(JSON.parse(fs.readFileSync(destination, 'utf8')).status, expectedOld);
+      if (attempts[status] === 1) {
+        firstTemporary.set(status, temporary);
+        throw Object.assign(new Error('simulated Windows replacement contention'), {
+          code: status === 'running' ? 'EPERM' : 'EBUSY',
+        });
+      }
+      assert.equal(temporary, firstTemporary.get(status));
+    }
+    return replace(temporary, destination);
+  });
+
+  const result = await run(process.execPath, ['-e', 'process.stdout.write("completed once")'], {
+    cwd: directory, env: process.env, log, timeoutMs: 10_000,
+  });
+  assert.deepEqual(result, { code: 0, stdout: 'completed once', stderr: '' });
+  assert.deepEqual(attempts, { planned: 1, running: 2, exited: 2 });
+  const receipt = JSON.parse(fs.readFileSync(journal, 'utf8'));
+  assert.equal(receipt.status, 'exited');
+  assert.equal(receipt.code, 0);
+  assert.ok(receipt.pid > 0);
+  assert.equal(fs.readdirSync(directory).filter(file => file.endsWith('.tmp')).length, 0);
+});
+
+test('persistent running-journal contention stops the owned child before rejecting', async t => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'cloud-process-ownership-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const log = path.join(directory, 'ownership');
+  const journal = log + '.process.json';
+  const replace = fs.renameSync;
+  let runningAttempts = 0;
+  let childPid;
+  const contention = Object.assign(new Error('simulated persistent Windows replacement'), { code: 'EPERM' });
+  t.mock.method(fs, 'renameSync', (temporary, destination) => {
+    if (destination !== journal) return replace(temporary, destination);
+    const record = JSON.parse(fs.readFileSync(temporary, 'utf8'));
+    if (record.status !== 'running') return replace(temporary, destination);
+    runningAttempts++;
+    childPid = record.pid;
+    assert.equal(JSON.parse(fs.readFileSync(destination, 'utf8')).status, 'planned');
+    throw contention;
+  });
+
+  await assert.rejects(run(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], {
+    cwd: directory, env: process.env, log, timeoutMs: 10_000,
+  }), error => error === contention);
+  const terminal = JSON.parse(fs.readFileSync(journal, 'utf8'));
+  assert.equal(runningAttempts, 6);
+  assert.ok(childPid > 0);
+  assert.equal(terminal.pid, childPid);
+  assert.equal(terminal.status, 'exited');
+  assert.notEqual(terminal.code, 0);
+  assert.throws(() => process.kill(childPid, 0), { code: 'ESRCH' });
+  const retained = fs.readdirSync(directory).filter(file => file.endsWith('.tmp'));
+  assert.equal(retained.length, 1);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(directory, retained[0]), 'utf8')).pid, childPid);
+});
+
+test('terminal record failure retains exit evidence and rejects without an uncaught callback', async t => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'cloud-process-close-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const log = path.join(directory, 'closure');
+  const journal = log + '.process.json';
+  const replace = fs.renameSync;
+  let attempts = 0;
+  const denied = Object.assign(new Error('nontransient terminal record failure'), { code: 'ENOSPC' });
+  t.mock.method(fs, 'renameSync', (temporary, destination) => {
+    if (destination !== journal || JSON.parse(fs.readFileSync(temporary, 'utf8')).status !== 'exited') {
+      return replace(temporary, destination);
+    }
+    attempts++;
+    throw denied;
+  });
+
+  await assert.rejects(run(process.execPath, ['-e', 'process.exit(0)'], {
+    cwd: directory, env: process.env, log, timeoutMs: 10_000,
+  }), error => error === denied);
+  assert.equal(attempts, 1);
+  const current = JSON.parse(fs.readFileSync(journal, 'utf8'));
+  assert.equal(current.status, 'running');
+  const retained = fs.readdirSync(directory).filter(file => file.endsWith('.tmp'));
+  assert.equal(retained.length, 1);
+  const terminal = JSON.parse(fs.readFileSync(path.join(directory, retained[0]), 'utf8'));
+  assert.equal(terminal.pid, current.pid);
+  assert.equal(terminal.status, 'exited');
+  assert.equal(terminal.code, 0);
+});
+
 test('New A tags only the verified code HEAD and never commits generated data', () => {
   const source = fs.readFileSync(new URL('./weak-early-beta-daily-runner.mjs', import.meta.url), 'utf8');
   const main = source.slice(source.indexOf('async function main('), source.indexOf('export {'));

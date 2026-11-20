@@ -98,7 +98,10 @@ export function memberServices(d: MemberAdapters, generationSecret: string | und
       if (!part || !same(source, part.source)) return json({ error: 'source_unavailable' }, 503);
       if (history && Number(raw) > part.history_pages) return json({ error: 'page_not_found' }, 404);
       if (history) {
-        const rows = (part.rows as Record<string, unknown>[]).map(({ date, symbol, state, fundamental_sha256 }) => ({
+        const historyRows = part.rows as Record<string, unknown>[];
+        // Existing retained parts also contain terminal monitoring rows. Expose only settled holdings to Free.
+        const visible = tier === 'free' ? historyRows.filter(row => row.state === 'HOLD_ENDED') : historyRows;
+        const rows = visible.map(({ date, symbol, state, fundamental_sha256 }) => ({
           date, symbol, state,
           ...(tier === 'premium' && typeof fundamental_sha256 === 'string' ? { has_fundamental: true } : {}),
         }));

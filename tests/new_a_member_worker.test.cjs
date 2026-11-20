@@ -28,6 +28,7 @@ const dashboard = '/api/cloud/new-a-view/dashboard.json';
 const fundamental = '/api/cloud/new-a-view/fundamental.json';
 const sessionPath = '/api/cloud/new-a-view/session';
 const ended = { date: '2026-11-18', symbol: '0010', state: 'EXPIRED' };
+const closed = { date: '2026-11-18', symbol: '0020', state: 'HOLD_ENDED' };
 const reportFixture = {
   date: ended.date, symbol: ended.symbol, company_name: 'テスト会社', analysis_cutoff: '2026-11-18T07:00:00Z',
   fields: ['材料インパクト', '事業概要', '足元材料', 'ファンダ要点', '注意点', '開示リンク', 'Sources']
@@ -77,7 +78,9 @@ function setup(t, { report } = {}) {
   const presets = ['defensive', 'medium', 'return_priority'];
   const parts = [
     { kind: 'history', index: 0, rows: [{ date: day, symbol: '123A', state: 'WATCHING' }, ended] },
-    { kind: 'history', index: 1, rows: [{ ...ended, completed_on: ended.date }] },
+    { kind: 'history', index: 1, rows: [
+      { ...ended, completed_on: ended.date }, { ...closed, completed_on: day },
+    ] },
     { kind: 'history', index: 2, rows: [
       { date: day, symbol: '123A', state: 'WATCH_STARTED', lane: 'today' },
       { date: day, symbol: '123A', state: 'WATCHING', lane: 'watching' },
@@ -186,7 +189,7 @@ test('the Worker serves assets and shared data to a verified member while keepin
   assert.doesNotMatch(JSON.stringify(json), /source_version|dataset_id|input_header/);
   const free = await call(history, denied);
   assert.equal(free.status, 200);
-  assert.deepEqual((await free.json()).rows, [ended]);
+  assert.deepEqual((await free.json()).rows, [closed]);
   assert.equal((await call(dashboard, denied)).status, 403);
   const premiumDashboard = await call(dashboard, allowed);
   assert.equal(premiumDashboard.status, 200);
@@ -216,7 +219,7 @@ test('Fundamentals requires the fresh Premium session and the exact visible hist
   const premium = await (await call(history, allowed, sameSession)).json();
   assert.deepEqual(premium.rows, [{ date: day, symbol: '123A', state: 'WATCHING' }, { ...ended, has_fundamental: true }]);
   assert.doesNotMatch(JSON.stringify(premium), /AUDITED_REPORT_FIXTURE|fundamental_sha256|company_name/);
-  assert.deepEqual((await (await call(history, denied)).json()).rows, [ended]);
+  assert.deepEqual((await (await call(history, denied)).json()).rows, [closed]);
   assert.equal((await call(route, allowed, sameSession)).status, 403);
   const scoped = { ...sameSession, 'x-cloud-generation': premium.generation };
   assert.equal((await call(route, otherAllowed, scoped)).status, 403);
@@ -292,7 +295,13 @@ test('normal origin preserves the existing owner response and requires a matchin
     assert.equal(deniedResponse.status, 403);
     assert.equal(deniedResponse.headers.get('x-cloud-member-access'), null);
     assert.equal(deniedResponse.headers.get('x-cloud-member-session'), null);
-    assert.deepEqual(await deniedResponse.json(), { error: 'role_required' });
+    if (route === documentPath) {
+      assert.match(deniedResponse.headers.get('content-type'), /text\/html/);
+      assert.match(deniedResponse.headers.get('cache-control'), /no-store/);
+      const html = await deniedResponse.text();
+      assert.match(html, /href="\/purchase">Premiumアクセス権を購入する/);
+      assert.doesNotMatch(html, /123A|0010|0020|data-cloud-mode|<script/);
+    } else assert.deepEqual(await deniedResponse.json(), { error: 'role_required' });
   }
   for (const audience of [undefined, 'tiered', 'unknown']) {
     const invalid = { ...f.env, CLOUD_MEMBER_AUDIENCE: audience };
@@ -441,7 +450,8 @@ test('the role-only stage observes that roleless accounts receive no document or
       const result = await f.call(route, user);
       assert.equal(result.status, user === denied || route === ownerManifest ? 403 : 200);
       if (user === denied && route !== ownerManifest) {
-        assert.deepEqual(await result.json(), { error: 'role_required' });
+        if (route === documentPath) assert.match(await result.text(), /href="\/purchase"/);
+        else assert.deepEqual(await result.json(), { error: 'role_required' });
       }
     }
   }

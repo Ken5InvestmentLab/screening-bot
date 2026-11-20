@@ -72,6 +72,22 @@ function reject(request: Request, status: number, error: string): Response {
   });
 }
 
+function roleRequiredPage(request: Request): Response {
+  const document = `<!doctype html><html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>Premiumアクセス権 | 天底極致 Cloud 2.0</title>
+<style>
+:root{color-scheme:dark;background:#121b2d;color:#edf1fa;font:16px system-ui,sans-serif}
+main{max-width:480px;margin:clamp(24px,10vh,96px) auto;padding:24px}
+a{display:inline-block;padding:12px 16px;border:1px solid #7a93d4;border-radius:12px;background:#284779;color:#fff;text-decoration:none;font-weight:700}
+</style></head><body><main><h1>Premium会員限定</h1><p>当日の動きや監視銘柄は、Premiumアクセス権の取得後に閲覧できます。</p>
+<a href="/purchase">Premiumアクセス権を購入する</a></main></body></html>`;
+  return new Response(request.method === 'HEAD' ? null : document, {
+    status: 403,
+    headers: { ...privateHeaders, 'content-type': 'text/html; charset=utf-8',
+      'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'" },
+  });
+}
+
 export function memberOrigin(url: URL, env: RoleEnv): 'production' | 'stage' | null {
   const stage = env.CLOUD_MEMBER_STAGE_ORIGIN;
   if (stage === undefined) return url.origin === productionOrigin ? 'production' : null;
@@ -158,7 +174,7 @@ export async function roleFacade(
     const role = tier === 'premium' ? 'allowed' : 'denied';
     if (releaseOrigin === 'production' && await productionAllowed?.(subject, tier) !== true) return ownerDenial;
     if (tier === 'free' && (audience === 'role_only' || preferences || (aggregate && pathname !== historyPath))) {
-      const response = reject(request, 403, 'role_required');
+      const response = document ? roleRequiredPage(request) : reject(request, 403, 'role_required');
       observe?.(response, subject, role);
       return response;
     }

@@ -195,10 +195,11 @@ function premiumHome({asOf, selected, rows, chartRows, dashboard, historyPage}, 
     + '<section class="panel"><h2>検出履歴</h2>' + history(rows,historyPage) + '</section>';
 }
 function freeHome(rows = null) {
+  const closed = rows?.filter(row => row.state === 'HOLD_ENDED');
   return heading('home') + '<section class="panel member-locked"><h2>今日の動きと監視状況</h2>'
     + '<p>今日の検出と監視中の銘柄はPremium会員限定です。</p>' + purchase + '</section>'
-    + (rows === null ? '' : '<section class="panel"><h2>終了済みの検出履歴</h2>'
-      + (rows.length ? history(rows) : '<p class="note">表示できる検出履歴はありません。</p>') + '</section>');
+    + (closed === undefined ? '' : '<section class="panel"><h2>仮想保有終了銘柄</h2>'
+      + (closed.length ? history(closed) : '<p class="note">このページに仮想保有終了銘柄はありません。</p>') + '</section>');
 }
 function view({mode,access,asOf,presets,selected,rows,chartRows,personal,dashboard,historyPage}){
  if(access==='free')return mode==='home'?freeHome(rows):lockedPage(mode);

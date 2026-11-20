@@ -145,9 +145,9 @@ test('Premium Analytics annualizes only the selected resolved projection over it
 });
 test('analytics compares all 3 presets; missing personal result not fabricated',()=>{const html=ui.view({mode:'analytics',access:'premium',asOf:'2026-11-19',presets,selected:'defensive',rows:[],chartRows:[],personal:null});for(const s of ['守り','中間','利益優先','準備中','以前の結果では代用しません'])a.ok(html.includes(s));});
 test('free presentation shows server-provided closed history and one existing purchase action',()=>{
- const html=ui.view({mode:'home',access:'free',asOf:'2026-11-19',presets,selected:'medium',rows:[{date:'2026-11-18',symbol:'1234',state:'HOLD_ENDED'}],chartRows:[],personal:metrics,dashboard:{today:[{symbol:'TODAY_ONLY'}],watching:[{symbol:'WATCH_ONLY'}]}});
- for(const value of ['終了済みの検出履歴','1234','仮想保有終了','今日の動きと監視状況','href="/purchase"'])a.ok(html.includes(value),value);
- a.doesNotMatch(html,/TODAY_ONLY|WATCH_ONLY|member-preset|日次資金推移|対象日 2026-11-19/);
+ const html=ui.view({mode:'home',access:'free',asOf:'2026-11-19',presets,selected:'medium',rows:[{date:'2026-11-18',symbol:'1234',state:'HOLD_ENDED'},{date:'2026-11-18',symbol:'4321',state:'EXPIRED'}],chartRows:[],personal:metrics,dashboard:{today:[{symbol:'TODAY_ONLY'}],watching:[{symbol:'WATCH_ONLY'}]}});
+ for(const value of ['仮想保有終了銘柄','1234','仮想保有終了','今日の動きと監視状況','href="/purchase"'])a.ok(html.includes(value),value);
+ a.doesNotMatch(html,/4321|TODAY_ONLY|WATCH_ONLY|member-preset|日次資金推移|対象日 2026-11-19/);
  a.doesNotMatch(html,/today-summary|today-kpis|運用レベル/);
  a.equal((html.match(/href="\/purchase"/g)||[]).length,1);
  for(const mode of ['analytics','settings'])a.match(ui.view({mode,access:'free'}),/Premium会員限定.*href="\/purchase"/);

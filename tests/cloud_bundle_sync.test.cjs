@@ -2,6 +2,21 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path'),{spawnSync}=require('node:child_process'),{createHash}=require('node:crypto');
 const repo=path.resolve(__dirname,'..'),sourceGate=path.join(repo,'weak-early-beta-gate'),baseline=process.env.NEW_A_TEST_BASELINE_ROOT||repo;
 const {pathToFileURL}=require('node:url');
+function checkHelp(html,{stagedFree=false}={}){
+ const nav=html.match(/<nav class="nav"[\s\S]*?<\/nav>/)[0];
+ const opener=nav.match(/<button id="cloud-help-open"[^>]*>ヘルプ<\/button>/)[0];
+ assert.match(opener,/aria-haspopup="dialog" aria-controls="cloud-help-dialog"/);
+ if(stagedFree)assert.match(opener,/data-member-premium-nav hidden/);
+ assert.doesNotMatch(nav,/>その他<|weak_early_beta_(?:silence|dive|shadow|fusion|balance)\.html/);
+ const popup=html.match(/<dialog id="cloud-help-dialog"[\s\S]*?<\/dialog>/)[0];
+ assert.match(popup,/aria-labelledby="cloud-help-title"/);
+ assert.match(popup,/aria-label="ヘルプを閉じる"/);
+ assert.match(popup,/表示は仮想運用の試算です。売買の推奨や将来の成果の保証は行いません。投資判断はご自身で行ってください。/);
+ assert.equal((popup.match(/<p>/g)||[]).length,2);
+ assert.doesNotMatch(popup,/<a |<ol |<dl /);
+ assert.match(html,/\.cloud-help-dialog\{width:min\(520px,calc\(100vw - 20px\)\)\}/);
+ assert.match(html,/\.topbar \.cloud-primary-nav\{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:4px\}/);
+}
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 async function inventory(dir,rel=''){const result={};for(const e of await fs.readdir(dir,{withFileTypes:true})){const name=path.posix.join(rel,e.name),p=path.join(dir,e.name);if(e.isDirectory())Object.assign(result,await inventory(p,name));else result[name]=sha(await fs.readFile(p));}return result;}
 async function fixture(t,fault){const root=await fs.mkdtemp(path.join(os.tmpdir(),'new-a-code-sync-'));t.after(async()=>{assert.equal(path.dirname(root),path.resolve(os.tmpdir()));assert(path.basename(root).startsWith('new-a-code-sync-'));await fs.rm(root,{recursive:true,force:true});});const gate=path.join(root,'weak-early-beta-gate'),scripts=path.join(gate,'scripts'),publicDir=path.join(gate,'public');await fs.mkdir(scripts,{recursive:true});await fs.mkdir(publicDir,{recursive:true});
@@ -47,6 +62,8 @@ test('actual sync builds the exact data-free public inventory and a worker-only 
  const freeSettings = renderMemberFrame('/weak_early_beta_settings.html', 'free');
  const premiumSettings = renderMemberFrame('/weak_early_beta_settings.html', 'premium');
  const premiumHome = renderMemberFrame('/weak_early_beta_latest.html', 'premium');
+ checkHelp(premiumHome);
+ checkHelp(freeHome,{stagedFree:true});
  assert.match(freeHome, /href="\.\/weak_early_beta_analytics\.html" data-member-premium-nav hidden/);
  assert.match(freeHome, /href="\.\/weak_early_beta_settings\.html" data-member-premium-nav hidden/);
  assert.doesNotMatch(freeHome + freeSettings, /src="\/new-a-assets\/member-settings\.js"/);
@@ -67,6 +84,11 @@ test('generated owner frames use descriptive history labels and direct settings 
  const owner={ownerAuthorized:true,roleAuthorized:true,current:true};
  const dashboard=ownerFrame('/weak_early_beta_latest.html',owner);
  const settings=ownerFrame('/weak_early_beta_settings.html',owner);
+ const directHelp=ownerFrame('/weak_early_beta_guide.html',owner);
+ checkHelp(dashboard);
+ checkHelp(settings);
+ assert.match(directHelp,/<h1 id="cloud-help-page-title">ヘルプ<\/h1>/);
+ assert.doesNotMatch(directHelp,/監視から試算まで|画面を開く/);
  assert.match(dashboard,/<div>試算条件<\/div>/);
  assert.match(dashboard,/<dialog id="cloud-settings-dialog"/);
  const close = dashboard.match(/<button[^>]+id="cloud-settings-close"[\s\S]*?<\/button>/)[0];

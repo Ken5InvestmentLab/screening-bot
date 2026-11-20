@@ -335,16 +335,11 @@
   document.head.append(node);
  });
  const script=name=>scriptAt('/new-a-assets/'+name);
- const menu=document.querySelector('.cloud-more-menu');
  const closeSettings=()=>global.CloudSettingsDialog?.close(true);
  document.addEventListener('visibilitychange',closeSettings);
  global.addEventListener('pagehide',closeSettings);
  global.addEventListener('pageshow',event=>{if(event.persisted)closeSettings();});
- document.addEventListener('keydown',event=>{
-  if(event.key==='Escape'&&menu?.open){menu.open=false;menu.querySelector('summary')?.focus();}
- });
  document.addEventListener('click',event=>{
-  if(menu?.open&&!menu.contains(event.target))menu.open=false;
   const fundamental=event.target.closest?.('[data-owner-fundamental]');
   if(fundamental&&!global.AFiniteRevoked)openFundamental(fundamental);
  });

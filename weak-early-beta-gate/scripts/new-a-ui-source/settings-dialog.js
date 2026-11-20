@@ -1,7 +1,30 @@
-/* Keep settings in the current page, with the direct URL as a fallback. */
+/* Keep Help and Settings in the current page. */
 (function (g) {
  'use strict';
  if (typeof document === 'undefined') return;
+ function bindClose(dialog, button, close) {
+  button.addEventListener('click',close);
+  dialog.addEventListener('cancel',event => { event.preventDefault(); close(); });
+  dialog.addEventListener('click',event => {
+   if (event.target !== dialog) return;
+   const bounds = dialog.getBoundingClientRect();
+   if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) close();
+  });
+ }
+ const help = document.getElementById('cloud-help-dialog');
+ if (help && typeof help.showModal === 'function') {
+  const trigger = document.getElementById('cloud-help-open');
+  const button = document.getElementById('cloud-help-close');
+  trigger.addEventListener('click',() => {
+   if (trigger.hidden || help.open) return;
+   help.showModal();
+   button.focus();
+  });
+  bindClose(help,button,() => help.close());
+  help.addEventListener('close',() => {
+   if (trigger.isConnected && !trigger.hidden) trigger.focus({ preventScroll:true });
+  });
+ }
  const dialog = document.getElementById('cloud-settings-dialog');
  if (!dialog || typeof dialog.showModal !== 'function') return;
  const content = document.getElementById('cloud-settings-content');
@@ -35,26 +58,17 @@
   finish();
   return true;
  }
- closeButton.addEventListener('click', () => close());
- dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });
+ bindClose(dialog,closeButton,() => close());
  dialog.addEventListener('close', () => { if (!dialog.open) finish(); });
- dialog.addEventListener('click', event => {
-  if (event.target !== dialog) return;
-  const bounds = dialog.getBoundingClientRect();
-  if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) close();
- });
  function connect(mount, canOpen = () => true) {
   document.addEventListener('click', event => {
    const trigger = event.target.closest?.('a[href="./weak_early_beta_settings.html"]');
    if (!trigger || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || !canOpen()) return;
    event.preventDefault();
    if (current) return;
-   const menu = trigger.closest('details.cloud-more-menu');
-   const focusTarget = menu?.querySelector('summary') ?? trigger;
-   if (menu) menu.open = false;
    function load() {
     current?.controller.abort();
-    const job = { trigger:focusTarget, controller: new AbortController() };
+    const job = { trigger, controller: new AbortController() };
     current = job;
     const active = () => current === job && dialog.open && !job.controller.signal.aborted;
     content.replaceChildren();

@@ -171,3 +171,31 @@ test('owner access reset clears an open modal and its direct fallback form',()=>
  assert.match(reset,/['"]cloud-settings-direct['"]/);
  assert.match(reset,/node\.replaceChildren\(\);node\.hidden=true/);
 });
+
+test('compact Help opens the current page dialog and returns focus on Esc, outside click and close',()=>{
+ const dialog=element('dialog'),trigger=element('button'),close=element('button');
+ dialog.showModal=()=>{ dialog.open=true; };
+ dialog.close=()=>{ dialog.open=false; dialog.events.close(); };
+ dialog.getBoundingClientRect=()=>({left:10,top:10,right:30,bottom:30});
+ const nodes={'cloud-help-dialog':dialog,'cloud-help-open':trigger,'cloud-help-close':close};
+ const document={getElementById:id=>nodes[id]};
+ vm.runInNewContext(source('../settings-dialog.js'),{document});
+ trigger.hidden=true;
+ trigger.events.click();
+ assert.equal(dialog.open,undefined);
+ trigger.hidden=false;
+ for (const dismiss of [
+  ()=>{ let prevented=false; dialog.events.cancel({preventDefault(){prevented=true;}}); assert.equal(prevented,true); },
+  ()=>{ dialog.events.click({target:dialog,clientX:20,clientY:20}); assert.equal(dialog.open,true);
+   dialog.events.click({target:dialog,clientX:5,clientY:20}); },
+  ()=>close.events.click(),
+ ]) {
+  trigger.focused=close.focused=false;
+  trigger.events.click();
+  assert.equal(dialog.open,true);
+  assert.equal(close.focused,true);
+  dismiss();
+  assert.equal(dialog.open,false);
+  assert.equal(trigger.focused,true);
+ }
+});

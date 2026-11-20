@@ -174,7 +174,6 @@ body[data-page="guide"] .hero{grid-template-columns:minmax(0,1fr)}
   .history-date-actions>.button-link,.history-date-actions>.fundamental-toggle{width:auto;min-height:44px;padding:8px 10px;font-size:14px}
   .history-record:not(.history-details-open) .history-date-actions{display:none}
 }
-#new-a-trial-preset-field{margin-bottom:18px}
 
 .cloud-secondary-nav{display:none!important}#cloud-menu-toggle{display:inline-flex!important}.cloud-navigation{max-height:70dvh;overflow-y:auto}.nav{grid-template-columns:minmax(0,1fr) auto}.cloud-main-nav{margin-left:auto}.nav-tools{flex-wrap:wrap;justify-content:flex-end}
 body[data-page="analytics"] #new-a-source-status{font-size:12px}
@@ -182,20 +181,14 @@ body[data-page="home"] #new-a-trial-preset-field{display:block}
 .today-summary h1{font-size:clamp(24px,5vw,36px);margin-bottom:8px}.today-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.today-kpis .kpi b{font-size:clamp(20px,3vw,29px)}.today-list{display:grid;gap:12px}.today-item{padding:16px;border:1px solid var(--line);border-radius:14px;min-width:0;background:var(--panel-solid)}.today-item>strong{display:block;font-size:17px;overflow-wrap:anywhere}.today-item small{font-size:12px;color:var(--muted)}.today-item dl{display:grid;grid-template-columns:minmax(80px,1fr) minmax(0,2fr);gap:8px 16px;margin:12px 0 0}.today-item dt{color:var(--muted)}.today-item dd{margin:0;overflow-wrap:anywhere}.today-item dd small{display:block;margin-top:3px}.today-summary .note{margin:8px 0}
 @media(max-width:760px){.nav{display:flex;flex-wrap:wrap;gap:12px;padding:14px}.brand{flex:1}.brand-logo{max-width:160px}.cloud-main-nav{display:block!important;order:3;flex-basis:100%;margin:0}.cloud-primary-nav{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cloud-primary-nav .nav-link{display:block;text-align:center;min-height:48px;padding:12px 8px;border:1px solid var(--line);border-radius:12px}.nav-tools{gap:6px;flex-basis:100%;order:4;display:grid;grid-template-columns:1fr minmax(0,2fr)}.nav-tools .nav-control{font-size:14px;justify-content:center;min-height:48px;padding:10px 8px}.cloud-navigation{top:100%;right:12px}.today-kpis{grid-template-columns:1fr}.today-kpis .kpi{padding:14px}.today-item dl{grid-template-columns:1fr}.today-item dd{margin-bottom:4px}main,.panel,#cloud-analytics-content,.today-list{min-width:0;max-width:100%}.panel{padding:18px}.today-item{width:100%;box-sizing:border-box}.scenario-table{width:100%;table-layout:fixed}.table-wrap{max-width:100%;overflow-x:clip}.scenario-table td{overflow-wrap:anywhere}.cloud-settings-dialog{width:calc(100% - 20px)}.cloud-settings-dialog .filters{grid-template-columns:1fr}.settings-actions{position:static;display:grid;grid-template-columns:1fr}.settings-actions button{width:100%;min-height:48px}.cloud-settings button,.cloud-settings select,.cloud-settings input{min-height:48px}.kpi b{overflow-wrap:anywhere}}
 
-#new-a-trial-preset{border:1px solid var(--line);border-radius:12px;background:var(--panel-solid);color:var(--ink);padding:10px 12px;min-height:48px}
 
 [hidden]{display:none!important}
 .skip-link{position:fixed;top:8px;left:8px;padding:10px 14px;background:var(--panel-solid);color:var(--ink);z-index:20;transform:translateY(-150%)}
 .skip-link:focus{transform:none}
 :focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
-.topbar .nav{display:grid;grid-template-columns:minmax(160px,.9fr) minmax(0,1.5fr) auto;gap:12px;align-items:center}
+.topbar .nav{display:grid;grid-template-columns:minmax(160px,.9fr) minmax(0,1.5fr);gap:12px;align-items:center}
 .topbar .cloud-primary-nav{display:flex;gap:6px;justify-content:flex-end}
 .topbar .nav-link{min-height:44px;white-space:nowrap}
-.cloud-more-menu{position:relative}
-.cloud-more-menu summary{display:flex;justify-content:center;list-style:none;min-height:44px}
-.cloud-more-menu summary::-webkit-details-marker{display:none}
-.cloud-more-menu .cloud-navigation{position:absolute;right:0;top:calc(100% + 8px);display:grid;gap:3px;min-width:155px;padding:8px;border:1px solid var(--line);border-radius:14px;background:var(--panel-solid);box-shadow:var(--shadow);z-index:4}
-.cloud-more-menu .cloud-navigation .nav-link{justify-content:flex-start}
 .page-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 16px}
 .page-heading h1{margin:0}
 .cloud-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
@@ -259,10 +252,9 @@ body[data-page="settings"] #cloud-settings-status[data-state="error"]{color:var(
 body[data-page="settings"] .topbar a[aria-disabled="true"]{opacity:.55;cursor:wait}
 @media(max-width:760px){
  .topbar .nav{grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;padding:9px 12px}
- .topbar .brand{grid-column:1;grid-row:1}
- .topbar .cloud-more-menu{grid-column:2;grid-row:1}
+ .topbar .brand{grid-column:1/-1;grid-row:1}
  .topbar .cloud-main-nav{grid-column:1/-1;grid-row:2;width:100%}
- .topbar .cloud-primary-nav{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.1fr) minmax(0,.6fr);gap:4px}
+ .topbar .cloud-primary-nav{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:4px}
  .topbar .cloud-primary-nav .nav-link{font-size:clamp(12px,3.5vw,14px);padding-inline:3px;justify-content:center}
  body[data-page="settings"] .cloud-settings .filters{grid-template-columns:minmax(0,1fr)}
  body[data-page="settings"] .cloud-settings select,body[data-page="settings"] .cloud-settings input{font-size:16px;min-height:44px}
@@ -295,8 +287,14 @@ body[data-page="settings"] .topbar a[aria-disabled="true"]{opacity:.55;cursor:wa
 .cloud-settings-current [role="tabpanel"][hidden]{display:none}
 .cloud-settings-dialog .cloud-settings{margin:0}
 #cloud-settings-status:empty{display:none}
+.cloud-help-open{background:none;border:0;color:var(--blue)}
+.cloud-help-dialog{width:min(520px,calc(100vw - 20px))}
+.cloud-help-copy p{margin:0 0 12px}
+.cloud-help-copy p:last-child{margin-bottom:0}
+.cloud-help-page{max-width:620px;margin-inline:auto}
+.cloud-help-page h1{margin-bottom:16px}
 </style>
-<script src="/auth/guard.js" defer></script><script src="/new-a-assets/owner-loader.js" defer></script></head><body data-page="{{PAGE}}"><header class="topbar"><a class="skip-link" href="#main-content">本文へ</a><nav class="nav" aria-label="ページ移動"><a class="brand" href="./weak_early_beta_latest.html" aria-label="天底極致-Cloud 2.0- ダッシュボードへ"><img class="brand-logo brand-logo-light" src="/new-a-assets/report-assets/cloud-logo-light.png" alt="天底極致-Cloud 2.0-"><img class="brand-logo brand-logo-dark" src="/new-a-assets/report-assets/cloud-logo-dark.png" alt=""></a><div class="cloud-main-nav"><span class="cloud-primary-nav"><a class="nav-link" href="./weak_early_beta_latest.html">ダッシュボード</a><a class="nav-link" href="./weak_early_beta_analytics.html">アナリティクス</a><a class="nav-link" href="./weak_early_beta_settings.html" {{SETTINGS_TRIGGER}}>設定</a></span></div><details class="cloud-more-menu"><summary class="nav-control">その他</summary><div class="cloud-navigation" aria-label="その他のページ"><a class="nav-link" href="./weak_early_beta_guide.html">ヘルプ</a><a class="nav-link" href="./weak_early_beta_silence.html">Silence</a><a class="nav-link" href="./weak_early_beta_dive.html">Dive</a><a class="nav-link" href="./weak_early_beta_shadow.html">Shadow</a><a class="nav-link" href="./weak_early_beta_fusion.html">Fusion</a><a class="nav-link" href="./weak_early_beta_balance.html">Balance</a></div></details></nav></header><main id="main-content" tabindex="-1">{{VIEW}}</main>{{SETTINGS_DIALOG}}<footer class="site-footer"><div class="site-footer-inner">
+<script src="/auth/guard.js" defer></script><script src="/new-a-assets/owner-loader.js" defer></script></head><body data-page="{{PAGE}}"><header class="topbar"><a class="skip-link" href="#main-content">本文へ</a><nav class="nav" aria-label="ページ移動"><a class="brand" href="./weak_early_beta_latest.html" aria-label="天底極致-Cloud 2.0- ダッシュボードへ"><img class="brand-logo brand-logo-light" src="/new-a-assets/report-assets/cloud-logo-light.png" alt="天底極致-Cloud 2.0-"><img class="brand-logo brand-logo-dark" src="/new-a-assets/report-assets/cloud-logo-dark.png" alt=""></a><div class="cloud-main-nav"><span class="cloud-primary-nav"><a class="nav-link" href="./weak_early_beta_latest.html">ダッシュボード</a><a class="nav-link" href="./weak_early_beta_analytics.html">アナリティクス</a><a class="nav-link" href="./weak_early_beta_settings.html" {{SETTINGS_TRIGGER}}>設定</a><button id="cloud-help-open" class="nav-link cloud-help-open" type="button" aria-haspopup="dialog" aria-controls="cloud-help-dialog">ヘルプ</button></span></div></nav></header><main id="main-content" tabindex="-1">{{VIEW}}</main>{{SETTINGS_DIALOG}}{{HELP_DIALOG}}<footer class="site-footer"><div class="site-footer-inner">
 <p class="footer-copy">© 2026 Ken5 Investment Lab. All rights reserved.</p>
 <div class="footer-links" aria-label="公式リンク">
 <a class="footer-link" href="https://discord.gg/PX3cCQTxAz" target="_blank" rel="noopener noreferrer" aria-label="Discord">

@@ -26,7 +26,7 @@ body[data-cloud-mode=member] form label{display:block;margin:14px 0}
 body[data-cloud-mode=member] form select,body[data-cloud-mode=member] form input{max-width:100%;min-height:44px}
 `;
 
-export async function buildNewAMemberFrame(gate, html, settingsModal, settingsTrigger) {
+export async function buildNewAMemberFrame(gate, html, settingsModal, settingsTrigger, helpModal) {
   const ownerGuard = '<script src="/auth/guard.js" defer></script>';
   const ownerLoader = '<script src="/new-a-assets/owner-loader.js" defer></script>';
   const memberScripts = ['member-presentation', 'member-loader']
@@ -38,12 +38,13 @@ export async function buildNewAMemberFrame(gate, html, settingsModal, settingsTr
     .replace(ownerLoader, '{{MEMBER_SETTINGS_SCRIPT}}' + memberScripts)
     .replace('<body data-page=', '<body data-cloud-mode="member" data-page=')
     .replaceAll(/href="\.\/weak_early_beta_(?:analytics|settings)\.html"/g, '$& data-member-premium-nav hidden')
-    .replace('<details class="cloud-more-menu">', '<details class="cloud-more-menu" data-member-premium-nav hidden>')
+    .replace('id="cloud-help-open"', 'id="cloud-help-open" data-member-premium-nav hidden')
     .replace('</style>', memberStyles + '</style>');
   const generated = [
     '// Build-only data-free member shell. Do not commit generated files.',
     'const SHELL=' + JSON.stringify(shell) + ';',
     'const SETTINGS_DIALOG=' + JSON.stringify(settingsModal) + ';',
+    'const HELP_DIALOG=' + JSON.stringify(helpModal) + ';',
     'const SETTINGS_TRIGGER=' + JSON.stringify(settingsTrigger) + ';',
     'export function memberFrame(path: string, tier: "premium" | "free" = "premium"): string {',
     '  const page = path === "/weak_early_beta_analytics.html" ? "analytics" : path === "/weak_early_beta_settings.html" ? "settings" : "home";',
@@ -51,7 +52,7 @@ export async function buildNewAMemberFrame(gate, html, settingsModal, settingsTr
     '  const content = \'<p id="member-state" role="status">読込中</p><button id="member-retry" hidden>再試行</button><div id="member-content"></div>\';',
     '  const view = page === "settings" && tier === "premium" ? \'<section class="panel cloud-settings" aria-labelledby="cloud-settings-title"><h1 id="cloud-settings-title">設定</h1>\' + content + \'</section>\' : content;',
     '  const settings = page === "settings" && tier === "premium" ? \'<script src="/new-a-assets/member-settings.js" defer></script>\' : "";',
-    '  return SHELL.replaceAll("{{INITIAL_THEME}}", "dark").replace("{{INITIAL_THEME_SCRIPT}}", "").replaceAll("{{TITLE}}", title).replaceAll("{{PAGE}}", page).replace("{{MEMBER_SETTINGS_SCRIPT}}", settings).replace("{{SETTINGS_DIALOG}}", page !== "settings" && tier === "premium" ? SETTINGS_DIALOG : "").replace("{{SETTINGS_TRIGGER}}", page !== "settings" && tier === "premium" ? SETTINGS_TRIGGER : "").replace("{{VIEW}}", view);',
+    '  return SHELL.replaceAll("{{INITIAL_THEME}}", "dark").replace("{{INITIAL_THEME_SCRIPT}}", "").replaceAll("{{TITLE}}", title).replaceAll("{{PAGE}}", page).replace("{{MEMBER_SETTINGS_SCRIPT}}", settings).replace("{{HELP_DIALOG}}", HELP_DIALOG).replace("{{SETTINGS_DIALOG}}", page !== "settings" && tier === "premium" ? SETTINGS_DIALOG : "").replace("{{SETTINGS_TRIGGER}}", page !== "settings" && tier === "premium" ? SETTINGS_TRIGGER : "").replace("{{VIEW}}", view);',
     '}',
     '',
   ].join('\n');

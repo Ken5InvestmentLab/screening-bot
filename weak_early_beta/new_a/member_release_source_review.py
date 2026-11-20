@@ -18,6 +18,7 @@ PRESENTATION_REVIEW_SCHEMA = "NEW_A_MEMBER_PRESENTATION_SUCCESSOR_SOURCE_REVIEW_
 COMPLETED_TIMING_REVIEW_SCHEMA = "NEW_A_MEMBER_COMPLETED_TIMING_SUCCESSOR_SOURCE_REVIEW_V1"
 FUNDAMENTAL_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_SUCCESSOR_SOURCE_REVIEW_V1"
 ROLE_ONLY_REVIEW_SCHEMA = "NEW_A_MEMBER_ROLE_ONLY_SUCCESSOR_SOURCE_REVIEW_V1"
+JOURNAL_REVIEW_SCHEMA = "NEW_A_MEMBER_JOURNAL_SUCCESSOR_SOURCE_REVIEW_V1"
 _PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumのアクセス権を購入する</a>'.encode()
 _NEW_PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumアクセス権を購入する</a>'.encode()
 _SUCCESSOR_REVIEW_PATHS = frozenset({
@@ -106,6 +107,14 @@ _ROLE_ONLY_TEST_PATHS = frozenset({
     "tests/test_new_a_member_rollout.py",
 })
 _ROLE_ONLY_PRODUCT_SHA256 = "1b64c36fd3f8dca56e204fa3d115219b19bcd3db6060db7053388e481c7bce63"
+_JOURNAL_BASELINE = "70d475ad9980bc8d116525c0717e948590624f89"
+_JOURNAL_REVIEWED_RUNNER = "853832eabd6a289761080ae0bc54e142d3d8f65f"
+_JOURNAL_PRODUCT_PATHS = frozenset({
+    "scripts/windows/weak-early-beta-daily-runner.mjs",
+    "scripts/windows/weak-early-beta-run-journal.mjs",
+    "scripts/windows/test-weak-early-beta-daily-runner.mjs",
+})
+_JOURNAL_PRODUCT_SHA256 = "e7c7307d629e08e67aaca69d2c6b8784c21f87e36ae45225ef39d95ee7861159"
 MEMBER_BINDING = {
     "binding": "CLOUD_MEMBER_DB",
     "database_name": "tentei-cloud-member-view",
@@ -197,7 +206,15 @@ def _check_role_only_successor(repo, candidate, paths):
 
 
 def _member_successor(repo, baseline, candidate):
-    if baseline == _ROLE_ONLY_BASELINE:
+    if baseline == _JOURNAL_BASELINE:
+        paths = _successor_paths(repo, baseline, candidate)
+        parents = git(repo, "show", "-s", "--format=%P", candidate).decode().split()
+        if parents != [_JOURNAL_REVIEWED_RUNNER] or paths != _JOURNAL_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
+            raise ValueError("Journal successor differs from the exact reviewed runner or release scope")
+        if _product_digest(repo, candidate, _JOURNAL_PRODUCT_PATHS) != _JOURNAL_PRODUCT_SHA256:
+            raise ValueError("Journal successor differs from the reviewed runner bytes")
+        schema = JOURNAL_REVIEW_SCHEMA
+    elif baseline == _ROLE_ONLY_BASELINE:
         paths = _successor_paths(repo, baseline, candidate, allowed_addition=_ROLE_ONLY_MIGRATION)
         _check_role_only_successor(repo, candidate, paths)
         schema = ROLE_ONLY_REVIEW_SCHEMA
@@ -225,7 +242,8 @@ def _member_successor(repo, baseline, candidate):
         "member_database_id": MEMBER_BINDING["database_id"],
         "member_support_configured": True,
         "owner_only_gate_preserved": True,
-        **({"member_audience": "role_only"} if schema == ROLE_ONLY_REVIEW_SCHEMA else {}),
+        **({"member_audience": "role_only"} if schema in {ROLE_ONLY_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA} else {}),
+        **({"reviewed_runner_commit": _JOURNAL_REVIEWED_RUNNER} if schema == JOURNAL_REVIEW_SCHEMA else {}),
     }
 
 
@@ -254,6 +272,8 @@ def review_member_release_source(repo, baseline, candidate):
         if (expected_config != candidate_config_bytes or common_config.get("name") != acceptance.SERVICE
                 or common_config["vars"].get("CLOUD_MEMBER_VIEW_ENABLED") != "true" or prior_members != [MEMBER_BINDING]):
             raise ValueError("Member successor changes the approved Worker configuration or member D1")
+        if baseline == _JOURNAL_BASELINE and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "role_only":
+            raise ValueError("Journal successor requires the existing role-only audience")
         return _member_successor(repo, baseline, candidate)
 
     if changed != [ENTRY]:

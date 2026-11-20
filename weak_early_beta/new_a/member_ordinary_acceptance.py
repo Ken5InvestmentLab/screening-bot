@@ -15,7 +15,7 @@ from . import continuing_acceptance as ca
 from . import continuing_transition as transition
 from .files import atomic_write, digest, file_sha, private_root, read
 from .member_release_source_review import (
-    COMPLETED_TIMING_REVIEW_SCHEMA, FUNDAMENTAL_REVIEW_SCHEMA, INITIAL_REVIEW_SCHEMA,
+    COMPLETED_TIMING_REVIEW_SCHEMA, FUNDAMENTAL_REVIEW_SCHEMA, INITIAL_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA,
     PRESENTATION_REVIEW_SCHEMA, ROLE_ONLY_REVIEW_SCHEMA, review_member_release_source,
 )
 from .operational_admission import ORIGIN, checked_ci
@@ -28,6 +28,7 @@ MEMBER_SUCCESSORS = {
     PRESENTATION_REVIEW_SCHEMA: COMPLETED_TIMING_REVIEW_SCHEMA,
     COMPLETED_TIMING_REVIEW_SCHEMA: FUNDAMENTAL_REVIEW_SCHEMA,
     FUNDAMENTAL_REVIEW_SCHEMA: ROLE_ONLY_REVIEW_SCHEMA,
+    ROLE_ONLY_REVIEW_SCHEMA: JOURNAL_REVIEW_SCHEMA,
 }
 DECISION = "CONTINUING_DAILY_WITH_DORMANT_DESIGNATED_MEMBER_VIEW"
 ORDINARY_DECISION = "CONTINUING_DAILY_WITH_NONOWNER_UNMEASURED"
@@ -37,6 +38,12 @@ SHA = re.compile(r"[a-f0-9]{64}")
 VERSION = re.compile(r"[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}")
 RELEASE_KEYS = ("version_id", "build_input_sha256", "policy_sha256", "ci_run_id", "tag")
 DEPLOYMENT_KEYS = ("source_commit", "target", "deployment_id", "deployed_at", "active_owner_sha256", *RELEASE_KEYS)
+INCUMBENT_POLICY_SCHEMA = "NEW_A_HOST_MEMBER_POLICY_INCUMBENT_V1"
+EFFECTIVE_OFF_POLICY_SCHEMA = "NEW_A_HOST_MEMBER_POLICY_EFFECTIVE_OFF_V1"
+HANDOVER_POLICY_KEYS = {
+    "schema", "database_id", "primary", "source_commit", "worker_version_id", "deployment_id",
+    "policy", "observed_at", "raw_receipt_sha256", "synthetic", "platform_signature_claimed",
+}
 OTHER_LOCKS = (
     ".cache/weak_early_beta/exit-reminder-runner.lock", ".cache/weak_early_beta/exit-reminder.lock",
     "weak_early_beta/state/exit-reminder.lock", "weak_early_beta/state/daily_runtime/daily.lock",
@@ -83,7 +90,7 @@ def _header(operating_repo, candidate_repo, plan):
     ca.require(baseline is not None, "verified operating ordinary predecessor required")
     previous_activation = read(_activation(previous))
     owner = previous_activation["owner_acceptance"]
-    _, review_schema = _predecessor(previous, owner)
+    previous_audit, review_schema = _predecessor(previous, owner)
     source = ca.head(repo)
     target = ca.target(repo)
     ca.require(plan.get("decision") == DECISION and plan.get("scope") == ca.SCOPE
@@ -103,10 +110,45 @@ def _header(operating_repo, candidate_repo, plan):
     ca.require(source_review["member_support_configured"] is True
                and source_review["schema"] == review_schema and source_review == plan.get("source_review"),
                "reviewed member capability must match the exact candidate source")
-    return repo, baseline, old, source_review
+    predecessor_deployment = read(previous_audit)["deployment"] if review_schema == JOURNAL_REVIEW_SCHEMA else None
+    return repo, baseline, old, source_review, predecessor_deployment
 
 
-def _normal_evidence(source, target, member_database_id, ci, deployment, policy, as_of, *, live):
+def _effective_off(policy, database_id, deployment, handover):
+    prior_deployment, incumbent = handover
+    for receipt, pins, schema in (
+        (incumbent, prior_deployment, INCUMBENT_POLICY_SCHEMA),
+        (policy, deployment, EFFECTIVE_OFF_POLICY_SCHEMA),
+    ):
+        ca.require(isinstance(receipt, dict) and set(receipt) == HANDOVER_POLICY_KEYS
+                   and receipt["schema"] == schema and receipt["database_id"] == database_id
+                   and receipt["source_commit"] == pins["source_commit"]
+                   and receipt["worker_version_id"] == pins["version_id"]
+                   and receipt["deployment_id"] == pins["deployment_id"]
+                   and receipt["primary"] is True and receipt["synthetic"] is False
+                   and receipt["platform_signature_claimed"] is False
+                   and SHA.fullmatch(str(receipt["raw_receipt_sha256"])),
+                   "exact primary incumbent and effective-OFF member evidence required")
+    changed_at = ca.timestamp(deployment["deployed_at"])
+    observed = ca.timestamp(incumbent["observed_at"])
+    ca.require(prior_deployment["source_commit"] != deployment["source_commit"]
+               and prior_deployment["version_id"] != deployment["version_id"]
+               and prior_deployment["deployment_id"] != deployment["deployment_id"]
+               and prior_deployment["build_input_sha256"] == deployment["build_input_sha256"]
+               and max(ca.timestamp(prior_deployment["deployed_at"]), changed_at - datetime.timedelta(hours=1))
+               <= observed <= changed_at,
+               "journal successor deployment or incumbent observation differs")
+    row = policy["policy"]
+    ca.require(isinstance(row, dict) and set(row) == {"mode", "source_commit", "worker_version_id", "revision"}
+               and row == incumbent["policy"] and row["mode"] == "enabled"
+               and row["source_commit"] == prior_deployment["source_commit"]
+               and row["worker_version_id"] == prior_deployment["version_id"]
+               and type(row["revision"]) is int and 1 <= row["revision"] <= 2**53 - 1,
+               "member policy differs from the pinned enabled predecessor")
+    return row
+
+
+def _normal_evidence(source, target, member_database_id, ci, deployment, policy, as_of, *, live, handover=None):
     checked_ci(ci, source)
     transition.checked_normal_deployment(source, target, lambda: deployment)
     ca.require(ci.get("synthetic") is not True and deployment.get("normal_origin") == ORIGIN
@@ -117,20 +159,23 @@ def _normal_evidence(source, target, member_database_id, ci, deployment, policy,
                and deployment["ci_run_id"] == ci["run_id"]
                and all(deployment[key] == ci[key] for key in ("tag", "version_id", "build_input_sha256")),
                "exact normal CI, production deployment or owner generation differs")
-    ca.require(isinstance(policy, dict) and policy.get("schema") == "NEW_A_HOST_MEMBER_POLICY_OFF_V1"
-               and policy.get("database_id") == member_database_id and policy.get("source_commit") == source
-               and policy.get("worker_version_id") == deployment["version_id"] and policy.get("primary") is True
-               and "policy" in policy and policy.get("synthetic") is not True
-               and policy.get("platform_signature_claimed") is False
-               and SHA.fullmatch(str(policy.get("raw_receipt_sha256", ""))),
-               "primary member rollout OFF readback required")
-    row = policy["policy"]
-    ca.require(row is None or (
-        isinstance(row, dict) and set(row) == {"mode", "source_commit", "worker_version_id", "revision"}
-        and row.get("mode") == "off" and row.get("source_commit") == source
-        and row.get("worker_version_id") == deployment["version_id"]
-        and type(row.get("revision")) is int and 1 <= row["revision"] <= 2**53 - 1
-    ), "member rollout must remain OFF")
+    if handover is not None:
+        row = _effective_off(policy, member_database_id, deployment, handover)
+    else:
+        ca.require(isinstance(policy, dict) and policy.get("schema") == "NEW_A_HOST_MEMBER_POLICY_OFF_V1"
+                   and policy.get("database_id") == member_database_id and policy.get("source_commit") == source
+                   and policy.get("worker_version_id") == deployment["version_id"] and policy.get("primary") is True
+                   and "policy" in policy and policy.get("synthetic") is not True
+                   and policy.get("platform_signature_claimed") is False
+                   and SHA.fullmatch(str(policy.get("raw_receipt_sha256", ""))),
+                   "primary member rollout OFF readback required")
+        row = policy["policy"]
+        ca.require(row is None or (
+            isinstance(row, dict) and set(row) == {"mode", "source_commit", "worker_version_id", "revision"}
+            and row.get("mode") == "off" and row.get("source_commit") == source
+            and row.get("worker_version_id") == deployment["version_id"]
+            and type(row.get("revision")) is int and 1 <= row["revision"] <= 2**53 - 1
+        ), "member rollout must remain OFF")
     earliest = ca.timestamp(deployment["deployed_at"])
     if live:
         earliest = max(earliest, as_of - MAX_OBSERVATION_AGE)
@@ -148,9 +193,11 @@ def _review(plan, old, source_review, deployment, policy, room_transfer):
         member_policy_sha256=digest(policy), member_access_off=True,
         existing_access_policy_preserved=True, owner_room_transfer=room_transfer,
     )
-    if source_review["schema"] == ROLE_ONLY_REVIEW_SCHEMA:
+    if source_review["schema"] in {ROLE_ONLY_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA}:
         ca.require(source_review.get("member_audience") == "role_only", "verified role-only audience required")
         review["member_audience"] = "role_only"
+    if source_review["schema"] == JOURNAL_REVIEW_SCHEMA:
+        review["predecessor_member_policy_sha256"] = digest(plan["predecessor_member_policy"])
     return review
 
 
@@ -184,7 +231,7 @@ def _check_http_boundary(measurements, raw, deployment, as_of):
 def _prepare(operating_repo, candidate_repo, plan, *, primary_reader, ordinary_decision_reader,
              role_decision_reader, measurement_reader, raw_reader, authority, room_transfer_reader=None,
              ci_reader, deployment_reader, member_policy_reader):
-    repo, baseline, old, source_review = _header(operating_repo, candidate_repo, plan)
+    repo, baseline, old, source_review, predecessor_deployment = _header(operating_repo, candidate_repo, plan)
     owner = ca.primary_message(plan["owner_message"], primary_reader, authority)
     room = None
     if old["owner_message"]["room_id"] != owner["room_id"]:
@@ -196,8 +243,10 @@ def _prepare(operating_repo, candidate_repo, plan, *, primary_reader, ordinary_d
     ci, deployment, policy = _readers(ci_reader=ci_reader, deployment_reader=deployment_reader,
                                      member_policy_reader=member_policy_reader)
     source, target = plan["source_commit"], plan["target"]
+    incumbent = deepcopy(plan.get("predecessor_member_policy"))
+    handover = (predecessor_deployment, incumbent) if predecessor_deployment is not None else None
     pins, row = _normal_evidence(source, target, source_review["member_database_id"],
-                                 ci, deployment, policy, ca.now(), live=True)
+                                 ci, deployment, policy, ca.now(), live=True, handover=handover)
     _check_successor_policy(source_review, baseline, pins)
     raw = _private_http_observations({kind: raw_reader(kind) for kind in ca.PATHS})
     measurements = checked_measurements(plan, measurement_reader, raw.__getitem__, deployment)
@@ -211,7 +260,8 @@ def _prepare(operating_repo, candidate_repo, plan, *, primary_reader, ordinary_d
     ca.require(_header(operating_repo, repo, plan)[1] == baseline,
                "operating ordinary predecessor changed during observation")
     return owner, ordinary_review, measurements, dict(review=review, source_review=source_review,
-        predecessor=baseline, ci=ci, deployment=deployment, member_policy=policy, http_observations=raw)
+        predecessor=baseline, ci=ci, deployment=deployment, member_policy=policy, http_observations=raw,
+        **({"predecessor_member_policy": incumbent} if handover is not None else {}))
 
 
 def prepare(operating_repo, candidate_repo, plan, **readers):
@@ -220,7 +270,9 @@ def prepare(operating_repo, candidate_repo, plan, **readers):
     The independent CI and deployment readers return the existing exact
     normal-CI and production-deployment evidence. The member policy reader
     returns a primary OFF observation for the same candidate Worker and
-    dedicated D1. Ordinary HTTP measurements use the existing owner boundary,
+    dedicated D1. The journal successor uses primary effective-OFF evidence
+    that matches the admitted enabled predecessor receipt in the plan.
+    Ordinary HTTP measurements use the existing owner boundary,
     with the actual normal origin, deployment ID and denied member API added.
     """
     _, _, measurements, audit = _prepare(operating_repo, candidate_repo, plan, **readers)
@@ -268,8 +320,11 @@ def verify_application(repo, record, grant, current_path, folder, completed, cla
                and source_review["schema"] == review_schema and source_review == audit["source_review"],
                "completed member source review differs")
     applied_at = ca.timestamp(completed["applied_at"])
+    incumbent = audit.get("predecessor_member_policy")
+    handover = (old_deployment, incumbent) if review_schema == JOURNAL_REVIEW_SCHEMA else None
     pins, row = _normal_evidence(record["source_commit"], record["target"], source_review["member_database_id"],
-                                 audit["ci"], audit["deployment"], audit["member_policy"], applied_at, live=False)
+                                 audit["ci"], audit["deployment"], audit["member_policy"], applied_at,
+                                 live=False, handover=handover)
     _check_successor_policy(source_review, baseline, pins)
     raw = audit["http_observations"]
     measurements = record["measurements"]
@@ -288,6 +343,7 @@ def verify_application(repo, record, grant, current_path, folder, completed, cla
         "prior_acceptance": completed["previous_acceptance"],
         "expected_activation_sha256": grant["expected_activation_sha256"],
         "management_not_after": review["management_not_after"],
+        "predecessor_member_policy": incumbent,
     }, old, source_review, pins, row, room)
     ca.require(all(review.get(key, object()) == value for key, value in expected.items())
                and applied_at <= ca.timestamp(review["management_not_after"])
@@ -408,12 +464,16 @@ def apply(operating_repo, candidate_repo, plan, issued, *, preflight, arbitratio
                    and transition.ordinary_runtime_release(previous_repo) == audit["predecessor"]
                    and other_locks_clear(),
                    "member ordinary runtime, predecessor or authority changed before replace")
+        handover = None
+        if audit["source_review"]["schema"] == JOURNAL_REVIEW_SCHEMA:
+            predecessor_audit, _ = _predecessor(previous_repo, read(_activation(previous_repo))["owner_acceptance"])
+            handover = (read(predecessor_audit)["deployment"], audit["predecessor_member_policy"])
         stored_pins, stored_policy = _normal_evidence(record["source_commit"], record["target"],
             audit["source_review"]["member_database_id"], audit["ci"], audit["deployment"], audit["member_policy"],
-            ca.now(), live=True)
+            ca.now(), live=True, handover=handover)
         live_proofs = _readers(**{key: readers[key] for key in ("ci_reader", "deployment_reader", "member_policy_reader")})
         fresh_pins, fresh_policy = _normal_evidence(record["source_commit"], record["target"],
-            audit["source_review"]["member_database_id"], *live_proofs, ca.now(), live=True)
+            audit["source_review"]["member_database_id"], *live_proofs, ca.now(), live=True, handover=handover)
         ca.require(fresh_pins == stored_pins and fresh_policy == stored_policy and live_proofs[0] == audit["ci"],
                    "production Worker or member OFF policy changed before apply")
         ca.require(within_grant() and config.read_bytes() == config_bytes

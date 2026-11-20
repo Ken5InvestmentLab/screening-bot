@@ -275,3 +275,39 @@ class PresentationSuccessorReviewTest(unittest.TestCase):
                     changed = self.commit("Unreviewed role-only successor")
                     with self.assertRaisesRegex(ValueError, error):
                         review.review_member_release_source(self.repo, baseline, changed)
+
+    def test_journal_successor_pins_reviewed_parent_and_runner_bytes(self):
+        self.config['vars']['CLOUD_MEMBER_AUDIENCE'] = 'role_only'
+        self.write(review.CONFIG, json.dumps(self.config).encode())
+        for path in review._JOURNAL_PRODUCT_PATHS | review._SUCCESSOR_REVIEW_PATHS:
+            self.write(path, b'prior ' + path.encode())
+        baseline = self.commit('Accepted role-only baseline')
+        for path in review._JOURNAL_PRODUCT_PATHS:
+            self.write(path, b'reviewed runner ' + path.encode())
+        runner = self.commit('Reviewed runner')
+        checked = review._product_digest(self.repo, runner, review._JOURNAL_PRODUCT_PATHS)
+        for path in review._SUCCESSOR_REVIEW_PATHS:
+            self.write(path, b'journal release verifier ' + path.encode())
+        candidate = self.commit('Journal successor')
+
+        with (patch.object(review, '_JOURNAL_BASELINE', baseline),
+              patch.object(review, '_JOURNAL_REVIEWED_RUNNER', runner),
+              patch.object(review, '_JOURNAL_PRODUCT_SHA256', checked)):
+            result = review.review_member_release_source(self.repo, baseline, candidate)
+            self.assertEqual(result['schema'], review.JOURNAL_REVIEW_SCHEMA)
+            self.assertEqual(result['member_audience'], 'role_only')
+            self.assertEqual(result['reviewed_runner_commit'], runner)
+            self.assertTrue(result['owner_only_gate_preserved'])
+            with self.assertRaisesRegex(ValueError, 'runner or release scope'):
+                review.review_member_release_source(self.repo, baseline, runner)
+            path = sorted(review._JOURNAL_PRODUCT_PATHS)[0]
+            self.write(path, b'changed after review')
+            self.git('add', '--', path)
+            self.git('commit', '--amend', '--no-edit')
+            with self.assertRaisesRegex(ValueError, 'reviewed runner bytes'):
+                review.review_member_release_source(self.repo, baseline, self.git('rev-parse', 'HEAD'))
+            self.write(review.ENTRY, b'unreviewed owner authorization')
+            self.git('add', '--', review.ENTRY)
+            self.git('commit', '--amend', '--no-edit')
+            with self.assertRaisesRegex(ValueError, 'authorization'):
+                review.review_member_release_source(self.repo, baseline, self.git('rev-parse', 'HEAD'))

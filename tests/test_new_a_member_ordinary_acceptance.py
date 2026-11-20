@@ -14,7 +14,7 @@ from weak_early_beta.new_a import continuing_transition as transition
 from weak_early_beta.new_a import member_ordinary_acceptance as member
 from weak_early_beta.new_a.files import atomic_write, digest, file_sha, private_root, read
 from weak_early_beta.new_a.member_release_source_review import (
-    COMPLETED_TIMING_REVIEW_SCHEMA, FUNDAMENTAL_REVIEW_SCHEMA, MEMBER_BINDING, PRESENTATION_REVIEW_SCHEMA,
+    COMPLETED_TIMING_REVIEW_SCHEMA, FUNDAMENTAL_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA, MEMBER_BINDING, PRESENTATION_REVIEW_SCHEMA,
     ROLE_ONLY_REVIEW_SCHEMA,
 )
 
@@ -239,8 +239,21 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
         self.source_review = {**legacy_review, 'schema': schema,
                               'accepted_owner_source': self.old_source, 'candidate_source': self.source,
                               'reviewed_diff_sha256': digest([self.old_source, self.source])}
-        if schema == ROLE_ONLY_REVIEW_SCHEMA:
+        if schema in (ROLE_ONLY_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA):
             self.source_review['member_audience'] = 'role_only'
+        if schema == JOURNAL_REVIEW_SCHEMA:
+            previous_deployment = read(prior_audit)['deployment']
+            incumbent = dict(mode='enabled', revision=2, source_commit=prior['source_commit'],
+                             worker_version_id=prior['version_id'])
+            self.plan['predecessor_member_policy'] = dict(
+                self.policy, schema=member.INCUMBENT_POLICY_SCHEMA, source_commit=prior['source_commit'],
+                worker_version_id=prior['version_id'], deployment_id=previous_deployment['deployment_id'],
+                policy=incumbent, observed_at=(self.now - datetime.timedelta(seconds=30)).isoformat(),
+                raw_receipt_sha256='a' * 64,
+            )
+            self.policy.update(schema=member.EFFECTIVE_OFF_POLICY_SCHEMA, policy=dict(incumbent),
+                               deployment_id=self.deployment_id)
+            self.ci['build_input_sha256'] = self.deployment['build_input_sha256'] = prior['build_input_sha256']
         self.source_reviews[self.old_source, self.source] = self.source_review
         patcher = patch.object(member, 'review_member_release_source',
                                lambda _repo, before, after: copy.deepcopy(self.source_reviews[before, after]))
@@ -253,7 +266,8 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
                          measurements={kind: dict(id=kind, sha256=digest(value)) for kind, value in self.measurements.items()})
         self.ordinary_review.update(source_commit=self.source)
         self.role_review = {**self.ordinary_review, 'decision': member.DECISION, **member._review(
-            self.plan, self.old, self.source_review, {key: self.deployment[key] for key in member.DEPLOYMENT_KEYS}, None, None)}
+            self.plan, self.old, self.source_review, {key: self.deployment[key] for key in member.DEPLOYMENT_KEYS},
+            self.policy['policy'], None)}
         return prior, prior_audit
 
     def test_presentation_successor_preserves_policy_and_verifies_prior_member_audit(self):
@@ -336,3 +350,27 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
         self.assertEqual(transition.ordinary_runtime_release(self.operating), prior)
         self.assertEqual(prior_audit.read_bytes(), original)
         self.assertEqual(transition.ordinary_runtime_release(self.repo)["activation_sha256"], result["after_sha256"])
+
+    def test_journal_successor_preserves_pinned_enabled_predecessor_and_replays_acceptance(self):
+        for schema in (PRESENTATION_REVIEW_SCHEMA, COMPLETED_TIMING_REVIEW_SCHEMA,
+                       FUNDAMENTAL_REVIEW_SCHEMA, ROLE_ONLY_REVIEW_SCHEMA):
+            self.prepare_successor(schema)
+        previous, previous_audit = self.prepare_successor(JOURNAL_REVIEW_SCHEMA)
+        incumbent = read(previous_audit)['deployment']
+        handover = self.plan['predecessor_member_policy']
+        self.assertEqual(member._effective_off(self.policy, MEMBER_BINDING['database_id'], self.deployment,
+                                               (incumbent, handover)), handover['policy'])
+        for changed in ({'policy': {**self.policy['policy'], 'revision': 3}}, {'primary': False},
+                        {'deployment_id': incumbent['deployment_id']}, {'schema': member.INCUMBENT_POLICY_SCHEMA}):
+            with self.subTest(changed=changed), self.assertRaisesRegex(ValueError, 'member policy|effective-OFF'):
+                member._effective_off(dict(self.policy, **changed), MEMBER_BINDING['database_id'],
+                                      self.deployment, (incumbent, handover))
+        for changed in ({'version_id': incumbent['version_id']}, {'build_input_sha256': 'a' * 64}):
+            policy = dict(self.policy, worker_version_id=changed.get('version_id', self.version))
+            with self.subTest(changed=changed), self.assertRaisesRegex(ValueError, 'successor deployment'):
+                member._effective_off(policy, MEMBER_BINDING['database_id'],
+                                      dict(self.deployment, **changed), (incumbent, handover))
+        result = self.apply(self.issue())
+        self.assertEqual(transition.ordinary_runtime_release(self.operating), previous)
+        self.assertEqual(self.policy['policy'], handover['policy'])
+        self.assertEqual(transition.ordinary_runtime_release(self.repo)['activation_sha256'], result['after_sha256'])

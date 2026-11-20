@@ -82,11 +82,14 @@
     retry.hidden = false;
   }
 
+  function suspendDisplay() {
+    dismissFundamental();
+    g.CloudSettingsDialog?.close(true);
+    out.hidden = true;
+  }
+
   async function verifyAccess(hideUntilChecked = false) {
-    if (hideUntilChecked) {
-      dismissFundamental();
-      out.hidden = true;
-    }
+    if (hideUntilChecked) suspendDisplay();
     if (accessCheck) return accessCheck;
     const check = (async () => {
       try {
@@ -226,7 +229,7 @@
     });
   }
 
-  g.CloudSettingsDialog?.connect(openSettings, () => memberAccess === 'premium');
+  g.CloudSettingsDialog?.connect(openSettings, () => memberAccess === 'premium' && !out.hidden);
 
   async function load({ restorePresetFocus = false } = {}) {
     clearFundamentalPage();
@@ -333,16 +336,9 @@
   retry.addEventListener('click', load);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') verifyAccess(true);
-    else {
-      dismissFundamental();
-      out.hidden = true;
-    }
+    else suspendDisplay();
   });
-  g.addEventListener('pagehide', () => {
-    dismissFundamental();
-    g.CloudSettingsDialog?.close(true);
-    out.hidden = true;
-  });
+  g.addEventListener('pagehide', suspendDisplay);
   g.addEventListener('pageshow', event => {
     if (event.persisted) verifyAccess(true);
   });

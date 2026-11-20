@@ -141,6 +141,12 @@ function browser(options = {}) {
   let session = initialSession;
   let interval;
   const requests = [];
+  const windowEvents = {};
+  const settingsDialog = {
+    open:false,
+    connect(_mount,canOpen) { this.canOpen=canOpen; },
+    close(force) { assert.equal(force,true); this.open=false; },
+  };
   const nodes = Object.fromEntries(['state', 'retry', 'content', 'preset'].map(key => ['member-' + key, element()]));
   const premiumLink = { hidden: true };
   const document = {
@@ -157,7 +163,8 @@ function browser(options = {}) {
     location: { pathname: '/weak_early_beta_latest.html' },
     AbortSignal,
     AbortController,
-    addEventListener() {},
+    addEventListener(name,handler) { windowEvents[name]=handler; },
+    CloudSettingsDialog:settingsDialog,
     structuredClone,
     setInterval(handler) { interval = handler; },
     NewAMemberPresentation: {
@@ -186,6 +193,8 @@ function browser(options = {}) {
   vm.runInContext(loader, context);
   return {
     document, requests, nodes, premiumLink,
+    settingsDialog, restore() { windowEvents.pageshow({ persisted:true }); },
+    navigateAway() { windowEvents.pagehide(); },
     poll() { interval(); },
     show() {
       document.visibilityState = 'visible';
@@ -401,6 +410,21 @@ test('returning to the tab requires the same authorized session and hides revoke
   await flush();
   assert.equal(view.nodes['member-content'].innerHTML, '');
   assert.match(view.nodes['member-state'].textContent, /アクセス権/);
+});
+
+test('member settings close before visibility and restored-page access rechecks settle', async () => {
+  const view = browser();
+  await flush();
+  const dialog = view.settingsDialog;
+  assert.equal(dialog.canOpen(),true);
+  for (const transition of ['hide','show','restore','navigateAway']) {
+    dialog.open=true;
+    view[transition]();
+    assert.equal(dialog.open,false,transition);
+    assert.equal(view.nodes['member-content'].hidden,true,transition);
+    assert.equal(dialog.canOpen(),false,transition);
+    await flush();
+  }
 });
 
 test('role loss clears settings and a delayed settings response cannot repaint them', async () => {

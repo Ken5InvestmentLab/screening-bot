@@ -15,8 +15,9 @@ from . import continuing_acceptance as ca
 from . import continuing_transition as transition
 from .files import atomic_write, digest, file_sha, private_root, read
 from .member_release_source_review import (
-    COMPLETED_TIMING_REVIEW_SCHEMA, FUNDAMENTAL_POPUP_REVIEW_SCHEMA, FUNDAMENTAL_REVIEW_SCHEMA, INITIAL_REVIEW_SCHEMA,
-    JOURNAL_REVIEW_SCHEMA, PRESENTATION_REVIEW_SCHEMA, ROLE_ONLY_REVIEW_SCHEMA, review_member_release_source,
+    COMPLETED_TIMING_REVIEW_SCHEMA, FUNDAMENTAL_IMPACT_REVIEW_SCHEMA, FUNDAMENTAL_POPUP_REVIEW_SCHEMA,
+    FUNDAMENTAL_REVIEW_SCHEMA, INITIAL_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA, PRESENTATION_REVIEW_SCHEMA,
+    ROLE_ONLY_REVIEW_SCHEMA, review_member_release_source,
 )
 from .operational_admission import ORIGIN, checked_ci
 from .release_acceptance import checked_measurements
@@ -30,8 +31,9 @@ MEMBER_SUCCESSORS = {
     FUNDAMENTAL_REVIEW_SCHEMA: ROLE_ONLY_REVIEW_SCHEMA,
     ROLE_ONLY_REVIEW_SCHEMA: JOURNAL_REVIEW_SCHEMA,
     JOURNAL_REVIEW_SCHEMA: FUNDAMENTAL_POPUP_REVIEW_SCHEMA,
+    FUNDAMENTAL_POPUP_REVIEW_SCHEMA: FUNDAMENTAL_IMPACT_REVIEW_SCHEMA,
 }
-VERSION_BOUND_HANDOVERS = frozenset({JOURNAL_REVIEW_SCHEMA, FUNDAMENTAL_POPUP_REVIEW_SCHEMA})
+VERSION_BOUND_HANDOVERS = frozenset({JOURNAL_REVIEW_SCHEMA, FUNDAMENTAL_POPUP_REVIEW_SCHEMA, FUNDAMENTAL_IMPACT_REVIEW_SCHEMA})
 DECISION = "CONTINUING_DAILY_WITH_DORMANT_DESIGNATED_MEMBER_VIEW"
 ORDINARY_DECISION = "CONTINUING_DAILY_WITH_NONOWNER_UNMEASURED"
 ROUTE = "/api/cloud/new-a-view/history.json"
@@ -134,7 +136,7 @@ def _effective_off(policy, database_id, deployment, handover, *, source_review_s
     changed_at = ca.timestamp(deployment["deployed_at"])
     observed = ca.timestamp(incumbent["observed_at"])
     ca.require(source_review_schema in VERSION_BOUND_HANDOVERS, "version-bound member handover review required")
-    # Journal changes are outside the Worker inputs. The admitted popup release ships different assets.
+    # Journal changes are outside the Worker inputs. Both presentation releases ship different assets.
     same_build_input = prior_deployment["build_input_sha256"] == deployment["build_input_sha256"]
     ca.require(prior_deployment["source_commit"] != deployment["source_commit"]
                and prior_deployment["version_id"] != deployment["version_id"]

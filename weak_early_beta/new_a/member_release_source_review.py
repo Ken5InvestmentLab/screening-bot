@@ -20,6 +20,7 @@ FUNDAMENTAL_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_SUCCESSOR_SOURCE_REVIEW_V1
 ROLE_ONLY_REVIEW_SCHEMA = "NEW_A_MEMBER_ROLE_ONLY_SUCCESSOR_SOURCE_REVIEW_V1"
 JOURNAL_REVIEW_SCHEMA = "NEW_A_MEMBER_JOURNAL_SUCCESSOR_SOURCE_REVIEW_V1"
 FUNDAMENTAL_POPUP_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_POPUP_SUCCESSOR_SOURCE_REVIEW_V1"
+FUNDAMENTAL_IMPACT_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_IMPACT_SUCCESSOR_SOURCE_REVIEW_V1"
 _PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumのアクセス権を購入する</a>'.encode()
 _NEW_PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumアクセス権を購入する</a>'.encode()
 _SUCCESSOR_REVIEW_PATHS = frozenset({
@@ -129,8 +130,16 @@ _FUNDAMENTAL_POPUP_REVIEWED_PATHS = frozenset({
     "tests/new_a_role_presentation_candidate.test.cjs",
 })
 _FUNDAMENTAL_POPUP_REVIEWED_SHA256 = "d9053b478b5c7b4ce7fbebadcaa338caf142a8b4b1996c7f6a68125508f3a87e"
+_FUNDAMENTAL_IMPACT_BASELINE = "c8d76064fa236e2c79801484394ca032c01c994b"
+_FUNDAMENTAL_IMPACT_REVIEWED_PATHS = frozenset({
+    PRESENTATION,
+    "weak-early-beta-gate/scripts/new-a-ui-source/presentation-adapter.cjs",
+    "tests/new_a_dashboard_details.test.cjs",
+    "tests/new_a_role_presentation_candidate.test.cjs",
+})
+_FUNDAMENTAL_IMPACT_REVIEWED_SHA256 = "e1a500af4f1160265639f5b86a911c1fc3cd19383bd1d08f5fea0e51dcba3904"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
-    ROLE_ONLY_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA, FUNDAMENTAL_POPUP_REVIEW_SCHEMA,
+    ROLE_ONLY_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA, FUNDAMENTAL_POPUP_REVIEW_SCHEMA, FUNDAMENTAL_IMPACT_REVIEW_SCHEMA,
 })
 MEMBER_BINDING = {
     "binding": "CLOUD_MEMBER_DB",
@@ -223,7 +232,14 @@ def _check_role_only_successor(repo, candidate, paths):
 
 
 def _member_successor(repo, baseline, candidate):
-    if baseline == _FUNDAMENTAL_POPUP_BASELINE:
+    if baseline == _FUNDAMENTAL_IMPACT_BASELINE:
+        paths = _successor_paths(repo, baseline, candidate)
+        if paths != _FUNDAMENTAL_IMPACT_REVIEWED_PATHS | _SUCCESSOR_REVIEW_PATHS:
+            raise ValueError("Fundamental impact successor differs from the reviewed frontend or test scope")
+        if _product_digest(repo, candidate, _FUNDAMENTAL_IMPACT_REVIEWED_PATHS) != _FUNDAMENTAL_IMPACT_REVIEWED_SHA256:
+            raise ValueError("Fundamental impact successor differs from the reviewed frontend or test bytes")
+        schema = FUNDAMENTAL_IMPACT_REVIEW_SCHEMA
+    elif baseline == _FUNDAMENTAL_POPUP_BASELINE:
         paths = _successor_paths(repo, baseline, candidate)
         if paths != _FUNDAMENTAL_POPUP_REVIEWED_PATHS | _SUCCESSOR_REVIEW_PATHS:
             raise ValueError("Fundamental popup successor differs from the reviewed frontend or test scope")
@@ -296,7 +312,7 @@ def review_member_release_source(repo, baseline, candidate):
         if (expected_config != candidate_config_bytes or common_config.get("name") != acceptance.SERVICE
                 or common_config["vars"].get("CLOUD_MEMBER_VIEW_ENABLED") != "true" or prior_members != [MEMBER_BINDING]):
             raise ValueError("Member successor changes the approved Worker configuration or member D1")
-        if (baseline in {_JOURNAL_BASELINE, _FUNDAMENTAL_POPUP_BASELINE}
+        if (baseline in {_JOURNAL_BASELINE, _FUNDAMENTAL_POPUP_BASELINE, _FUNDAMENTAL_IMPACT_BASELINE}
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "role_only"):
             raise ValueError("Version-bound member successor requires the existing role-only audience")
         return _member_successor(repo, baseline, candidate)

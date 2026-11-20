@@ -14,8 +14,9 @@ from weak_early_beta.new_a import continuing_transition as transition
 from weak_early_beta.new_a import member_ordinary_acceptance as member
 from weak_early_beta.new_a.files import atomic_write, digest, file_sha, private_root, read
 from weak_early_beta.new_a.member_release_source_review import (
-    COMPLETED_TIMING_REVIEW_SCHEMA, FUNDAMENTAL_POPUP_REVIEW_SCHEMA, FUNDAMENTAL_REVIEW_SCHEMA,
-    JOURNAL_REVIEW_SCHEMA, MEMBER_BINDING, PRESENTATION_REVIEW_SCHEMA, ROLE_ONLY_REVIEW_SCHEMA,
+    COMPLETED_TIMING_REVIEW_SCHEMA, FUNDAMENTAL_IMPACT_REVIEW_SCHEMA, FUNDAMENTAL_POPUP_REVIEW_SCHEMA,
+    FUNDAMENTAL_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA, MEMBER_BINDING, PRESENTATION_REVIEW_SCHEMA,
+    ROLE_ONLY_REVIEW_SCHEMA,
 )
 
 
@@ -416,3 +417,23 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
             member._check_successor_policy(source_review, previous, dict(deployment, policy_sha256='f' * 64))
         with self.assertRaisesRegex(ValueError, 'pinned enabled predecessor'):
             observe(self.ci, self.deployment, dict(effective_off, policy=dict(row, revision=3)))
+
+    def test_fundamental_impact_successor_preserves_the_accepted_popup_and_access_policy(self):
+        for schema in (PRESENTATION_REVIEW_SCHEMA, COMPLETED_TIMING_REVIEW_SCHEMA, FUNDAMENTAL_REVIEW_SCHEMA,
+                       ROLE_ONLY_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA, FUNDAMENTAL_POPUP_REVIEW_SCHEMA):
+            self.prepare_successor(schema)
+        previous, popup_audit = self.prepare_successor(FUNDAMENTAL_IMPACT_REVIEW_SCHEMA)
+        popup_bytes = popup_audit.read_bytes()
+        with self.assertRaisesRegex(ValueError, 'pinned enabled predecessor'):
+            member.prepare(self.operating, self.repo, self.plan, **self.readers(
+                member_policy_reader=lambda: {**self.policy, 'policy': {**self.policy['policy'], 'revision': 3}}))
+        with self.assertRaisesRegex(ValueError, 'approved live owner policy'):
+            member.prepare(self.operating, self.repo, self.plan, **self.readers(
+                deployment_reader=lambda: {**self.deployment, 'policy_sha256': 'f' * 64}))
+        result = self.apply(self.issue())
+        self.assertEqual(transition.ordinary_runtime_release(self.operating), previous)
+        self.assertEqual(popup_audit.read_bytes(), popup_bytes)
+        live = transition.ordinary_runtime_release(self.repo)
+        self.assertEqual(live['activation_sha256'], result['after_sha256'])
+        self.assertEqual(live['policy_sha256'], previous['policy_sha256'])
+        self.assertNotEqual(live['build_input_sha256'], previous['build_input_sha256'])

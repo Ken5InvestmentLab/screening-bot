@@ -18,7 +18,7 @@
    trialPreset:'balanced',calculateOnLoad:false,dashboardPrices,recentAnalytics,transport,
    onChange(state) {
     if (!active()) return;
-    if (state.phase === 'denied' || state.phase === 'session-changed') { onRevoked(); return; }
+    if (state.phase === 'denied' || state.phase === 'session-changed') { setBusy(false); onRevoked(); return; }
     ui.lock(busy(state) || state.revision === null);
     setBusy(state.phase === 'saving');
     status.dataset.state = state.phase === 'error' ? 'error' : '';

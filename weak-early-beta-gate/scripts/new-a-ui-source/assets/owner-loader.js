@@ -313,7 +313,7 @@
   global.AFiniteBrowser?.clear();
   global.AFiniteRevoked=true;
   global.AOwnerPageData=null;
-  for(const id of ['new-a-dashboard','new-a-model-holdings','cloud-analytics-content','history','new-a-history-jump']){
+  for(const id of ['new-a-dashboard','new-a-model-holdings','cloud-analytics-content','history','new-a-history-jump','cloud-settings-direct']){
    const node=document.getElementById(id);
    if(node){node.replaceChildren();node.hidden=true;}
   }

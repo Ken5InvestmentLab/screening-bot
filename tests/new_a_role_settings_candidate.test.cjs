@@ -164,3 +164,11 @@ test('the replacement owner UI does not mount notifications or the push registra
  assert.doesNotMatch(source('owner-loader.js'),/AOwnerNotifications|owner-notifications\.js|weak-early-beta-push\.js/);
  assert.doesNotMatch(readFileSync(path.join(assets,'../settings-body.html'),'utf8'),/プッシュ通知|new-a-notification-settings/);
 });
+
+test('owner access reset clears an open modal and its direct fallback form',()=>{
+ const loader=source('owner-loader.js');
+ const reset=loader.slice(loader.indexOf(' function unavailable(){'),loader.indexOf(' async function start(){'));
+ assert.match(reset,/CloudSettingsDialog\?\.close\(true\)/);
+ assert.match(reset,/['"]cloud-settings-direct['"]/);
+ assert.match(reset,/node\.replaceChildren\(\);node\.hidden=true/);
+});

@@ -1,41 +1,57 @@
 {
   "method": "mega_report",
   "description": "Approved report-only Mega mode scoring. The bot does not read or deploy this file.",
-  "updated_at": "2026-06-22T13:17:40Z",
+  "updated_at": "2026-11-20T11:27:25Z",
+  "evaluation_policy": {
+    "calendar_days": 365,
+    "timezone": "Asia/Tokyo",
+    "feature_source": "first_final_snapshot_then_signal_received_cutoff",
+    "current_selection": "published_mode_or_stable_score_then_conditions_fallback",
+    "win_rate": "exclude_zero_percent_draws"
+  },
   "modes": {
     "mega5_rebound": {
       "label": "Mega5 短期リバウンド",
       "eval_days": 5,
       "target": 0.2,
       "conditions": [
-        "vol20",
-        "rci9_os",
-        "pre_down3"
+        "body_pullback10",
+        "rsi5070",
+        "rci9_os"
       ],
       "combo_size": 3,
       "required_conditions": [
         "rci9_os"
       ],
       "source": "approved_pending",
-      "updated_at": "2026-06-22T13:17:40Z",
+      "updated_at": "2026-11-20T11:27:25Z",
       "backtest": {
-        "n": 8,
-        "avg_raw": 0.27,
-        "wr_raw": 0.75,
-        "target_hits": 5,
-        "target_rate": 0.625
+        "n": 13,
+        "decisive_n": 13,
+        "avg_raw": 0.082385,
+        "wr_raw": 0.538462,
+        "median_raw": 0.033,
+        "m10_raw": 3,
+        "target_hits": 3,
+        "target_rate": 0.230769
       },
       "validation": {
-        "n": 1,
-        "avg_raw": 0.615,
-        "wr_raw": 1.0,
-        "target_hits": 1,
-        "target_rate": 1.0
+        "n": 8,
+        "decisive_n": 8,
+        "avg_raw": -0.05525,
+        "wr_raw": 0.25,
+        "median_raw": -0.051,
+        "m10_raw": 3,
+        "target_hits": 0,
+        "target_rate": 0.0
       },
       "live": {
-        "n": 1,
+        "n": 0,
+        "decisive_n": 0,
         "avg_raw": 0.0,
         "wr_raw": 0.0,
+        "median_raw": 0.0,
+        "m10_raw": 0,
         "target_hits": 0,
         "target_rate": 0.0
       }

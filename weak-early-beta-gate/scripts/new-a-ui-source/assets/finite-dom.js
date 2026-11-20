@@ -197,7 +197,7 @@
    if(historyLoaded)rebuildHistory(simulation.result);
    if(data.current[0]&&!data.rows.length){
     data.loadDashboardRows(data.current[0],currentModel).then(displayRows=>{
-     if(globalThis.AFiniteRevoked||latest?.accepted!==simulation||!displayRows.length||data.rows.length)return;
+     if(globalThis.AFiniteRevoked||latest?.accepted?.request_id!==simulation.request_id||!displayRows.length||data.rows.length)return;
      data.dashboardRows=displayRows;
      renderHome(simulation);
     }).catch(data.onReadError);

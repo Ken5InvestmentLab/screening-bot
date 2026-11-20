@@ -206,6 +206,41 @@ test('preloading model data transfers the original verified quote buffers exactl
  assert.equal(quoteRequests,1);assert.equal(workerStarts,1);assert.equal(authChecks,1);
 });
 
+test('owner price preload admits eight concurrent private part reads and queues the ninth', { timeout:5000 }, async t=>{
+ const ctx={module:{exports:{}},Response,TextDecoder,Uint8Array,AbortController,crypto:webcrypto};
+ vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(source,'assets/browser-transport.js'),'utf8'),ctx);
+ const raw='[]';
+ const sha256=Buffer.from(await webcrypto.subtle.digest('SHA-256',new TextEncoder().encode(raw))).toString('hex');
+ const quotes=Array.from({length:9},(_,index)=>({name:`quotes-00${index}.json`,bytes:raw.length,rows:0,sha256}));
+ const manifest={schema:'A_BROWSER_PRIVATE_INPUT_V1',audience:'EXISTING_CLOUD_OWNER_ONLY',dataset_id:'a-'+'1'.repeat(24),
+  source_version:'synthetic-input',input_header:input(),collections:{episodes:[],intents:[],watches:[]},quotes};
+ const entered=Promise.withResolvers(), ninth=Promise.withResolvers(), first=Promise.withResolvers(), rest=Promise.withResolvers();
+ const requests=[];
+ const broker=ctx.module.exports.create({
+  pinnedManifest:manifest,
+  async fetch(url,{cache,credentials}){
+   assert.equal(cache,'no-store');
+   assert.equal(credentials,'same-origin');
+   const index=requests.length;
+   requests.push(url);
+   if(requests.length===8)entered.resolve();
+   if(requests.length===9)ninth.resolve();
+   await (index===0?first.promise:rest.promise);
+   return new Response(raw);
+  },
+  createWorker:()=>({postMessage(m){queueMicrotask(()=>this.onmessage({data:{id:m.id,ready:true}}));},terminate(){}}),
+ });
+ t.after(()=>{first.resolve();rest.resolve();});
+ const loaded=broker.preload();
+ await entered.promise;
+ assert.equal(requests.length,8);
+ first.resolve();
+ await ninth.promise;
+ rest.resolve();
+ await loaded;
+ assert.deepEqual(requests,quotes.map(d=>`/api/cloud/new-a-finite/input/${manifest.dataset_id}/${d.name}`));
+});
+
 test('a failed preload is surfaced without a silent retry and its other part reads are aborted',async()=>{
  const ctx={module:{exports:{}},Response,TextDecoder,Uint8Array,AbortController,crypto:webcrypto};
  vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(source,'assets/browser-transport.js'),'utf8'),ctx);

@@ -311,3 +311,38 @@ class PresentationSuccessorReviewTest(unittest.TestCase):
             self.git('commit', '--amend', '--no-edit')
             with self.assertRaisesRegex(ValueError, 'authorization'):
                 review.review_member_release_source(self.repo, baseline, self.git('rev-parse', 'HEAD'))
+
+    def test_fundamental_popup_successor_pins_only_reviewed_frontend_and_test_bytes(self):
+        self.config["vars"]["CLOUD_MEMBER_AUDIENCE"] = "role_only"
+        original_config = json.dumps(self.config).encode()
+        self.write(review.CONFIG, original_config)
+        unrelated = "weak_early_beta/new_a/pipeline.py"
+        self.write(unrelated, b"frozen daily pipeline")
+        paths = review._FUNDAMENTAL_POPUP_REVIEWED_PATHS | review._SUCCESSOR_REVIEW_PATHS
+        for path in paths:
+            self.write(path, b"predecessor " + path.encode())
+        baseline = self.commit("Accepted journal successor")
+        for path in paths:
+            self.write(path, b"reviewed popup successor " + path.encode())
+        candidate = self.commit("Exact popup successor")
+        checked = review._product_digest(self.repo, candidate, review._FUNDAMENTAL_POPUP_REVIEWED_PATHS)
+        cases = (
+            (review.PRESENTATION, b"changed popup after review", "reviewed frontend or test bytes"),
+            ("tests/new_a_analytics_presets.test.cjs", b"changed checks", "reviewed frontend or test bytes"),
+            (unrelated, b"unexpected change", "reviewed frontend or test scope"),
+            (review.CONFIG, original_config.replace(b'"role_only"', b'"tiered"'), "Worker configuration"),
+            (review.ENTRY, b"unexpected owner authorization", "authorization"),
+        )
+        with (patch.object(review, "_FUNDAMENTAL_POPUP_BASELINE", baseline),
+              patch.object(review, "_FUNDAMENTAL_POPUP_REVIEWED_SHA256", checked)):
+            result = review.review_member_release_source(self.repo, baseline, candidate)
+            self.assertEqual(result["schema"], review.FUNDAMENTAL_POPUP_REVIEW_SCHEMA)
+            self.assertEqual(result["member_audience"], "role_only")
+            self.assertTrue(result["owner_only_gate_preserved"])
+            for path, replacement, reason in cases:
+                with self.subTest(path=path):
+                    self.git("reset", "--hard", candidate)
+                    self.write(path, replacement)
+                    changed = self.commit("Unreviewed successor")
+                    with self.assertRaisesRegex(ValueError, reason):
+                        review.review_member_release_source(self.repo, baseline, changed)

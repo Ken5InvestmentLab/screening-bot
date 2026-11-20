@@ -19,6 +19,7 @@ COMPLETED_TIMING_REVIEW_SCHEMA = "NEW_A_MEMBER_COMPLETED_TIMING_SUCCESSOR_SOURCE
 FUNDAMENTAL_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_SUCCESSOR_SOURCE_REVIEW_V1"
 ROLE_ONLY_REVIEW_SCHEMA = "NEW_A_MEMBER_ROLE_ONLY_SUCCESSOR_SOURCE_REVIEW_V1"
 JOURNAL_REVIEW_SCHEMA = "NEW_A_MEMBER_JOURNAL_SUCCESSOR_SOURCE_REVIEW_V1"
+FUNDAMENTAL_POPUP_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_POPUP_SUCCESSOR_SOURCE_REVIEW_V1"
 _PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumのアクセス権を購入する</a>'.encode()
 _NEW_PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumアクセス権を購入する</a>'.encode()
 _SUCCESSOR_REVIEW_PATHS = frozenset({
@@ -115,6 +116,22 @@ _JOURNAL_PRODUCT_PATHS = frozenset({
     "scripts/windows/test-weak-early-beta-daily-runner.mjs",
 })
 _JOURNAL_PRODUCT_SHA256 = "e7c7307d629e08e67aaca69d2c6b8784c21f87e36ae45225ef39d95ee7861159"
+_FUNDAMENTAL_POPUP_BASELINE = "00fab418f14488b3fa2f347213e52d0e8e5e1853"
+_FUNDAMENTAL_POPUP_REVIEWED_PATHS = frozenset({
+    PRESENTATION,
+    "weak-early-beta-gate/scripts/new-a-ui-source/presentation-adapter.cjs",
+    "weak-early-beta-gate/scripts/new-a-ui-source/frame.html",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/browser-transport.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/finite-dom.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/owner-loader.js",
+    "tests/new_a_analytics_presets.test.cjs",
+    "tests/new_a_dashboard_details.test.cjs",
+    "tests/new_a_role_presentation_candidate.test.cjs",
+})
+_FUNDAMENTAL_POPUP_REVIEWED_SHA256 = "d9053b478b5c7b4ce7fbebadcaa338caf142a8b4b1996c7f6a68125508f3a87e"
+_ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
+    ROLE_ONLY_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA, FUNDAMENTAL_POPUP_REVIEW_SCHEMA,
+})
 MEMBER_BINDING = {
     "binding": "CLOUD_MEMBER_DB",
     "database_name": "tentei-cloud-member-view",
@@ -206,7 +223,14 @@ def _check_role_only_successor(repo, candidate, paths):
 
 
 def _member_successor(repo, baseline, candidate):
-    if baseline == _JOURNAL_BASELINE:
+    if baseline == _FUNDAMENTAL_POPUP_BASELINE:
+        paths = _successor_paths(repo, baseline, candidate)
+        if paths != _FUNDAMENTAL_POPUP_REVIEWED_PATHS | _SUCCESSOR_REVIEW_PATHS:
+            raise ValueError("Fundamental popup successor differs from the reviewed frontend or test scope")
+        if _product_digest(repo, candidate, _FUNDAMENTAL_POPUP_REVIEWED_PATHS) != _FUNDAMENTAL_POPUP_REVIEWED_SHA256:
+            raise ValueError("Fundamental popup successor differs from the reviewed frontend or test bytes")
+        schema = FUNDAMENTAL_POPUP_REVIEW_SCHEMA
+    elif baseline == _JOURNAL_BASELINE:
         paths = _successor_paths(repo, baseline, candidate)
         parents = git(repo, "show", "-s", "--format=%P", candidate).decode().split()
         if parents != [_JOURNAL_REVIEWED_RUNNER] or paths != _JOURNAL_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
@@ -242,7 +266,7 @@ def _member_successor(repo, baseline, candidate):
         "member_database_id": MEMBER_BINDING["database_id"],
         "member_support_configured": True,
         "owner_only_gate_preserved": True,
-        **({"member_audience": "role_only"} if schema in {ROLE_ONLY_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA} else {}),
+        **({"member_audience": "role_only"} if schema in _ROLE_ONLY_SUCCESSOR_SCHEMAS else {}),
         **({"reviewed_runner_commit": _JOURNAL_REVIEWED_RUNNER} if schema == JOURNAL_REVIEW_SCHEMA else {}),
     }
 
@@ -272,8 +296,9 @@ def review_member_release_source(repo, baseline, candidate):
         if (expected_config != candidate_config_bytes or common_config.get("name") != acceptance.SERVICE
                 or common_config["vars"].get("CLOUD_MEMBER_VIEW_ENABLED") != "true" or prior_members != [MEMBER_BINDING]):
             raise ValueError("Member successor changes the approved Worker configuration or member D1")
-        if baseline == _JOURNAL_BASELINE and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "role_only":
-            raise ValueError("Journal successor requires the existing role-only audience")
+        if (baseline in {_JOURNAL_BASELINE, _FUNDAMENTAL_POPUP_BASELINE}
+                and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "role_only"):
+            raise ValueError("Version-bound member successor requires the existing role-only audience")
         return _member_successor(repo, baseline, candidate)
 
     if changed != [ENTRY]:

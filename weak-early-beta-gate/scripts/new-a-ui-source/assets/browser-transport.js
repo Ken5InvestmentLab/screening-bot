@@ -1,5 +1,6 @@
 // 資金配分は本人端末のWorkerで実行。Cloudflareは本人認証・保存・private小分け入力のみ。
 (function(){'use strict';
+ const partReadLimit=8;
  const response=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json','cache-control':'private, no-store'}});
  function create({fetch:network,createWorker,crypto=globalThis.crypto,pinnedManifest=null,onSimulationPhase=()=>{}}){
   let worker=null,ready=null,early=null,loading=null,next=0,generation=0;const jobs=new Map();
@@ -44,7 +45,7 @@
       loaded.set(d.name,rows);
      }
     }
-    await Promise.all(Array.from({length:Math.min(4,descriptors.length)},load));stillCurrent();
+    await Promise.all(Array.from({length:Math.min(partReadLimit,descriptors.length)},load));stillCurrent();
     const input={...manifest.input_header};for(const kind of kinds)input[kind]=manifest.collections[kind].flatMap(d=>loaded.get(d.name));
     // Transfer verified original quote bytes to avoid parsing and cloning the
     // full price history on the UI thread.

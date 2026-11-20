@@ -110,9 +110,10 @@ test('only verified Premium history rows have the exact page, date and symbol an
    {...match,symbol:'456A',has_fundamental:'true'},{...match,symbol:'567A',date:'2026-11-31'}];
  const html=ui.view({...premiumHome,rows,historyPage:42});
  a.equal((html.match(/data-member-fundamental=/g)||[]).length,1);
- a.match(html,/data-member-fundamental="42\.2026-11-18\.234A">ファンダ分析/);
- a.doesNotMatch(ui.view({...premiumHome,rows}),/ファンダ分析/);
- a.doesNotMatch(ui.view({...premiumHome,rows,access:'free',historyPage:42}),/ファンダ分析|has_fundamental|data-member-fundamental/);
+ a.match(html,/class="fundamental-toggle cloud-stock-action"[^>]*aria-haspopup="dialog"/);
+ a.match(html,/data-member-fundamental="42\.2026-11-18\.234A">ファンダ<\/button>/);
+ a.doesNotMatch(ui.view({...premiumHome,rows}),/>ファンダ<\/button>/);
+ a.doesNotMatch(ui.view({...premiumHome,rows,access:'free',historyPage:42}),/ファンダ|has_fundamental|data-member-fundamental/);
 });
 test('verified report fields keep the existing dialog copy, escape content and reject mismatches',()=>{
  const expected={asOf:'2026-11-19',date:'2026-11-18',symbol:'234A',generation:'a'.repeat(64)};
@@ -123,6 +124,7 @@ test('verified report fields keep the existing dialog copy, escape content and r
  };
  const html=ui.fundamentalMarkup(report,expected);
  a.match(html,/ファンダ分析を閉じる/);
+ a.match(html,/<dl><dt>材料インパクト<\/dt><dd>/);
  a.match(html,/&lt;銘柄名&gt;\(234A\)/);
  a.match(html,/検出日 2026-11-18/);
  a.match(html,/分析時点 2026-11-18T16:15:00\+09:00/);

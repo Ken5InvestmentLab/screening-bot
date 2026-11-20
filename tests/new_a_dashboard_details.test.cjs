@@ -9,7 +9,7 @@ function loadBrowserScript(file) {
   vm.runInContext(fs.readFileSync(path.join(assets, file), 'utf8'), context);
   return context.module.exports;
 }
-const { currentMarkup, stockDetails, holdingPerformance } = loadBrowserScript('owner-loader.js');
+const { currentMarkup, stockDetails, holdingPerformance, openFundamental } = loadBrowserScript('owner-loader.js');
 const { renderHoldings, historyRecords } = loadBrowserScript('finite-controller.js');
 const adapter = require('../weak-early-beta-gate/scripts/new-a-ui-source/presentation-adapter.cjs');
 
@@ -42,9 +42,55 @@ test('dashboard details use exact episode, verified quote and individual model r
   assert.match(html, /TradingView|tradingview\.com\/chart/);
   assert.match(html, /対象日終値<\/dt><dd>1,100円/);
   assert.match(html, /仮想決済 成績<\/dt><dd>9,320円（9.32%）/);
-  assert.match(html, /ファンダ分析/);
+  assert.match(html, /data-owner-fundamental aria-haspopup="dialog" aria-expanded="false">ファンダ<\/button>/);
+  assert.match(html, /<dialog class="fundamental-detail" aria-label="ファンダ分析の詳細">/);
+  assert.match(html, /class="button-link cloud-stock-action"[^>]*>チャート<\/a>/);
+  assert.match(html, /class="fundamental-toggle cloud-stock-action"/);
+  assert.match(html, /<dl><dt>業績<\/dt><dd>/);
+  assert.doesNotMatch(html, /<details class="cloud-fundamental"/);
   assert.match(html, /&lt;strong&gt;素材&lt;\/strong&gt;/);
   assert.doesNotMatch(html, /<strong>素材<\/strong>/);
+});
+
+test('the dynamically rendered owner history button opens a modal and restores its focus after dismissal', () => {
+  class Dialog extends EventTarget {
+    open = false;
+    matches(selector) { return selector === 'dialog.fundamental-detail'; }
+    showModal() { this.open = true; }
+    close() {
+      this.open = false;
+      this.dispatchEvent(new Event('close'));
+    }
+    addEventListener(type, listener, options) {
+      if (type !== 'click') return super.addEventListener(type, listener, options);
+      this.clickListener = listener;
+    }
+    removeEventListener(type, listener) {
+      if (type === 'click' && this.clickListener === listener) this.clickListener = null;
+      else super.removeEventListener(type, listener);
+    }
+    click(target) { this.clickListener({ target }); }
+  }
+  const dialog = new Dialog();
+  const button = {
+    nextElementSibling: dialog, isConnected: true, expanded: 'false', focusCount: 0,
+    setAttribute(name, value) { assert.equal(name, 'aria-expanded'); this.expanded = value; },
+    focus() { this.focusCount++; },
+  };
+  openFundamental(button);
+  assert.equal(dialog.open, true);
+  assert.equal(button.expanded, 'true');
+  dialog.click({ closest: () => null });
+  assert.equal(dialog.open, true);
+  dialog.click(dialog);
+  assert.equal(dialog.open, false);
+  assert.equal(button.expanded, 'false');
+  assert.equal(button.focusCount, 1);
+  openFundamental(button);
+  dialog.click({ closest: (selector) => selector === '.fundamental-close' });
+  assert.equal(dialog.open, false);
+  assert.equal(button.expanded, 'false');
+  assert.equal(button.focusCount, 2);
 });
 
 test('missing latest quote, held quote and a different episode cannot be used as a substitute', () => {

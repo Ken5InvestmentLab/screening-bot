@@ -139,10 +139,10 @@
     if(profit)outcome='<div><dt>仮想保有 評価損益</dt><dd>'+money(profit.yen)+'（'+percentage(profit.rate)+'）</dd></div>';
     else outcome='<div><dt>個別成績</dt><dd>仮想保有中・評価未確認</dd></div>';
    }
-   const chart=chartAllowed?'<a class="button-link" href="https://jp.tradingview.com/chart/?symbol=TSE%3A'+encodeURIComponent(symbol)+'" target="_blank" rel="noopener noreferrer">チャート</a>':'';
+   const chart=chartAllowed?'<a class="button-link cloud-stock-action" href="https://jp.tradingview.com/chart/?symbol=TSE%3A'+encodeURIComponent(symbol)+'" target="_blank" rel="noopener noreferrer">チャート</a>':'';
    const analysis=chartAllowed&&adapter?adapter.fundamentalMarkup(row):'';
    const basis=dashboardYear&&(trade||stillOpen)?'<p class="note">'+esc(dashboardYear.period[0].slice(0,4))+'年の独立試算</p>':'';
-   return '<details class="cloud-table-details cloud-stock-detail"><summary>銘柄の詳細</summary><dl class="scenario-stats">'+actual+signal+entryPrice+outcome+'</dl>'+basis+'<div class="actions">'+chart+(analysis||'<small class="note">ファンダ分析 未確認</small>')+'</div></details>';
+   return '<details class="cloud-table-details cloud-stock-detail"><summary>銘柄の詳細</summary><dl class="scenario-stats">'+actual+signal+entryPrice+outcome+'</dl>'+basis+'<div class="actions">'+analysis+chart+(analysis?'':'<small class="note">ファンダ分析 未確認</small>')+'</div></details>';
   };
  }
 
@@ -258,7 +258,22 @@
   return '<section class="panel" id="new-a-current" aria-labelledby="new-a-events-heading"><div class="cloud-section-head"><h2 id="new-a-events-heading">対象日の動き</h2><div class="cloud-meta"><span class="badge">対象 '+esc(s.as_of||'—')+'</span>'+(observed?'<span class="badge">観測 '+esc(observed)+' JST</span>':'')+(s.observation_kind==='DELAYED_SCHEDULED_OBSERVATION'?'<span class="badge">遅延実行</span>':'')+'</div></div><ul class="cloud-transition-summary" aria-label="対象日の件数">'+totals+'</ul><div class="cloud-meta">'+(live||delayed?'<span class="badge">新規検出 '+newCount+'銘柄</span>':'<span class="badge">照合</span>')+'<span class="badge">データ保留 '+Object.keys(held).length+'銘柄</span></div><div class="cloud-stock-grid">'+(eventCards||'<p class="cloud-empty">'+(modelPending?'監視の開始・終了はありません':'確認済みの開始・終了はありません')+'</p>')+'</div>'+openingSection+(referenceRows?'<details class="cloud-table-details cloud-reference-events"><summary>買付候補・その他の記録</summary>'+table(['銘柄','記録'],referenceRows)+'</details>':'')+'</section>'+
    '<section class="panel" aria-labelledby="new-a-watch-heading"><div class="cloud-section-head"><h2 id="new-a-watch-heading">現在の監視</h2><span class="badge">'+watchStatus+'</span></div>'+(watchRows?table(['銘柄','監視開始日','状況'],watchRows):'<p class="cloud-empty">'+noWatches+'</p>')+(watches.length>20?'<button class="settings-secondary" type="button" id="new-a-current-more">残り '+(watches.length-20)+'銘柄を表示</button>':'')+(heldRows?'<details class="cloud-table-details"><summary>データ保留 '+Object.keys(held).length+'銘柄</summary>'+table(['銘柄','理由','対象日'],heldRows)+'</details>':'')+'</section>';
  }
- const api={validateManifest,assembleCurrent,readPresentation,inputFor,presentationMarkup,currentMarkup,stockDetails,holdingPerformance};
+ function openFundamental(button){
+  const dialog=button.nextElementSibling;
+  if(!dialog?.matches('dialog.fundamental-detail')||dialog.open)return;
+  const dismiss=event=>{
+   if(event.target===dialog||event.target.closest?.('.fundamental-close'))dialog.close();
+  };
+  dialog.addEventListener('click',dismiss);
+  dialog.addEventListener('close',()=>{
+   dialog.removeEventListener('click',dismiss);
+   button.setAttribute('aria-expanded','false');
+   if(button.isConnected)button.focus({preventScroll:true});
+  },{once:true});
+  dialog.showModal();
+  button.setAttribute('aria-expanded','true');
+ }
+ const api={validateManifest,assembleCurrent,readPresentation,inputFor,presentationMarkup,currentMarkup,stockDetails,holdingPerformance,openFundamental};
  if(typeof module!=='undefined'&&module.exports){module.exports=api;return;}
  global.AOwnerPresentation=api;
  if(typeof document==='undefined')return;
@@ -276,6 +291,8 @@
  });
  document.addEventListener('click',event=>{
   if(menu?.open&&!menu.contains(event.target))menu.open=false;
+  const fundamental=event.target.closest?.('[data-owner-fundamental]');
+  if(fundamental&&!global.AFiniteRevoked)openFundamental(fundamental);
  });
  function showLoadStatus(message,retry){
   const panel=document.getElementById('new-a-load-panel');

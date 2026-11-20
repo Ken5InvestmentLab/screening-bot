@@ -62,19 +62,19 @@ function fundamentalMarkup(report, {date,symbol,asOf,generation}) {
       && field.label === fundamentalLabels[index] && boundedText(field.text,8192))
     || encoder.encode(JSON.stringify(report)).length > 16384) return null;
   const heading = report.company_name === null ? symbol : report.company_name + '(' + symbol + ')';
-  const fields = report.fields.map(field => '<p><strong>' + esc(field.label) + '</strong><br>'
-    + fundamentalText(field) + '</p>').join('');
-  return '<button class="fundamental-close" type="button" aria-label="ファンダ分析を閉じる">×</button>'
+  const fields = report.fields.map(field => '<dt>' + esc(field.label) + '</dt><dd>'
+    + fundamentalText(field) + '</dd>').join('');
+  return '<button class="fundamental-close" type="button" aria-label="ファンダ分析を閉じる" autofocus>×</button>'
     + '<div class="discord-message"><article class="discord-embed"><h4>' + esc(heading) + '</h4>'
     + '<p>検出日 ' + esc(date) + '</p><p>分析時点 ' + esc(report.analysis_cutoff) + '</p>'
-    + fields + '</article></div>';
+    + '<dl>' + fields + '</dl></article></div>';
 }
 function history(rows, premiumPage) {
   return '<div class="history-table-wrap"><table id="detection-table"><thead><tr><th>検出日</th><th>銘柄</th>'
     + '<th>状態</th><th>詳細</th></tr></thead><tbody>' + rows.map(row => {
       const item = fundamentalItem(premiumPage,row);
-      const action = item ? '<div class="actions"><button class="fundamental-toggle" type="button" aria-haspopup="dialog" aria-expanded="false" data-member-fundamental="'
-        + esc(item) + '">ファンダ分析</button></div>' : '';
+      const action = item ? '<div class="actions"><button class="fundamental-toggle cloud-stock-action" type="button" aria-haspopup="dialog" aria-expanded="false" data-member-fundamental="'
+        + esc(item) + '">ファンダ</button></div>' : '';
       const state = esc(Object.hasOwn(states,row.state) ? states[row.state] : row.state);
       return '<tr><td data-label="検出日">' + esc(row.date) + action + '</td><th scope="row">' + esc(row.symbol)
         + '</th><td data-label="状態">' + state + '</td><td><details><summary>確認</summary><p>検出日 ' + esc(row.date)

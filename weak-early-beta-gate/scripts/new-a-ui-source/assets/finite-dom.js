@@ -90,7 +90,7 @@
   const chartAllowed=d.aChartAllowed!=='false';
   const name=app.esc(d.name),code=app.esc(d.symbol);
   const url='https://jp.tradingview.com/chart/?symbol=TSE%3A'+encodeURIComponent(d.symbol);
-  const chart=chartAllowed?'<a class="button-link" href="'+url+'" target="_blank" rel="noopener noreferrer">チャート</a>':'<span class="button-link" aria-disabled="true">チャート保留</span>';
+  const chart=chartAllowed?'<a class="button-link cloud-stock-action" href="'+url+'" target="_blank" rel="noopener noreferrer">チャート</a>':'<span class="button-link" aria-disabled="true">チャート保留</span>';
   const fundamental=globalThis.ANewPresentation?.fundamentalMarkup(source);
   const entry=pos?app.esc(pos.entry_date)+'<small>寄付 '+app.yen(pos.entry_price_nominal)+'</small><small>'+app.number(pos.shares)+'株 · '+app.yen(pos.entry_cost)+'</small>':'—';
   const simulated=w&&w.selection_reason===null&&latest?.applied;

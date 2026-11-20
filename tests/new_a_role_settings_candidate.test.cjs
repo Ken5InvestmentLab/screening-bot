@@ -13,13 +13,13 @@ const preferences = {
  price_cap_yen:425.5,exit_endpoint:'a20_close',base_shares:200,cost_percent:1,year_scope:'2025',allocation:'stacked',
  initial_cash_yen:10000000,max_positions:20,per_order_cap_yen:500000,
 };
-const view_preferences = {trial_preset:null,theme:'dark',font_size:'standard',page_size:20};
+const view_preferences = {trial_preset:'profit',theme:'dark',font_size:'standard',page_size:20};
 const saved = {revision:3,save_binding:'b'.repeat(64),preferences,view_preferences};
 const flush = () => new Promise(resolve => setImmediate(resolve));
 
 test('only current inputs are editable and legacy account values survive cancel and save',() => {
  assert.deepEqual(Array.from(specs,item=>item.key),[
-  'trial_preset','initial_cash_yen','max_positions','per_order_cap_yen','cost_percent','theme','font_size','page_size',
+  'initial_cash_yen','max_positions','per_order_cap_yen','cost_percent','theme','font_size','page_size',
  ]);
  const model = state();
  model.load(saved);
@@ -27,6 +27,7 @@ test('only current inputs are editable and legacy account values survive cancel 
  assert.deepEqual(model.cancel().preferences,preferences);
  assert.throws(()=>model.edit('preferences','price_cap_yen',1));
  assert.throws(()=>model.edit('preferences','notifications',true));
+ assert.throws(()=>model.edit('view_preferences','trial_preset','defensive'));
  model.edit('view_preferences','theme','light');
  assert.deepEqual(model.begin().preferences,preferences);
 });
@@ -131,9 +132,7 @@ for (const owner of [true,false]) {
   assert.equal(items(form).some(node=>node.textContent==='プッシュ通知'),false);
   const shown=items(form).map(node=>node.name);
   for (const key of ['theme','font_size','page_size']) assert.equal(shown.includes(key),owner);
-  const preset=items(form).find(node=>node.name==='trial_preset');
-  assert.equal(preset.value,'');
-  assert.equal(preset.lastElementChild.hidden,false);
+  assert.equal(shown.includes('trial_preset'),false);
   const cancel=items(form).find(node=>node.textContent==='キャンセル');
   cancel.events.click();
   assert.equal(ui.dialog.open,false);
@@ -150,7 +149,7 @@ for (const owner of [true,false]) {
   items(form).find(node=>node.name===(owner?'theme':'cost_percent')).value=owner?'light':'2';
   await form.events.submit({preventDefault(){}});
   if (owner) {
-   assert.equal(ui.saved()?.state.viewPreferences?.theme,'light');
+   assert.deepEqual(JSON.parse(JSON.stringify(ui.saved()?.state.viewPreferences)),{...view_preferences,theme:'light'});
    assert.equal(ui.saved()?.trialChanged,false);
   } else {
    assert.equal(ui.saved()?.state.preferences.cost_percent,2);

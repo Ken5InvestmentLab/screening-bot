@@ -2,9 +2,6 @@
 (function (g) {
  'use strict';
  const specs = [
-  { group:'view_preferences', key:'trial_preset', label:'試算プリセット', options:[
-   ['defensive','守り'], ['balanced','中間'], ['profit','利益優先'], ['','現在の条件'],
-  ] },
   { group:'preferences', key:'initial_cash_yen', label:'初期資金（円）', min:1, max:1e12, step:1 },
   { group:'preferences', key:'max_positions', label:'同時保有上限（銘柄）', min:1, max:1000, step:1 },
   { group:'preferences', key:'per_order_cap_yen', label:'1注文の購入上限（円）', min:1, max:1e12, step:1 },
@@ -145,7 +142,6 @@
     for (const {spec,field} of fields) {
      const value = saved[spec.group][spec.key];
      field.value = value ?? '';
-     if (spec.key === 'trial_preset') field.lastElementChild.hidden = value != null;
     }
    },
    edits() {

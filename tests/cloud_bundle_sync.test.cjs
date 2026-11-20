@@ -69,6 +69,11 @@ test('generated owner frames use descriptive history labels and direct settings 
  const settings=ownerFrame('/weak_early_beta_settings.html',owner);
  assert.match(dashboard,/<div>試算条件<\/div>/);
  assert.match(dashboard,/<dialog id="cloud-settings-dialog"/);
+ const close = dashboard.match(/<button[^>]+id="cloud-settings-close"[\s\S]*?<\/button>/)[0];
+ assert.match(close,/aria-label="設定を閉じる"/);
+ assert.match(close,/<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">/);
+ assert.match(close,/<path d="M6 6L18 18M18 6L6 18"/);
+ assert.match(dashboard,/\.cloud-settings \.settings-close\{display:grid;place-items:center;flex:0 0 44px/);
  assert.match(dashboard,/aria-haspopup="dialog" aria-controls="cloud-settings-dialog"/);
  assert.match(settings,/<h1 id="cloud-settings-title">設定<\/h1>/);
  assert.match(settings,/id="cloud-settings-direct"/);

@@ -135,6 +135,27 @@ test('verified report fields keep the existing dialog copy, escape content and r
   a.equal(ui.fundamentalMarkup(invalid,expected),null);
  }
 });
+test('the member popup uses the old report palette only for a leading verified impact category',()=>{
+ const expected={asOf:'2026-11-19',date:'2026-11-18',symbol:'234A',generation:'a'.repeat(64)};
+ const labels=['材料インパクト','事業概要','足元材料','ファンダ要点','注意点','開示リンク','Sources'];
+ const cases=[
+  ['  ポジティブ材料：確定事項',' impact-positive'],
+  ['ネガティブ材料：確認結果',' impact-negative'],
+  ['様子見：要確認',' impact-watch'],
+  ['混在/要確認：確定事項あり',' impact-watch'],
+  ['分類未記載。ポジティブ材料を後日確認。',''],
+  ['ポジティブ材料を確認中',''],
+ ];
+ for (const [impact, palette] of cases) {
+  const fields=labels.map((label,index)=>({label,text:index===0?impact:'様子見の補足'}));
+  const report={as_of:expected.asOf,date:expected.date,symbol:expected.symbol,generation:expected.generation,
+   company_name:null,analysis_cutoff:'2026-11-18T16:15:00+09:00',fields};
+  const html=ui.fundamentalMarkup(report,expected);
+  a.ok(html.includes('class="discord-embed'+palette+'"'));
+  a.ok(html.includes(impact));
+  a.match(html,/<dt>注意点<\/dt><dd>様子見の補足<\/dd>/);
+ }
+});
 test('verified disclosure and Sources fields render only safe titled HTTPS links',()=>{
  const expected={asOf:'2026-11-19',date:'2026-11-18',symbol:'234A',generation:'a'.repeat(64)};
  const fields=['材料インパクト','事業概要','足元材料','ファンダ要点','注意点','開示リンク','Sources']

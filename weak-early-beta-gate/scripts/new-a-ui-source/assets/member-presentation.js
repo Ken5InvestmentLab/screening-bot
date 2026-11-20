@@ -47,6 +47,15 @@ function fundamentalText({label,text}) {
     return '・<a href="' + esc(address.href) + '" target="_blank" rel="noopener noreferrer">' + esc(title) + '</a>';
   }).join('<br>');
 }
+function fundamentalImpactClass(fields) {
+  const impact = fields.find(field => field?.label === '材料インパクト')?.text;
+  if (typeof impact !== 'string') return '';
+  const category = impact.trim().split(/[\s:：。、「」]/u, 1)[0];
+  if (/^(?:ポジティブ(?:材料)?|positive)$/iu.test(category)) return ' impact-positive';
+  if (/^(?:ネガティブ(?:材料)?|negative)$/iu.test(category)) return ' impact-negative';
+  if (/^(?:様子見|中立|混在(?:[/・]要確認)?|要確認|watch|neutral|mixed)$/iu.test(category)) return ' impact-watch';
+  return '';
+}
 function fundamentalMarkup(report, {date,symbol,asOf,generation}) {
   const encoder = new TextEncoder();
   const boundedText = (value, limit) => typeof value === 'string' && value.trim().length > 0
@@ -65,7 +74,8 @@ function fundamentalMarkup(report, {date,symbol,asOf,generation}) {
   const fields = report.fields.map(field => '<dt>' + esc(field.label) + '</dt><dd>'
     + fundamentalText(field) + '</dd>').join('');
   return '<button class="fundamental-close" type="button" aria-label="ファンダ分析を閉じる" autofocus>×</button>'
-    + '<div class="discord-message"><article class="discord-embed"><h4>' + esc(heading) + '</h4>'
+    + '<div class="discord-message"><article class="discord-embed'
+    + fundamentalImpactClass(report.fields) + '"><h4>' + esc(heading) + '</h4>'
     + '<p>検出日 ' + esc(date) + '</p><p>分析時点 ' + esc(report.analysis_cutoff) + '</p>'
     + '<dl>' + fields + '</dl></article></div>';
 }

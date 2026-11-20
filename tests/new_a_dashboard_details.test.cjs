@@ -52,6 +52,22 @@ test('dashboard details use exact episode, verified quote and individual model r
   assert.doesNotMatch(html, /<strong>素材<\/strong>/);
 });
 
+test('owner popup uses the verified impact category without treating caution prose as an impact', () => {
+  const fields = [
+    { label: '材料インパクト', text: 'ポジティブ材料：材料確認済み。' },
+    { label: '注意点', text: 'ネガティブ材料も要確認。<script>alert(1)</script>' },
+  ];
+  const reportRow = { ...row, fundamental: { ...row.fundamental, fields } };
+  const rendered = adapter.fundamentalMarkup(reportRow);
+  assert.match(rendered, /class="discord-embed impact-positive"/);
+  assert.match(rendered, /<dt>注意点<\/dt><dd>ネガティブ材料も要確認。&lt;script&gt;/);
+  assert.doesNotMatch(rendered, /<script/);
+  assert.doesNotMatch(adapter.fundamentalMarkup({ ...reportRow, analysisCutoff: date }), /impact-/);
+  const unknown = { ...reportRow, fundamental: { ...reportRow.fundamental,
+    fields: [{ label: '材料インパクト', text: '分類未記載。ポジティブ材料を後日確認。' }, fields[1]] } };
+  assert.match(adapter.fundamentalMarkup(unknown), /class="discord-embed"/);
+});
+
 test('the dynamically rendered owner history button opens a modal and restores its focus after dismissal', () => {
   class Dialog extends EventTarget {
     open = false;

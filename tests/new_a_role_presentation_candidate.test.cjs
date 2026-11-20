@@ -15,19 +15,22 @@ const premiumHome = {
   watching:[{date:'2026-11-18',symbol:'345A',state:'WATCHING'}],
  },
 };
-test('Premium restores the vertical dashboard panels with the original top KPI layout',()=>{
+test('shared dashboard follows the prior owner heading, daily cards, holdings, watch and history order',()=>{
  const html=ui.view({...premiumHome,chartRows:[{date:premiumHome.asOf,equity_yen:9500,holding_count:2}]});
- const order=['データ更新日','ダッシュボード','運用レベル','純損益','最大DD','勝率','保有件数','対象日の動き',
-  '234A','456A','567A','現在の監視','345A','検出履歴','1234'];
+ const order=['データ更新日','ダッシュボード','運用レベル','検出履歴へ','対象日の動き',
+  '234A','456A','567A','現在の仮想保有','現在の監視','345A','>検出履歴<','1234'];
  let previous=-1;
  for(const label of order){
   const index=html.indexOf(label);
   a.ok(index>previous,label);
   previous=index;
  }
- a.match(html,/class="kpis today-kpis"/);
+ a.match(html,/class="page-heading"/);
+ a.match(html,/<a href="#history" class="button-link cloud-jump">検出履歴へ<\/a>/);
+ a.match(html,/<section class="panel" id="history" tabindex="-1" aria-labelledby="member-history-heading">/);
+ a.doesNotMatch(html,/today-kpis|純損益|最大DD|勝率|日足始値と仮想保有の結果/);
  a.match(html,/class="cloud-stock-grid"/);
- a.match(html,/保有件数<\/small><b>2件/);
+ a.match(html,/現在の仮想保有<\/h2><span class="badge">2銘柄/);
  a.match(html,/cloud-transition--watch-start/);
  a.match(html,/cloud-transition--hold-start/);
  a.match(html,/cloud-transition--hold-end/);
@@ -35,6 +38,13 @@ test('Premium restores the vertical dashboard panels with the original top KPI l
  a.match(html,/<p class="note">データ更新日 <time datetime="2026-11-19">2026-11-19<\/time><\/p>/);
  a.equal((html.match(/データ更新日/g)||[]).length,1);
  a.doesNotMatch(html,/<select|owner-only|39213|決済件数|新A|（A）|運用レベルは|仮想保有の動き|日次資金推移|対象 <time/);
+});
+test('shared action details use only the verified projected candidate code',()=>{
+ const today=[...premiumHome.dashboard.today,{date:premiumHome.asOf,symbol:'987A',state:'ENTRY_CANDIDATE',
+  company_name:'DO_NOT_SHOW_COMPANY',price:87431,holding_detail:'DO_NOT_SHOW_POSITION'}];
+ const html=ui.view({...premiumHome,dashboard:{...premiumHome.dashboard,today}});
+ a.match(html,/<details class="cloud-table-details cloud-reference-events"><summary>仮想買付候補<\/summary>.*987A<\/span>/);
+ a.doesNotMatch(html,/DO_NOT_SHOW|87431|日足始値/);
 });
 test('current monitoring shows eight recent rows and a closed native disclosure for remaining rows',()=>{
  const watching=Array.from({length:11},(_,i)=>({symbol:String(9000+i),date:'2026-11-'+(19-i),state:'WATCHING'}));
@@ -53,7 +63,7 @@ test('current monitoring shows eight recent rows and a closed native disclosure 
  a.doesNotMatch(section(report(watching.slice(0,8))),/<details/);
  a.match(section(report([])),/監視中の銘柄なし/);
 });
-test('dashboard level offers three native radio choices and the current choice matches the selected KPI',()=>{
+test('dashboard level offers three native radio choices and the current choice matches the holdings count',()=>{
  const changed=presets.map(item=>item.preset==='return_priority'
   ? {...item,metrics:{...metrics,net_profit:5678}} : item);
  const html=ui.view({...premiumHome,presets:changed,selected:'return_priority',
@@ -65,16 +75,16 @@ test('dashboard level offers three native radio choices and the current choice m
  }
  a.equal((html.match(/type="radio"/g)||[]).length,3);
  a.equal((html.match(/ checked>/g)||[]).length,1);
- a.match(html,/純損益<\/small><b>5,678円/);
- a.match(html,/保有件数<\/small><b>0件/);
+ a.doesNotMatch(html,/5,678円/);
+ a.match(html,/現在の仮想保有<\/h2><span class="badge">0銘柄/);
 });
 test('dashboard does not substitute stale or unresolved holding counts',()=>{
  const older={date:'2026-11-18',equity_yen:9500,holding_count:7};
  const latest={date:premiumHome.asOf,equity_yen:9500,holding_count:2};
  const unknown=presets.map(item=>item.preset==='medium'?{...item,resolved:false,metrics:null}:item);
- a.match(ui.view({...premiumHome,chartRows:[older]}),/保有件数<\/small><b>未確定/);
- a.match(ui.view({...premiumHome,presets:unknown,chartRows:[latest]}),/保有件数<\/small><b>未確定/);
- a.match(ui.view({...premiumHome,chartRows:[{...latest,equity_yen:null,holding_count:null}]}),/保有件数<\/small><b>未確定/);
+ a.match(ui.view({...premiumHome,chartRows:[older]}),/現在の仮想保有<\/h2><span class="badge">未確定/);
+ a.match(ui.view({...premiumHome,presets:unknown,chartRows:[latest]}),/現在の仮想保有<\/h2><span class="badge">未確定/);
+ a.match(ui.view({...premiumHome,chartRows:[{...latest,equity_yen:null,holding_count:null}]}),/現在の仮想保有<\/h2><span class="badge">未確定/);
  a.match(ui.view({...premiumHome,dashboard:{today:[],watching:[]}}),/仮想保有開始 <b>未確定/);
 });
 async function renderLevelPage({mode,session,storage,access='premium'}) {

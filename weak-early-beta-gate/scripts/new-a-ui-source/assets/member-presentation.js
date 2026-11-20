@@ -8,11 +8,6 @@ const states={
  WATCH_STARTED:'監視開始',ENTRY_CANDIDATE:'仮想買付候補',WATCH_TERMINAL:'監視終了',HOLD_STARTED:'仮想保有開始',HOLD_ENDED:'仮想保有終了',
  DATA_GAP:'価格未確認',BASIS_CHANGED:'価格基準変更',IDENTITY_CHANGED:'銘柄情報変更',
 };
-function dashboardKpis(entries) {
- return '<div class="kpis today-kpis">' + entries.map(([label, value, unit]) =>
-  '<div class="kpi"><small>' + label + '</small><b>' + number(value) + (value == null ? '' : unit)
-   + '</b></div>').join('') + '</div>';
-}
 function metrics(m, annualized) {
  const items=[['純損益',m?.net_profit,'円'],['最大下落率',m?.max_drawdown_pct,'%'],
   ['勝率',m?.win_rate_pct,'%'],['決済件数',m?.trade_count,'件']];
@@ -128,10 +123,8 @@ const movementTone = {
   WATCH_STARTED: 'watch-start', WATCH_TERMINAL: 'watch-end', HOLD_STARTED: 'hold-start', HOLD_ENDED: 'hold-end',
 };
 function movementBadge(state) {
-  const tone = Object.hasOwn(movementTone, state) ? movementTone[state] : null;
-  const label = Object.hasOwn(states, state) ? states[state] : state;
-  return '<span class="' + (tone ? 'cloud-transition cloud-transition--' + tone : 'badge') + '">'
-    + esc(label) + '</span>';
+  return '<span class="cloud-transition cloud-transition--' + movementTone[state] + '">'
+    + states[state] + '</span>';
 }
 function movementSummary(rows) {
   const totals = Object.fromEntries(Object.keys(movementTone).map(state => [state, 0]));
@@ -145,6 +138,7 @@ function movementSummary(rows) {
 function movementCards(rows) {
   const stocks = new Map();
   for (const {symbol, state} of rows) {
+    if (!Object.hasOwn(movementTone, state)) continue;
     if (!stocks.has(symbol)) stocks.set(symbol, []);
     stocks.get(symbol).push(state);
   }
@@ -152,6 +146,13 @@ function movementCards(rows) {
     + '<div class="cloud-transition-list">' + changes.map(state => '<div class="cloud-transition-row">'
       + movementBadge(state) + '</div>').join('') + '</div></article>').join('');
   return '<div class="cloud-stock-grid">' + (cards || '<p class="cloud-empty">確認済みの開始・終了はありません</p>') + '</div>';
+}
+function entryCandidates(rows) {
+  const symbols = rows.filter(({state}) => state === 'ENTRY_CANDIDATE').map(({symbol}) => symbol);
+  if (!symbols.length) return '';
+  return '<details class="cloud-table-details cloud-reference-events"><summary>仮想買付候補</summary>'
+    + '<ul class="cloud-transition-summary">' + symbols.map(symbol => '<li><span class="badge">' + esc(symbol)
+      + '</span></li>').join('') + '</ul></details>';
 }
 function watchTable(rows, label) {
   return '<div class="table-wrap"><table class="scenario-table" aria-label="' + label + '">'
@@ -179,20 +180,21 @@ function premiumHome({asOf, selected, rows, chartRows, dashboard, historyPage}, 
   const latest = chartRows?.at(-1);
   const holdingCount = current.resolved && latest?.date === asOf
     && Number.isSafeInteger(latest.holding_count) && latest.holding_count >= 0 ? latest.holding_count : null;
-  const m = current.resolved ? current.metrics : null;
-  const summary = dashboardKpis([['純損益',m?.net_profit,'円'],['最大DD',m?.max_drawdown_pct,'%'],
-    ['勝率',m?.win_rate_pct,'%'],['保有件数',holdingCount,'件']]);
-  return '<section class="panel today-summary" aria-labelledby="member-today-title">'
+  const holdings = holdingCount === null ? '未確定' : number(holdingCount) + '銘柄';
+  return '<div class="page-heading"><div>'
     + '<p class="note">データ更新日 <time datetime="' + esc(asOf) + '">' + esc(asOf) + '</time></p>'
-    + '<div class="cloud-section-head"><h1 id="member-today-title">ダッシュボード</h1>'
-    + operatingLevel(selected) + '</div>' + summary + '</section>'
+    + '<h1>ダッシュボード</h1></div>' + operatingLevel(selected)
+    + '<a href="#history" class="button-link cloud-jump">検出履歴へ</a></div>'
     + '<section class="panel" id="new-a-current" aria-labelledby="member-activity-heading"><div class="cloud-section-head">'
     + '<h2 id="member-activity-heading">対象日の動き</h2></div>'
-    + movementSummary(dashboard.today) + movementCards(dashboard.today) + '</section>'
+    + movementSummary(dashboard.today) + movementCards(dashboard.today) + entryCandidates(dashboard.today) + '</section>'
+    + '<section class="panel" aria-labelledby="member-holdings-heading"><div class="cloud-section-head">'
+    + '<h2 id="member-holdings-heading">現在の仮想保有</h2><span class="badge">' + holdings + '</span></div></section>'
     + '<section class="panel" aria-labelledby="member-watching-heading"><div class="cloud-section-head">'
     + '<h2 id="member-watching-heading">現在の監視</h2><span class="badge">' + dashboard.watching.length + '銘柄</span></div>'
     + currentWatch(dashboard.watching) + '</section>'
-    + '<section class="panel"><h2>検出履歴</h2>' + history(rows,historyPage) + '</section>';
+    + '<section class="panel" id="history" tabindex="-1" aria-labelledby="member-history-heading">'
+    + '<h2 id="member-history-heading">検出履歴</h2>' + history(rows,historyPage) + '</section>';
 }
 function freeHome(rows = null) {
   const closed = rows?.filter(row => row.state === 'HOLD_ENDED');

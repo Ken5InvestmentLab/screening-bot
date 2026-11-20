@@ -14,7 +14,8 @@ from weak_early_beta.new_a import continuing_transition as transition
 from weak_early_beta.new_a import member_ordinary_acceptance as member
 from weak_early_beta.new_a.files import atomic_write, digest, file_sha, private_root, read
 from weak_early_beta.new_a.member_release_source_review import (
-    CLOUD_UI_REVIEW_SCHEMA, COMPLETED_TIMING_REVIEW_SCHEMA, FUNDAMENTAL_IMPACT_REVIEW_SCHEMA,
+    CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_UI_REVIEW_SCHEMA, COMPLETED_TIMING_REVIEW_SCHEMA,
+    ENTRY, FUNDAMENTAL_IMPACT_REVIEW_SCHEMA,
     FUNDAMENTAL_POPUP_REVIEW_SCHEMA,
     FUNDAMENTAL_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA, MEMBER_BINDING, PRESENTATION_REVIEW_SCHEMA,
     ROLE_ONLY_REVIEW_SCHEMA,
@@ -219,6 +220,9 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
         atomic_write(self.runtime.parent / 'daily-runner.config.json', {
             'repoPath': str(self.repo), 'runtimeDir': str(self.runtime),
         })
+        if schema == CLOUD_UI_POLISH_REVIEW_SCHEMA:
+            (self.repo / ENTRY).write_bytes(b'// exact shared owner UI routing fixture\n')
+            self.git(self.repo, 'add', '--', ENTRY)
         self.git(self.repo, 'commit', '--allow-empty', '-qm', 'Successor presentation fixture')
         self.old_source, self.source = prior['source_commit'], ca.head(self.repo)
         self.now += datetime.timedelta(minutes=1)
@@ -439,13 +443,17 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
         self.assertEqual(live['policy_sha256'], previous['policy_sha256'])
         self.assertNotEqual(live['build_input_sha256'], previous['build_input_sha256'])
 
-    def test_cloud_ui_successor_retains_the_accepted_role_only_chain(self):
+    def test_cloud_ui_successors_retain_the_accepted_role_only_chain(self):
         for schema in (PRESENTATION_REVIEW_SCHEMA, COMPLETED_TIMING_REVIEW_SCHEMA, FUNDAMENTAL_REVIEW_SCHEMA,
                        ROLE_ONLY_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA, FUNDAMENTAL_POPUP_REVIEW_SCHEMA,
-                       FUNDAMENTAL_IMPACT_REVIEW_SCHEMA):
+                       FUNDAMENTAL_IMPACT_REVIEW_SCHEMA, CLOUD_UI_REVIEW_SCHEMA):
             self.prepare_successor(schema)
-        previous, previous_audit = self.prepare_successor(CLOUD_UI_REVIEW_SCHEMA)
+        previous, previous_audit = self.prepare_successor(CLOUD_UI_POLISH_REVIEW_SCHEMA)
         previous_bytes = previous_audit.read_bytes()
+        prior_pins = self.old['auth_source_hashes']
+        self.assertEqual({name for name in prior_pins if prior_pins[name] != self.auth_hashes[name]}, {ENTRY})
+        with self.assertRaisesRegex(ValueError, 'authentication source changed'):
+            member.prepare(self.operating, self.repo, {**self.plan, 'auth_source_hashes': prior_pins}, **self.readers())
         result = self.apply(self.issue())
         self.assertEqual(transition.ordinary_runtime_release(self.operating), previous)
         self.assertEqual(previous_audit.read_bytes(), previous_bytes)

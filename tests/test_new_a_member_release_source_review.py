@@ -412,3 +412,42 @@ class PresentationSuccessorReviewTest(unittest.TestCase):
                     changed = self.commit("Unreviewed successor")
                     with self.assertRaisesRegex(ValueError, error):
                         review.review_member_release_source(self.repo, baseline, changed)
+
+
+    def test_cloud_ui_polish_pins_only_the_reviewed_authenticated_owner_entry(self):
+        self.config["vars"]["CLOUD_MEMBER_AUDIENCE"] = "role_only"
+        self.write(review.CONFIG, json.dumps(self.config).encode())
+        reviewed = review._CLOUD_UI_POLISH_PRODUCT_PATHS
+        paths = reviewed | review._SUCCESSOR_REVIEW_PATHS
+        self.assertEqual(paths & review.acceptance.AUTH_FILES, {review.ENTRY})
+        for path in paths:
+            self.write(path, b"predecessor " + path.encode())
+        baseline = self.commit("Approved role-only Cloud UI")
+        for path in paths:
+            self.write(path, b"reviewed Cloud UI polish " + path.encode())
+        candidate = self.commit("Reviewed Cloud UI polish")
+        product = review._product_digest(self.repo, candidate, reviewed)
+        entry = hashlib.sha256((self.repo / review.ENTRY).read_bytes()).hexdigest()
+        with (patch.object(review, "_CLOUD_UI_POLISH_BASELINE", baseline),
+              patch.object(review, "_CLOUD_UI_POLISH_ENTRY_SHA256", entry),
+              patch.object(review, "_CLOUD_UI_POLISH_PRODUCT_SHA256", product)):
+            result = review.review_member_release_source(self.repo, baseline, candidate)
+            self.assertEqual(result["schema"], review.CLOUD_UI_POLISH_REVIEW_SCHEMA)
+            self.assertEqual(result["member_audience"], "role_only")
+            self.assertTrue(result["owner_only_gate_preserved"])
+            for path, error in ((review.ENTRY, "authorization"),
+                                ("report-gate/src/index.ts", "authorization"),
+                                ("weak-early-beta-gate/src/new-a-role-integration.ts", "reviewed product or test bytes"),
+                                ("unreviewed-asset.js", "mode or inventory"),
+                                (review.CONFIG, "approved Worker configuration")):
+                with self.subTest(path=path):
+                    self.git("reset", "--hard", candidate)
+                    self.write(path, b"unreviewed change")
+                    changed = self.commit("Unreviewed Cloud UI polish")
+                    with self.assertRaisesRegex(ValueError, error):
+                        review.review_member_release_source(self.repo, baseline, changed)
+            self.git("reset", "--hard", candidate)
+            self.write(review.CONFIG, json.dumps(self.config).replace("role_only", "tiered").encode())
+            changed = self.commit("Changed members' role-only audience")
+            with self.assertRaisesRegex(ValueError, "approved Worker configuration"):
+                review.review_member_release_source(self.repo, baseline, changed)

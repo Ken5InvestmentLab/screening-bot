@@ -2,7 +2,11 @@ const {test}=require('node:test'),a=require('node:assert/strict');
 const {roleFacade:routeWithRelease}=require('../weak-early-beta-gate/src/new-a-role-facade.ts');
 const roleFacade=(request,env,denial,services)=>routeWithRelease(request,env,denial,services,async()=>true);
 const origin='https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev';
-const env={CLOUD_OWNER_ONLY_ENABLED:'true',CLOUD_MEMBER_VIEW_ENABLED:'true',DISCORD_GUILD_ID:'1479418833352785944',DISCORD_ALLOWED_ROLE_IDS:'1487089073385373828',SESSION_SECRET:'synthetic-test-key'};
+const env={CLOUD_OWNER_ONLY_ENABLED:'true',CLOUD_MEMBER_VIEW_ENABLED:'true',CLOUD_MEMBER_AUDIENCE:'role_only',DISCORD_GUILD_ID:'1479418833352785944',DISCORD_ALLOWED_ROLE_IDS:'1487089073385373828',SESSION_SECRET:'synthetic-test-key'};
+const tieredStageOrigin = 'https://tentei-kyokuchi-cloud-member-stage.ipo-ken5-5489.workers.dev';
+const tieredStage = { ...env, CLOUD_MEMBER_AUDIENCE: 'tiered', CLOUD_MEMBER_STAGE_ORIGIN: tieredStageOrigin,
+  PUBLIC_BASE_URL: tieredStageOrigin };
+const stageRequest = (path, init) => new Request(tieredStageOrigin + path, init);
 function setup(identity={subject:'123456789012345678',discord_authorized:true}){const calls=[];const f=k=>async(r,s,tier)=>{calls.push([k,s,tier]);return new Response(k)};return {calls,s:{identity:async()=>identity,document:f('document'),aggregate:f('aggregate'),preferences:f('preferences'),asset:f('asset')}}}
 const req=(p,init)=>new Request(origin+p,init),deny=()=>new Response('owner only',{status:403});
 test('owner and other original denials unchanged; default off',async()=>{const {s,calls}=setup();a.equal(await roleFacade(req('/weak_early_beta_latest.html'),env,null,s),null);for(const status of [302,401,503]){const d=new Response(null,{status});a.equal(await roleFacade(req('/weak_early_beta_latest.html'),env,d,s),d)}const d=deny();a.equal(await roleFacade(req('/weak_early_beta_latest.html'),{...env,CLOUD_MEMBER_VIEW_ENABLED:'false'},d,s),d);a.equal(calls.length,0)});
@@ -37,15 +41,15 @@ test('the normal entry shows the member front page and access checks return no p
   a.equal(calls.length, 1);
 
   const revoked = setup({ subject: '123456789012345678', discord_authorized: false });
-  const free = await roleFacade(req(session), env, deny(), revoked.s);
+  const free = await roleFacade(stageRequest(session), tieredStage, deny(), revoked.s);
   a.equal(free.status, 204);
   a.equal(free.headers.get('x-cloud-member-access'), 'free');
   a.notEqual(free.headers.get('x-cloud-member-session'), tag);
   const history = '/api/cloud/new-a-view/history.json';
-  const stale = await roleFacade(req(history, { headers: { 'x-cloud-member-session': tag } }), env, deny(), revoked.s);
+  const stale = await roleFacade(stageRequest(history, { headers: { 'x-cloud-member-session': tag } }), tieredStage, deny(), revoked.s);
   a.equal(stale.status, 403);
   a.deepEqual(await stale.json(), { error: 'member_session_changed' });
-  const current = await roleFacade(req(history, { headers: { 'x-cloud-member-session': free.headers.get('x-cloud-member-session') } }), env, deny(), revoked.s);
+  const current = await roleFacade(stageRequest(history, { headers: { 'x-cloud-member-session': free.headers.get('x-cloud-member-session') } }), tieredStage, deny(), revoked.s);
   a.equal(current.status, 200);
   a.deepEqual(revoked.calls, [['aggregate', '123456789012345678', 'free']]);
   a.equal((await roleFacade(req(session + '?subject=123'), env, deny(), s)).status, 404);
@@ -87,7 +91,7 @@ test('Free reaches only the tiered shell and history; paid APIs never reach serv
   const { s, calls } = setup({ subject, discord_authorized: false });
   const observations = [];
   const observe = (res, actor, role) => observations.push([res.status, actor, role]);
-  const call = (path, init) => routeWithRelease(req(path, init), env, deny(), s, async () => true, observe);
+  const call = (path, init) => routeWithRelease(stageRequest(path, init), tieredStage, deny(), s, async () => true, observe);
   for (const path of ['/', '/weak_early_beta_latest.html', '/weak_early_beta_analytics.html', '/weak_early_beta_settings.html']) {
     a.equal((await call(path)).status, 200);
   }

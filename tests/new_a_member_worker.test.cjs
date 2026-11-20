@@ -143,6 +143,7 @@ function productionFixture(t) {
   const fixture = setup(t);
   delete fixture.env.CLOUD_MEMBER_STAGE_ORIGIN;
   delete fixture.env.PUBLIC_BASE_URL;
+  fixture.env.CLOUD_MEMBER_AUDIENCE = 'role_only';
   fixture.env.CLOUD_VERSION_METADATA = { id: workerVersion, tag: sourceCommit };
   return {
     ...fixture,
@@ -284,8 +285,21 @@ test('normal origin preserves the existing owner response and requires a matchin
   assert.equal((await f.call(history, allowed, { ...f.env, CLOUD_VERSION_METADATA: undefined })).status, 403);
   assert.equal((await f.call(documentPath, allowed)).status, 200);
   assert.equal((await f.call(history, allowed)).status, 200);
-  assert.equal((await f.call(documentPath, denied)).headers.get('x-cloud-member-access'), 'free');
-  assert.equal((await f.call(dashboard, denied)).status, 403);
+  assert.equal((await f.call(dashboard, allowed)).status, 200);
+  for (const route of [documentPath, history, dashboard, '/api/cloud/new-a-view/session',
+    '/api/cloud/new-a-view/preferences', '/new-a-assets/member-loader.js']) {
+    const deniedResponse = await f.call(route, denied);
+    assert.equal(deniedResponse.status, 403);
+    assert.equal(deniedResponse.headers.get('x-cloud-member-access'), null);
+    assert.equal(deniedResponse.headers.get('x-cloud-member-session'), null);
+    assert.deepEqual(await deniedResponse.json(), { error: 'role_required' });
+  }
+  for (const audience of [undefined, 'tiered', 'unknown']) {
+    const invalid = { ...f.env, CLOUD_MEMBER_AUDIENCE: audience };
+    assert.equal((await f.call(history, allowed, invalid)).status, 403);
+    assert.deepEqual(await (await f.call('/api/cloud/new-a-finite/access', owner, invalid)).json(),
+      { authorized: true, strategy: 'A_BASE' });
+  }
   assert.equal((await f.call('/api/cloud/new-a-view/release', allowed)).status, 403);
   assert.equal((await f.call('/api/cloud/new-a-finite/input/manifest.json', allowed)).status, 403);
   assert.equal((await f.call(history)).status, 401);
@@ -308,7 +322,7 @@ test('the exact canary proof narrows the normal role and is removed immediately 
   }
   const session = '/api/cloud/new-a-view/session';
   assert.equal((await f.call(session, allowed)).status, 204);
-  assert.equal((await f.call(history, denied)).status, 200);
+  assert.equal((await f.call(history, denied)).status, 403);
   assert.equal((await f.call(dashboard, denied)).status, 403);
   assert.equal((await f.call(history, otherFree)).status, 403);
   assert.equal((await f.call(session, otherAllowed)).status, 403);
@@ -357,7 +371,8 @@ function observationFixture(t) {
   const key = '51'.repeat(32);
   const subjects = [allowed, denied];
   f.env.CLOUD_VERSION_METADATA = { id: workerVersion, tag: sourceCommit, timestamp: new Date(now - 120_000).toISOString() };
-  for (const file of ['0002_new_a_member_release_policy.sql', '0003_new_a_member_response_observations.sql', '0004_new_a_member_access_tiers.sql']) {
+  for (const file of ['0002_new_a_member_release_policy.sql', '0003_new_a_member_response_observations.sql',
+    '0004_new_a_member_access_tiers.sql', '0006_new_a_role_only_response_observations.sql']) {
     f.memberDb.db.exec(loadSql('member-migrations/' + file));
   }
   function tag(subject) {
@@ -378,7 +393,8 @@ function observationFixture(t) {
     await Promise.all(tasks.splice(0));
     return response;
   }
-  const rows = () => f.memberDb.db.prepare('SELECT * FROM new_a_member_response_observation_v2 ORDER BY subject_hmac,route').all();
+  const rows = (table = 'new_a_member_response_observation_v2') =>
+    f.memberDb.db.prepare('SELECT * FROM ' + table + ' ORDER BY subject_hmac,route').all();
   return { ...f, key, subjects, tag, open, call, rows, windowId };
 }
 
@@ -413,6 +429,30 @@ test('exact signed nonowner responses record both free and premium routes', asyn
   }
   await f.call(documentPath, allowed);
   assert.deepEqual(f.rows(), recorded);
+});
+
+test('the role-only stage observes that roleless accounts receive no document or data', async t => {
+  const f = observationFixture(t);
+  f.env.CLOUD_MEMBER_AUDIENCE = 'role_only';
+  f.open();
+
+  for (const user of f.subjects) {
+    for (const route of [documentPath, history, dashboard, ownerManifest]) {
+      const result = await f.call(route, user);
+      assert.equal(result.status, user === denied || route === ownerManifest ? 403 : 200);
+      if (user === denied && route !== ownerManifest) {
+        assert.deepEqual(await result.json(), { error: 'role_required' });
+      }
+    }
+  }
+
+  assert.deepEqual(f.rows(), []);
+  const rows = f.rows('new_a_member_response_observation_v3');
+  assert.equal(rows.length, 8);
+  const denials = rows.filter(row => row.subject_hmac === f.tag(denied));
+  assert.equal(denials.length, 4);
+  assert.ok(denials.every(row => row.status === 403));
+  assert.ok(denials.every(row => row.role_result === (row.route === ownerManifest ? 'not_checked' : 'denied')));
 });
 
 test('feeds no observation for unrelated actor, expired or mismatched window, or spoofed request', async t => {

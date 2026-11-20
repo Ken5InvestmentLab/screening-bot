@@ -16,7 +16,7 @@ from . import continuing_transition as transition
 from .files import atomic_write, digest, file_sha, private_root, read
 from .member_release_source_review import (
     COMPLETED_TIMING_REVIEW_SCHEMA, FUNDAMENTAL_REVIEW_SCHEMA, INITIAL_REVIEW_SCHEMA,
-    PRESENTATION_REVIEW_SCHEMA, review_member_release_source,
+    PRESENTATION_REVIEW_SCHEMA, ROLE_ONLY_REVIEW_SCHEMA, review_member_release_source,
 )
 from .operational_admission import ORIGIN, checked_ci
 from .release_acceptance import checked_measurements
@@ -27,6 +27,7 @@ MEMBER_SUCCESSORS = {
     INITIAL_REVIEW_SCHEMA: PRESENTATION_REVIEW_SCHEMA,
     PRESENTATION_REVIEW_SCHEMA: COMPLETED_TIMING_REVIEW_SCHEMA,
     COMPLETED_TIMING_REVIEW_SCHEMA: FUNDAMENTAL_REVIEW_SCHEMA,
+    FUNDAMENTAL_REVIEW_SCHEMA: ROLE_ONLY_REVIEW_SCHEMA,
 }
 DECISION = "CONTINUING_DAILY_WITH_DORMANT_DESIGNATED_MEMBER_VIEW"
 ORDINARY_DECISION = "CONTINUING_DAILY_WITH_NONOWNER_UNMEASURED"
@@ -139,7 +140,7 @@ def _normal_evidence(source, target, member_database_id, ci, deployment, policy,
 
 
 def _review(plan, old, source_review, deployment, policy, room_transfer):
-    return dict(
+    review = dict(
         previous_acceptance=plan["prior_acceptance"], expected_activation_sha256=plan["expected_activation_sha256"],
         prior_source_commit=old["source_commit"], reviewed_diff_sha256=source_review["reviewed_diff_sha256"],
         historical_auth_source_hashes=old["auth_source_hashes"], current_auth_source_hashes=plan["auth_source_hashes"],
@@ -147,6 +148,10 @@ def _review(plan, old, source_review, deployment, policy, room_transfer):
         member_policy_sha256=digest(policy), member_access_off=True,
         existing_access_policy_preserved=True, owner_room_transfer=room_transfer,
     )
+    if source_review["schema"] == ROLE_ONLY_REVIEW_SCHEMA:
+        ca.require(source_review.get("member_audience") == "role_only", "verified role-only audience required")
+        review["member_audience"] = "role_only"
+    return review
 
 
 def _readers(*, ci_reader, deployment_reader, member_policy_reader):

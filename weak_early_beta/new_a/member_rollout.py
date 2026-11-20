@@ -39,6 +39,7 @@ _COMMIT = re.compile(r"[a-f0-9]{40}")
 _VERSION = re.compile(r"[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}")
 _SUBJECT = re.compile(r"[0-9]{17,20}")
 _MODES = {"off", "canary", "enabled"}
+_AUDIENCES = {"tiered", "role_only"}
 _REVISION_MAX = 2**53 - 1
 _PUBLIC_FIELDS = ("revision", "mode", "source_commit", "worker_version_id")
 _SUBJECT_FIELDS = ("canary_subject_hmac", "canary_free_subject_hmac")
@@ -168,13 +169,22 @@ def _projection(repo, owner_db, member_db, live):
     return {"owner_ready_sha256": active, "projection_sha256": marker["digest"]}
 
 
-def _role(value, allowed):
+def configured_member_audience(repo):
+    """Read the audience from the exact reviewed Worker source configuration."""
+    config = read(Path(repo) / "weak-early-beta-gate/wrangler.jsonc")
+    audience = config.get("vars", {}).get("CLOUD_MEMBER_AUDIENCE", "tiered")
+    ca.require(isinstance(audience, str) and audience in _AUDIENCES, "member_rollout_invalid_audience")
+    return audience
+
+
+def _role(value, allowed, audience):
+    shared_status = 200 if allowed or audience == "tiered" else 403
     ca.require(
         isinstance(value, dict) and value.get("session_verified") is True
         and value.get("owner") is False and value.get("fresh_designated_role_checked") is True
         and value.get("guild_id") == _GUILD and value.get("designated_role_id") == _ROLE
         and value.get("has_designated_role") is allowed and _matches(_SUBJECT, value.get("subject"))
-        and value.get("document_status") == 200 and value.get("member_api_status") == 200
+        and value.get("document_status") == shared_status and value.get("member_api_status") == shared_status
         and value.get("premium_dashboard_status") == (200 if allowed else 403)
         and value.get("owner_direct_status") == 403,
         "member_rollout_actual_role_observation_required",
@@ -188,11 +198,12 @@ def _observe(reader, context, *, live, stage=False, observed_after=None, canary=
         **context, "schema": "NEW_A_MEMBER_ROLLOUT_OBSERVATION_REQUEST_V2",
         "paths": _PROTECTED_PATHS, "guild_id": _GUILD, "designated_role_id": _ROLE,
     }
+    audience = request.get("audience", "tiered")
     request_sha256 = digest(request)
     value = reader(deepcopy(request))
     ca.require(
         isinstance(value, dict) and value.get("schema") == "NEW_A_HOST_MEMBER_ROLLOUT_OBSERVATION_V2"
-        and value.get("request_sha256") == request_sha256
+        and value.get("request_sha256") == request_sha256 and value.get("audience", "tiered") == audience
         and value.get("synthetic") is False and value.get("platform_signature_claimed") is False
         and value.get("origin") == (_STAGE if stage else _NORMAL)
         and value.get("source_commit") == live["source_commit"]
@@ -222,8 +233,8 @@ def _observe(reader, context, *, live, stage=False, observed_after=None, canary=
         )
     subjects = None
     if stage or context["effective_mode"] != "off":
-        premium = _role(value.get("role_allowed"), True)
-        free = _role(value.get("role_denied"), False)
+        premium = _role(value.get("role_allowed"), True, audience)
+        free = _role(value.get("role_denied"), False, audience)
         ca.require(premium != free, "member_rollout_distinct_accounts_required")
         subjects = (premium, free)
     if canary is not None:
@@ -311,6 +322,9 @@ def change_member_rollout(
         "action_sha256": action_sha256, "source_commit": live["source_commit"],
         "worker_version_id": live["version_id"], "projection": projection,
     }
+    audience = configured_member_audience(repo) if mode != "off" else "tiered"
+    if audience == "role_only":
+        context["audience"] = audience
     if pending_path.exists():
         pending = read(pending_path)
         ca.require(pending.get("schema") == "NEW_A_MEMBER_ROLLOUT_INTENT_V1"

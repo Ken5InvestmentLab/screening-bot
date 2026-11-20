@@ -38,6 +38,7 @@ test('stage preserves canonical Worker routes and role pins with isolated resour
   assert.equal(config.vars.CLOUD_MEMBER_STAGE_ORIGIN, stageOrigin);
   assert.equal(config.vars.CLOUD_OWNER_ONLY_ENABLED, 'true');
   assert.equal(config.vars.CLOUD_MEMBER_VIEW_ENABLED, 'true');
+  assert.equal(config.vars.CLOUD_MEMBER_AUDIENCE, undefined);
   assert.equal(config.vars.CLOUD_PUSH_MODE, 'disabled');
   for (const name of ['CLOUD_PUSH_REGISTRATION_ENABLED', 'CLOUD_PUSH_SCHEDULER_ENABLED', 'CLOUD_NEW_A_OWNER_PUSH_ENABLED']) {
     assert.equal(config.vars[name], 'false');
@@ -50,6 +51,15 @@ test('stage preserves canonical Worker routes and role pins with isolated resour
     assert.ok(!JSON.stringify(config).includes(database_id));
     assert.ok(!JSON.stringify(config).includes(database_name));
   }
+});
+
+test('stage can explicitly verify the role-only audience on the same isolated bindings', () => {
+  const config = createMemberStageConfig({ ...fixtures, audience: 'role_only' }, canonical, outputDir);
+  assert.equal(config.vars.CLOUD_MEMBER_AUDIENCE, 'role_only');
+  assert.equal(config.d1_databases[0].database_id, fixtures.ownerDatabaseId);
+  assert.equal(config.d1_databases[1].database_id, fixtures.memberDatabaseId);
+  assert.throws(() => createMemberStageConfig({ ...fixtures, audience: 'unsupported' }, canonical, outputDir),
+    /supported member stage audience/);
 });
 
 test('missing, foreign or production resource values and role-pin drift fail closed', () => {

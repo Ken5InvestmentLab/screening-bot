@@ -163,6 +163,24 @@ class MemberRolloutTest(unittest.TestCase):
             observation_reader=observe or self.observe,
         )
 
+    def test_role_only_cutover_requires_role_only_evidence(self):
+        config_path = self.repo / "weak-early-beta-gate/wrangler.jsonc"
+        config = read(config_path)
+        atomic_write(config_path, {**config, "vars": {"CLOUD_MEMBER_AUDIENCE": "role_only"}})
+        self.assertEqual(rollout.configured_member_audience(self.repo), "role_only")
+        with self.assertRaisesRegex(ValueError, "observation_provenance"):
+            self.apply("canary")
+        self.assertIsNone(rollout.read_member_policy(self.member_db))
+
+        def observe_role_only(request):
+            self.assertEqual(request["audience"], "role_only")
+            result = self.observe(request)
+            return {**result, "audience": "role_only",
+                    "role_denied": {**result["role_denied"], "document_status": 403, "member_api_status": 403}}
+
+        receipt = self.apply("canary", observe=observe_role_only)
+        self.assertEqual(receipt["after"]["mode"], "canary")
+
     def test_canary_then_role_and_private_rollback_to_off(self):
         canary = self.apply("canary")
         self.assertEqual(self.phases, ["before", "stage", "after"])

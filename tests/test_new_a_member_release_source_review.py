@@ -233,3 +233,45 @@ class PresentationSuccessorReviewTest(unittest.TestCase):
             self.git("commit", "-qm", "Make the added migration executable")
             with self.assertRaisesRegex(ValueError, "mode or inventory"):
                 review.review_member_release_source(self.repo, baseline, self.git("rev-parse", "HEAD"))
+
+
+    def test_role_only_successor_requires_the_exact_access_and_observation_delta(self):
+        migration = review._ROLE_ONLY_MIGRATION
+        old_config = json.dumps(self.config, indent=2).encode()
+        self.write(review.CONFIG, old_config)
+        for path in review._ROLE_ONLY_PRODUCT_PATHS - {migration}:
+            self.write(path, b"old " + path.encode())
+        baseline = self.commit("Accepted fundamental member release")
+
+        config = old_config.replace(review._ROLE_ONLY_CONFIG_LINE,
+                                    review._ROLE_ONLY_CONFIG_LINE + review._ROLE_ONLY_AUDIENCE_LINE)
+        self.write(review.CONFIG, config)
+        self.assertNotEqual(config, old_config)
+        digest = hashlib.sha256()
+        for path in sorted(review._ROLE_ONLY_PRODUCT_PATHS):
+            contents = b"role-only " + path.encode()
+            self.write(path, contents)
+            digest.update(path.encode() + b"\0" + hashlib.sha256(contents).digest())
+        candidate = self.commit("Role-only with dedicated response evidence")
+
+        with (patch.object(review, "_ROLE_ONLY_BASELINE", baseline),
+              patch.object(review, "_ROLE_ONLY_PRODUCT_SHA256", digest.hexdigest())):
+            result = review.review_member_release_source(self.repo, baseline, candidate)
+            self.assertEqual(result["schema"], review.ROLE_ONLY_REVIEW_SCHEMA)
+            self.assertEqual(result["member_audience"], "role_only")
+            self.assertTrue(result["owner_only_gate_preserved"])
+            self.assertEqual(result["member_database_id"], review.MEMBER_BINDING["database_id"])
+            for path, unexpected, error in (
+                (review.CONFIG, old_config, "Worker configuration"),
+                (review.CONFIG, config.replace(b'"fixed"', b'"other"'), "Worker configuration"),
+                (review.ENTRY, b"different owner authorization", "authorization"),
+                (migration, b"different response contract", "access or observation bytes"),
+                ("weak_early_beta/new_a/new_run.py", b"unreviewed file", "mode or inventory"),
+                ("weak-early-beta-gate/src/new-a-role-facade.ts", b"tiered fallback", "access or observation bytes"),
+            ):
+                with self.subTest(path=path, error=error):
+                    self.git("reset", "--hard", candidate)
+                    self.write(path, unexpected)
+                    changed = self.commit("Unreviewed role-only successor")
+                    with self.assertRaisesRegex(ValueError, error):
+                        review.review_member_release_source(self.repo, baseline, changed)

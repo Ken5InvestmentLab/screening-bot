@@ -3,6 +3,7 @@ import type { MemberResponseObserver } from './new-a-member-observation';
 export type RoleEnv = {
   CLOUD_OWNER_ONLY_ENABLED?: string;
   CLOUD_MEMBER_VIEW_ENABLED?: string;
+  CLOUD_MEMBER_AUDIENCE?: string;
   CLOUD_MEMBER_STAGE_ORIGIN?: string;
   PUBLIC_BASE_URL?: string;
   DISCORD_GUILD_ID?: string;
@@ -17,6 +18,7 @@ export type RoleIdentity = {
 };
 
 export type MemberTier = 'premium' | 'free';
+export type MemberAudience = 'tiered' | 'role_only';
 
 export type RoleServices = {
   identity: (request: Request) => Promise<RoleIdentity>;
@@ -77,6 +79,13 @@ export function memberOrigin(url: URL, env: RoleEnv): 'production' | 'stage' | n
     ? 'stage' : null;
 }
 
+export function memberAudience(env: RoleEnv, origin: 'production' | 'stage'): MemberAudience | null {
+  const audience = env.CLOUD_MEMBER_AUDIENCE;
+  if (audience === 'role_only') return audience;
+  if (origin === 'stage' && (audience === 'tiered' || audience === undefined)) return 'tiered';
+  return null;
+}
+
 export function hasMemberRoleConfiguration(env: RoleEnv): boolean {
   return env.CLOUD_OWNER_ONLY_ENABLED === 'true' && env.DISCORD_GUILD_ID === '1479418833352785944'
     && env.DISCORD_ALLOWED_ROLE_IDS === '1487089073385373828';
@@ -115,6 +124,8 @@ export async function roleFacade(
   const releaseOrigin = memberOrigin(url, env);
   const host = request.headers.get('host');
   if (!releaseOrigin || (host && host !== url.host)) return reject(request, 403, 'origin_not_allowed');
+  const audience = memberAudience(env, releaseOrigin);
+  if (!audience) return ownerDenial;
 
   const origin = request.headers.get('origin');
   const topLevelDocument = document && request.headers.get('sec-fetch-mode') === 'navigate'
@@ -146,7 +157,7 @@ export async function roleFacade(
     const tier: MemberTier = identity.discord_authorized ? 'premium' : 'free';
     const role = tier === 'premium' ? 'allowed' : 'denied';
     if (releaseOrigin === 'production' && await productionAllowed?.(subject, tier) !== true) return ownerDenial;
-    if (tier === 'free' && (preferences || (aggregate && pathname !== historyPath))) {
+    if (tier === 'free' && (audience === 'role_only' || preferences || (aggregate && pathname !== historyPath))) {
       const response = reject(request, 403, 'role_required');
       observe?.(response, subject, role);
       return response;

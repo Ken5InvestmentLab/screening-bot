@@ -17,6 +17,7 @@ INITIAL_REVIEW_SCHEMA = "NEW_A_MEMBER_RELEASE_SOURCE_REVIEW_V1"
 PRESENTATION_REVIEW_SCHEMA = "NEW_A_MEMBER_PRESENTATION_SUCCESSOR_SOURCE_REVIEW_V1"
 COMPLETED_TIMING_REVIEW_SCHEMA = "NEW_A_MEMBER_COMPLETED_TIMING_SUCCESSOR_SOURCE_REVIEW_V1"
 FUNDAMENTAL_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_SUCCESSOR_SOURCE_REVIEW_V1"
+ROLE_ONLY_REVIEW_SCHEMA = "NEW_A_MEMBER_ROLE_ONLY_SUCCESSOR_SOURCE_REVIEW_V1"
 _PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumのアクセス権を購入する</a>'.encode()
 _NEW_PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumアクセス権を購入する</a>'.encode()
 _SUCCESSOR_REVIEW_PATHS = frozenset({
@@ -81,6 +82,30 @@ _FUNDAMENTAL_PRODUCT_PATHS = frozenset({
 # Exact product blobs reviewed from 94d7474 (server), 23dc91c (daily) and ea85b3a (UI).
 # Include the full migration bytes; earlier member migrations may not change.
 _FUNDAMENTAL_PRODUCT_SHA256 = "0fa5bc7d4f39a024b0031fdb0613d4630c7082d60f718ec82e8b1a2a94cd2800"
+_ROLE_ONLY_BASELINE = "df7210db699677669e0b5c6d3fc2ea941bd37b96"
+_ROLE_ONLY_CONFIG_LINE = b'    "CLOUD_MEMBER_VIEW_ENABLED": "true",\n'
+_ROLE_ONLY_AUDIENCE_LINE = b'    "CLOUD_MEMBER_AUDIENCE": "role_only",\n'
+_ROLE_ONLY_MIGRATION = "weak-early-beta-gate/member-migrations/0006_new_a_role_only_response_observations.sql"
+_ROLE_ONLY_PRODUCT_PATHS = frozenset({
+    _ROLE_ONLY_MIGRATION,
+    "weak-early-beta-gate/AGENTS.md",
+    "weak-early-beta-gate/scripts/prepare-new-a-member-stage.mjs",
+    "weak-early-beta-gate/scripts/verify-release-config.mjs",
+    "weak-early-beta-gate/src/new-a-member-observation.ts",
+    "weak-early-beta-gate/src/new-a-role-facade.ts",
+    "weak-early-beta-gate/src/new-a-role-integration.ts",
+    "weak_early_beta/new_a/member_observation_host.py",
+    "weak_early_beta/new_a/member_rollout.py",
+})
+_ROLE_ONLY_TEST_PATHS = frozenset({
+    "tests/cloud_release_config.test.cjs",
+    "tests/new_a_member_stage_config.test.mjs",
+    "tests/new_a_member_worker.test.cjs",
+    "tests/new_a_role_facade_candidate.test.cjs",
+    "tests/test_new_a_member_observation_host.py",
+    "tests/test_new_a_member_rollout.py",
+})
+_ROLE_ONLY_PRODUCT_SHA256 = "1b64c36fd3f8dca56e204fa3d115219b19bcd3db6060db7053388e481c7bce63"
 MEMBER_BINDING = {
     "binding": "CLOUD_MEMBER_DB",
     "database_name": "tentei-cloud-member-view",
@@ -151,16 +176,32 @@ def _check_completed_timing_successor(repo, baseline, candidate, paths):
 def _check_fundamental_successor(repo, candidate, paths):
     if paths != _FUNDAMENTAL_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
         raise ValueError("Fundamental successor differs from the exact reviewed source scope")
-    checked = hashlib.sha256()
-    for path in sorted(_FUNDAMENTAL_PRODUCT_PATHS):
-        checked.update(path.encode() + b"\0")
-        checked.update(hashlib.sha256(git(repo, "show", f"{candidate}:{path}")).digest())
-    if checked.hexdigest() != _FUNDAMENTAL_PRODUCT_SHA256:
+    if _product_digest(repo, candidate, _FUNDAMENTAL_PRODUCT_PATHS) != _FUNDAMENTAL_PRODUCT_SHA256:
         raise ValueError("Fundamental successor differs from the reviewed product or migration bytes")
 
 
+def _product_digest(repo, candidate, paths):
+    checked = hashlib.sha256()
+    for path in sorted(paths):
+        checked.update(path.encode() + b"\0")
+        checked.update(hashlib.sha256(git(repo, "show", f"{candidate}:{path}")).digest())
+    return checked.hexdigest()
+
+
+def _check_role_only_successor(repo, candidate, paths):
+    required = _ROLE_ONLY_PRODUCT_PATHS | {CONFIG}
+    if not required <= paths or not paths <= required | _ROLE_ONLY_TEST_PATHS | _SUCCESSOR_REVIEW_PATHS:
+        raise ValueError("Role-only successor differs from the exact reviewed source scope")
+    if _product_digest(repo, candidate, _ROLE_ONLY_PRODUCT_PATHS) != _ROLE_ONLY_PRODUCT_SHA256:
+        raise ValueError("Role-only successor differs from the reviewed access or observation bytes")
+
+
 def _member_successor(repo, baseline, candidate):
-    if baseline == _FUNDAMENTAL_BASELINE:
+    if baseline == _ROLE_ONLY_BASELINE:
+        paths = _successor_paths(repo, baseline, candidate, allowed_addition=_ROLE_ONLY_MIGRATION)
+        _check_role_only_successor(repo, candidate, paths)
+        schema = ROLE_ONLY_REVIEW_SCHEMA
+    elif baseline == _FUNDAMENTAL_BASELINE:
         paths = _successor_paths(repo, baseline, candidate, allowed_addition=_FUNDAMENTAL_MIGRATION)
         _check_fundamental_successor(repo, candidate, paths)
         schema = FUNDAMENTAL_REVIEW_SCHEMA
@@ -184,6 +225,7 @@ def _member_successor(repo, baseline, candidate):
         "member_database_id": MEMBER_BINDING["database_id"],
         "member_support_configured": True,
         "owner_only_gate_preserved": True,
+        **({"member_audience": "role_only"} if schema == ROLE_ONLY_REVIEW_SCHEMA else {}),
     }
 
 
@@ -205,7 +247,11 @@ def review_member_release_source(repo, baseline, candidate):
     if prior_members or "CLOUD_MEMBER_VIEW_ENABLED" in common_config["vars"]:
         if changed:
             raise ValueError("Member successor changes existing Discord or owner authorization source")
-        if (baseline_config_bytes != candidate_config_bytes or common_config.get("name") != acceptance.SERVICE
+        expected_config = baseline_config_bytes
+        if baseline == _ROLE_ONLY_BASELINE:
+            expected_config = unique_replace(expected_config, _ROLE_ONLY_CONFIG_LINE,
+                                             _ROLE_ONLY_CONFIG_LINE + _ROLE_ONLY_AUDIENCE_LINE)
+        if (expected_config != candidate_config_bytes or common_config.get("name") != acceptance.SERVICE
                 or common_config["vars"].get("CLOUD_MEMBER_VIEW_ENABLED") != "true" or prior_members != [MEMBER_BINDING]):
             raise ValueError("Member successor changes the approved Worker configuration or member D1")
         return _member_successor(repo, baseline, candidate)

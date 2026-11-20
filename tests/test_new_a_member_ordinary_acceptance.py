@@ -15,6 +15,7 @@ from weak_early_beta.new_a import member_ordinary_acceptance as member
 from weak_early_beta.new_a.files import atomic_write, digest, file_sha, private_root, read
 from weak_early_beta.new_a.member_release_source_review import (
     COMPLETED_TIMING_REVIEW_SCHEMA, FUNDAMENTAL_REVIEW_SCHEMA, MEMBER_BINDING, PRESENTATION_REVIEW_SCHEMA,
+    ROLE_ONLY_REVIEW_SCHEMA,
 )
 
 
@@ -238,6 +239,8 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
         self.source_review = {**legacy_review, 'schema': schema,
                               'accepted_owner_source': self.old_source, 'candidate_source': self.source,
                               'reviewed_diff_sha256': digest([self.old_source, self.source])}
+        if schema == ROLE_ONLY_REVIEW_SCHEMA:
+            self.source_review['member_audience'] = 'role_only'
         self.source_reviews[self.old_source, self.source] = self.source_review
         patcher = patch.object(member, 'review_member_release_source',
                                lambda _repo, before, after: copy.deepcopy(self.source_reviews[before, after]))
@@ -315,3 +318,21 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
         initial_copy.write_bytes(initial_copy.read_bytes() + b'\n')
         with self.assertRaisesRegex(ValueError, 'completed member ordinary audit'):
             transition.ordinary_runtime_release(self.repo)
+
+
+    def test_role_only_successor_preserves_ordinary_admission_and_policy(self):
+        self.prepare_successor()
+        self.prepare_successor(COMPLETED_TIMING_REVIEW_SCHEMA)
+        self.prepare_successor(FUNDAMENTAL_REVIEW_SCHEMA)
+        prior, prior_audit = self.prepare_successor(ROLE_ONLY_REVIEW_SCHEMA)
+        original = prior_audit.read_bytes()
+        with self.assertRaisesRegex(ValueError, "role review does not bind"):
+            member.prepare(self.operating, self.repo, self.plan, **self.readers(
+                role_decision_reader=lambda _: {**self.role_review, "member_audience": "tiered"}))
+        with self.assertRaisesRegex(ValueError, "approved live owner policy"):
+            member.prepare(self.operating, self.repo, self.plan, **self.readers(
+                deployment_reader=lambda: {**self.deployment, "policy_sha256": "f" * 64}))
+        result = self.apply(self.issue())
+        self.assertEqual(transition.ordinary_runtime_release(self.operating), prior)
+        self.assertEqual(prior_audit.read_bytes(), original)
+        self.assertEqual(transition.ordinary_runtime_release(self.repo)["activation_sha256"], result["after_sha256"])

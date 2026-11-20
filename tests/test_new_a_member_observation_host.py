@@ -1,4 +1,5 @@
 from pathlib import Path
+from sqlite3 import IntegrityError
 import tempfile
 import unittest
 
@@ -22,7 +23,8 @@ class MemberObservationHostTest(unittest.TestCase):
         migrations = Path(__file__).resolve().parents[1] / "weak-early-beta-gate/member-migrations"
         migration = migrations / "0003_new_a_member_response_observations.sql"
         self.db = LocalD1(Path(temporary.name) / "isolated.sqlite", migration)
-        for file in ("0002_new_a_member_release_policy.sql", "0004_new_a_member_access_tiers.sql"):
+        for file in ("0002_new_a_member_release_policy.sql", "0004_new_a_member_access_tiers.sql",
+                     "0006_new_a_role_only_response_observations.sql"):
             self.db.db.executescript((migrations / file).read_text(encoding="utf-8"))
         self.addCleanup(self.db.close)
         self.live = {
@@ -37,22 +39,24 @@ class MemberObservationHostTest(unittest.TestCase):
             self.db, origin=host._STAGE, deployment_reader=lambda: self.live, allowed=ALLOWED, denied=DENIED,
         )
 
-    def seed(self):
+    def seed(self, *, audience="tiered"):
         scope = host.read_window(self.db)
+        table = host.response_observation_table(audience)
         for role in ("allowed", "denied"):
             for key in ("document", "member_api", "premium_dashboard", "owner_direct"):
                 state = role if key != "owner_direct" else "not_checked"
-                status = 403 if key == "owner_direct" or (role == "denied" and key == "premium_dashboard") else 200
+                restricted = role == "denied" and (audience == "role_only" or key == "premium_dashboard")
+                status = 403 if key == "owner_direct" or restricted else 200
                 self.db.query(
-                    "INSERT INTO new_a_member_response_observation_v2 VALUES(?,?,?,?,?,?,?,?,?,?)",
+                    f"INSERT INTO {table} VALUES(?,?,?,?,?,?,?,?,?,?)",
                     (*(scope[key] for key in host.WINDOW_FIELDS[:5]), scope[role + "_subject_hmac"],
                      host._PROTECTED_PATHS[key], status, state, scope["opens_at_ms"]),
                 )
 
-    def read(self, *, allowed=ALLOWED, denied=DENIED):
+    def read(self, *, allowed=ALLOWED, denied=DENIED, audience="tiered"):
         return host.read_member_window(
             self.db, origin=host._STAGE, deployment_reader=lambda: self.live,
-            window_id=self.window, allowed=allowed, denied=denied,
+            window_id=self.window, allowed=allowed, denied=denied, audience=audience,
         )
 
     def test_stage_host_readback_passes_real_rollout_consumer(self):
@@ -73,6 +77,34 @@ class MemberObservationHostTest(unittest.TestCase):
         )
         self.assertEqual(accounts, (ALLOWED, DENIED))
         self.assertEqual(len(receipt), 64)
+
+    def test_role_only_requires_distinct_real_entity_outcomes_across_all_routes(self):
+        self.open()
+        self.seed(audience="role_only")
+        for name in ("document", "member_api", "premium_dashboard", "owner_direct"):
+            self.assertEqual(self.read(audience="role_only")["role_denied"][name + "_status"], 403)
+        with self.assertRaisesRegex(ValueError, "observations are incomplete"):
+            self.read()
+        normal = {**self.live, "version_id": NORMAL_VERSION}
+        context = {"phase": "stage", "source_commit": SOURCE, "worker_version_id": NORMAL_VERSION,
+                   "effective_mode": "enabled", "audience": "role_only"}
+
+        def capture(request):
+            return host.member_rollout_observation(
+                request, deployment_reader=lambda: self.live, member_db=self.db,
+                window_id=self.window, accounts=(ALLOWED, DENIED),
+            )
+
+        accounts, receipt = member_rollout._observe(capture, context, live=normal, stage=True)
+        self.assertEqual(accounts, (ALLOWED, DENIED))
+        self.assertEqual(len(receipt), 64)
+        with self.assertRaisesRegex(ValueError, "observation_provenance"):
+            member_rollout._observe(
+                lambda request: {**capture(request), "audience": "tiered"},
+                context, live=normal, stage=True,
+            )
+        with self.assertRaises(IntegrityError):
+            self.db.query("UPDATE new_a_member_response_observation_v3 SET status=200 WHERE role_result='denied'")
 
     def test_conflicting_window_and_incomplete_paths_refuse(self):
         self.open()

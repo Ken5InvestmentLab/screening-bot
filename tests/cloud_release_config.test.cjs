@@ -123,6 +123,8 @@ test('member viewing requires a separate production database outside the canonic
     c => { c.d1_databases.at(-1).remote = true; },
     c => { c.d1_databases.at(-1).preview_database_id = c.d1_databases.at(-1).database_id; },
     c => { c.vars.CLOUD_MEMBER_STAGE_ORIGIN = 'https://stage.example.invalid'; },
+    c => { delete c.vars.CLOUD_MEMBER_AUDIENCE; },
+    c => { c.vars.CLOUD_MEMBER_AUDIENCE = 'tiered'; },
     c => { c.env.preview.vars.CLOUD_MEMBER_VIEW_ENABLED = 'true'; },
   ]) {
     const invalid = structuredClone(member);

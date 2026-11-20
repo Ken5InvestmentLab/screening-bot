@@ -8,7 +8,7 @@ import re
 import secrets
 
 from .files import digest
-from .member_rollout import _GUILD, _NORMAL, _PROTECTED_PATHS, _ROLE, _STAGE
+from .member_rollout import _AUDIENCES, _GUILD, _NORMAL, _PROTECTED_PATHS, _ROLE, _STAGE
 
 SHA = re.compile(r"[a-f0-9]{64}")
 COMMIT = re.compile(r"[a-f0-9]{40}")
@@ -98,9 +98,17 @@ def open_member_window(member_db, *, origin, deployment_reader, allowed, denied,
     return window["window_id"]
 
 
-def read_member_window(member_db, *, origin, deployment_reader, window_id, allowed, denied):
+def response_observation_table(audience):
+    if not isinstance(audience, str) or audience not in _AUDIENCES:
+        raise ValueError("Invalid member observation audience")
+    version = 3 if audience == "role_only" else 2
+    return f"new_a_member_response_observation_v{version}"
+
+
+def read_member_window(member_db, *, origin, deployment_reader, window_id, allowed, denied, audience="tiered"):
     """Read only authenticated results for exactly these two accounts and three routes."""
     checked_subjects(allowed, denied)
+    table = response_observation_table(audience)
     if origin not in (_NORMAL, _STAGE) or not matches(SHA, window_id):
         raise ValueError("Invalid member observation window selection")
     live = checked_deployment(deployment_reader, origin)
@@ -120,7 +128,7 @@ def read_member_window(member_db, *, origin, deployment_reader, window_id, allow
         raise ValueError("Member observation window time is invalid")
     routes = {key: _PROTECTED_PATHS[key] for key in ("document", "member_api", "premium_dashboard", "owner_direct")}
     rows = member_db.query(
-        f"SELECT {','.join(OBSERVATION_FIELDS)} FROM new_a_member_response_observation_v2 "
+        f"SELECT {','.join(OBSERVATION_FIELDS)} FROM {table} "
         "WHERE window_id=? ORDER BY subject_hmac, route", (window_id,),
     )
     if len(rows) != len(routes) * len(subjects):
@@ -142,7 +150,8 @@ def read_member_window(member_db, *, origin, deployment_reader, window_id, allow
         for key, route in routes.items():
             row = indexed.get((tags[role], route))
             result = "not_checked" if key == "owner_direct" else role
-            status = 403 if key == "owner_direct" or (key == "premium_dashboard" and not has_role) else 200
+            restricted = not has_role and (audience == "role_only" or key == "premium_dashboard")
+            status = 403 if key == "owner_direct" or restricted else 200
             if not row or row["role_result"] != result or row["status"] != status:
                 raise ValueError("Member route or Discord role outcome differs")
             values[key + "_status"] = status
@@ -165,9 +174,11 @@ def member_rollout_observation(request, *, deployment_reader, member_db=None,
     """Trusted callback for member_rollout; keep the returned subjects in memory."""
     phase = request.get("phase")
     stage = phase == "stage"
+    audience = request.get("audience", "tiered")
     origin = _STAGE if stage else _NORMAL
     if (request.get("schema") != "NEW_A_MEMBER_ROLLOUT_OBSERVATION_REQUEST_V2"
             or phase not in ("stage", "before", "after") or request.get("paths") != _PROTECTED_PATHS
+            or not isinstance(audience, str) or audience not in _AUDIENCES
             or request.get("guild_id") != _GUILD or request.get("designated_role_id") != _ROLE):
         raise ValueError("Member rollout observation request differs")
     live = checked_deployment(deployment_reader, origin)
@@ -205,7 +216,7 @@ def member_rollout_observation(request, *, deployment_reader, member_db=None,
 
         members = read_member_window(
             member_db, origin=origin, deployment_reader=same_deployment, window_id=window_id,
-            allowed=accounts[0], denied=accounts[1],
+            allowed=accounts[0], denied=accounts[1], audience=audience,
         )
         result.update(role_allowed=members["role_allowed"], role_denied=members["role_denied"])
         report_times.append(datetime.fromisoformat(members["observed_at"]))
@@ -216,4 +227,5 @@ def member_rollout_observation(request, *, deployment_reader, member_db=None,
         "source_commit": live["source_commit"], "worker_version_id": live["version_id"],
         "deployed_at": live["deployed_at"], "observed_at": min(report_times).isoformat(),
         "raw_receipt_sha256": digest(raw_receipts), **result,
+        **({"audience": audience} if audience == "role_only" else {}),
     }

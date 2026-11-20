@@ -1,4 +1,4 @@
-import { hasMemberRoleConfiguration, memberOrigin, roleFacade, type RoleEnv } from './new-a-role-facade';
+import { hasMemberRoleConfiguration, memberAudience, memberOrigin, roleFacade, type RoleEnv } from './new-a-role-facade';
 import { memberServices, type MemberAdapters } from './new-a-member-services';
 import { reportIdentity, reportVerifiedSessionSubject } from './shared-report-gate';
 import { cloudReportRole } from './cloud-role-authority';
@@ -46,9 +46,10 @@ export function memberRouteCandidate(
   const adapters = memberAdapters(env);
   const url = new URL(request.url);
   const scope = memberOrigin(url, env);
-  const observe = adapters && scope && hasMemberRoleConfiguration(env) && denial.status === 403
+  const audience = scope && memberAudience(env, scope);
+  const observe = adapters && scope && audience && hasMemberRoleConfiguration(env) && denial.status === 403
     ? memberResponseObserver(request, build, {
-      db: env.CLOUD_MEMBER_DB, ctx, version: env.CLOUD_VERSION_METADATA, owner: env.CLOUD_OWNER_DISCORD_ID, scope,
+      db: env.CLOUD_MEMBER_DB, ctx, version: env.CLOUD_VERSION_METADATA, owner: env.CLOUD_OWNER_DISCORD_ID, scope, audience,
     }) : undefined;
   if (observe && url.pathname === OBSERVED_OWNER_MANIFEST) {
     observe(denial, () => reportVerifiedSessionSubject(request, env), 'not_checked');

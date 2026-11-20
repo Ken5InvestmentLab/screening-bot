@@ -40,7 +40,10 @@ export function verifyReleaseConfig(config) {
   assert.ok([undefined, 'false', 'true'].includes(memberEnabled), 'invalid member view configuration');
   assert.ok(memberDatabases.length <= 1, 'duplicate member database binding');
   assert.equal(config.vars?.CLOUD_MEMBER_STAGE_ORIGIN, undefined, 'a stage origin cannot be configured on production');
-  if (memberEnabled === 'true') assert.equal(memberDatabases.length, 1, 'member view requires a dedicated database');
+  if (memberEnabled === 'true') {
+    assert.equal(memberDatabases.length, 1, 'member view requires a dedicated database');
+    assert.equal(config.vars?.CLOUD_MEMBER_AUDIENCE, 'role_only', 'production member data requires the Discord role');
+  }
   if (memberDatabases.length) {
     const member = memberDatabases[0];
     assert.equal(member.database_id, memberDatabaseId, 'wrong production member view database ID');

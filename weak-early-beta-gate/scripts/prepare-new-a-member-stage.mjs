@@ -25,7 +25,8 @@ function requireValue(condition, reason) {
 }
 
 export function createMemberStageConfig(options, canonical, outputDir) {
-  const { accountId, publicBaseUrl, ownerDatabaseId, memberDatabaseId, ownerDiscordId } = options;
+  const { accountId, publicBaseUrl, ownerDatabaseId, memberDatabaseId, ownerDiscordId, audience = 'tiered' } = options;
+  requireValue(audience === 'tiered' || audience === 'role_only', 'Use a supported member stage audience.');
   requireValue(publicBaseUrl === stageOrigin || publicBaseUrl === stageOrigin + '/', 'Use the exact HTTPS member stage origin.');
   requireValue(/^[a-f0-9]{32}$/.test(accountId) && accountId !== '0'.repeat(32), 'Provide the verified Cloudflare account ID.');
   requireValue(snowflake.test(ownerDiscordId), 'Provide the trusted stage owner Discord ID.');
@@ -76,6 +77,7 @@ export function createMemberStageConfig(options, canonical, outputDir) {
       CLOUD_OWNER_ONLY_ENABLED: 'true',
       CLOUD_OWNER_DISCORD_ID: ownerDiscordId,
       CLOUD_MEMBER_VIEW_ENABLED: 'true',
+      ...(audience === 'role_only' ? { CLOUD_MEMBER_AUDIENCE: audience } : {}),
       CLOUD_PUSH_REGISTRATION_ENABLED: 'false',
       CLOUD_PUSH_MODE: 'disabled',
       CLOUD_PUSH_SCHEDULER_ENABLED: 'false',
@@ -104,11 +106,12 @@ function argumentsFrom(argv) {
         'owner-database-id': { type: 'string' },
         'member-database-id': { type: 'string' },
         'owner-discord-id': { type: 'string' },
+        audience: { type: 'string' },
       },
     }));
   } catch {
     // Never echo command-line values if the caller supplied an unexpected argument.
-    throw Error('Use --account-id, --public-base-url, --owner-database-id, --member-database-id and --owner-discord-id.');
+    throw Error('Use --account-id, --public-base-url, --owner-database-id, --member-database-id, --owner-discord-id and optional --audience.');
   }
   return {
     accountId: values['account-id'],
@@ -116,6 +119,7 @@ function argumentsFrom(argv) {
     ownerDatabaseId: values['owner-database-id'],
     memberDatabaseId: values['member-database-id'],
     ownerDiscordId: values['owner-discord-id'],
+    audience: values.audience,
   };
 }
 

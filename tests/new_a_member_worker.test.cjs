@@ -314,6 +314,80 @@ test('normal origin preserves the existing owner response and requires a matchin
   assert.equal((await f.call(history)).status, 401);
 });
 
+test('the verified owner uses the same current member frame and keeps the internal API private', async t => {
+  const f = productionFixture(t);
+  f.migrate();
+  f.setPolicy('off');
+  const ownerDoc = await f.call(documentPath, owner);
+  assert.equal(ownerDoc.status, 200);
+  assert.equal(ownerDoc.headers.get('x-cloud-member-access'), 'premium');
+  const html = await ownerDoc.text();
+  assert.match(html, /data-cloud-mode="member"/);
+  assert.doesNotMatch(html, /owner-loader\.js|new-a-owner-access-check/);
+  assert.equal((await f.call('/new-a-assets/member-loader.js', owner)).status, 200);
+  assert.equal((await f.call(sessionPath, owner)).status, 204);
+  assert.equal((await f.call(history, owner)).status, 200);
+  assert.equal((await f.call(history, allowed)).status, 403);
+  assert.equal((await f.call(dashboard, denied)).status, 403);
+  assert.deepEqual(await (await f.call('/api/cloud/new-a-finite/access', owner)).json(), { authorized: true, strategy: 'A_BASE' });
+  assert.equal((await f.call('/api/cloud/new-a-finite/input/manifest.json', allowed)).status, 403);
+
+  f.setPolicy('enabled');
+  assert.equal(await (await f.call(documentPath, allowed)).text(), html);
+  for (const route of ['/weak_early_beta_analytics.html', '/weak_early_beta_settings.html']) {
+    const [actual, other] = await Promise.all([f.call(route, owner), f.call(route, allowed)]);
+    assert.equal(actual.status, 200);
+    assert.equal(other.status, 200);
+    assert.equal(await actual.text(), await other.text());
+  }
+  const oldPage = await f.call('/weak_early_beta_analytics_free.html', owner);
+  assert.equal(oldPage.status, 302);
+  assert.equal(oldPage.headers.get('location'), '/weak_early_beta_analytics.html');
+  assert.equal((await f.call('/research-a', owner)).headers.get('location'), documentPath);
+  assert.equal((await f.call('/research-a', allowed)).status, 403);
+
+  f.revoke(owner);
+  for (const route of [documentPath, history, dashboard, sessionPath, '/api/cloud/new-a-finite/access']) {
+    const result = await f.call(route, owner);
+    assert.equal(result.status, 403);
+    assert.equal(result.headers.get('x-cloud-member-session'), null);
+  }
+  assert.equal((await f.call(documentPath)).status, 302);
+});
+
+test('owner settings in the shared frame affect only the verified owner member account', async t => {
+  const f = productionFixture(t);
+  f.migrate();
+  f.setPolicy('enabled');
+  const rawPointer = f.ownerDb.db.prepare('SELECT * FROM new_a_active_pointer').get();
+  const ownerReads = f.ownerDb.reads();
+  const initial = await (await f.call(preferences, owner)).json();
+  const other = await (await f.call(preferences, allowed)).json();
+  assert.equal(initial.revision, 0);
+  assert.notEqual(initial.save_binding, other.save_binding);
+  const session = await f.call(sessionPath, owner);
+  const request = await f.request(preferences, owner, production);
+  const headers = new Headers(request.headers);
+  headers.set('origin', production);
+  headers.set('content-type', 'application/json');
+  headers.set('x-cloud-member-session', session.headers.get('x-cloud-member-session'));
+  const save = saveBinding => worker.fetch(new Request(request.url, {
+    method: 'PUT', headers,
+    body: JSON.stringify({
+      expected_revision: initial.revision, save_binding: saveBinding,
+      preferences: initial.preferences, view_preferences: { ...initial.view_preferences, theme: 'light' },
+    }),
+  }), f.env);
+  assert.equal((await save(other.save_binding)).status, 409);
+  const saved = await save(initial.save_binding);
+  assert.equal(saved.status, 200, await saved.clone().text());
+  assert.equal((await saved.json()).view_preferences.theme, 'light');
+  assert.equal((await (await f.call(preferences, owner)).json()).revision, 1);
+  assert.deepEqual(await (await f.call(preferences, allowed)).json(), other);
+  assert.deepEqual(f.ownerDb.db.prepare('SELECT * FROM new_a_active_pointer').get(), rawPointer);
+  assert.equal(f.ownerDb.reads(), ownerReads);
+});
+
 test('the exact canary proof narrows the normal role and is removed immediately for later requests', async t => {
   const f = productionFixture(t);
   f.migrate();

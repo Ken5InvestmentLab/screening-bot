@@ -58,6 +58,12 @@ const assets = new Set([
 for (const brand of ['discord', 'coconala', 'x']) {
   for (const shade of ['dark', 'light']) assets.add('/new-a-assets/report-assets/' + brand + '-' + shade + '.png');
 }
+
+export function isMemberViewPath(path: string): boolean {
+  return documents.has(path) || aggregates.has(path) || assets.has(path)
+    || path === preferencesPath || path === sessionPath;
+}
+
 const privateHeaders = {
   'cache-control': 'private, no-store',
   vary: 'Cookie',

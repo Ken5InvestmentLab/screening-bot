@@ -1,4 +1,4 @@
-import {memberRouteCandidate} from './new-a-role-integration';
+import {isSharedOwnerPage, memberRouteCandidate, sharedOwnerPage} from './new-a-role-integration';
 import { passiveObservationSink } from './owner-observation-d1';
 import {isNewAPath,newACloudRoute,protectedReply,newAEarlyRefusal,isCompatibilityAsset,compatibilityCodeResponse} from "./new-a-cloud";
 // The OAuth/session/role implementation remains byte-identical in the synced
@@ -60,7 +60,8 @@ export default {
     // Existing ownerOnlyGate has already run. Reuse the existing fresh-role identity.
     // Preserve existing push-only script updates after the unchanged owner gate.
     if (isCompatibilityAsset(pathname)) return compatibilityCodeResponse(request, env);
-    if (isNewAPath(pathname)) {
+    const sharedOwnerView = env.CLOUD_MEMBER_VIEW_ENABLED === 'true' && isSharedOwnerPage(pathname);
+    if (isNewAPath(pathname) || sharedOwnerView) {
       if (env.CLOUD_OWNER_ONLY_ENABLED?.trim().toLowerCase() !== "true") return protectedReply(request, 503, {error:"owner_mode_required"});
       const earlyRefusal = newAEarlyRefusal(request); if (earlyRefusal) return earlyRefusal;
       try {
@@ -76,7 +77,9 @@ export default {
           current: true,
           subject: identity.subject,
         };
-        const response = await newACloudRoute(request, env, ownerContext);
+        const response = sharedOwnerView
+          ? await sharedOwnerPage(request, env, ownerContext, operationalBuild)
+          : await newACloudRoute(request, env, ownerContext);
         await observeOwnerResponse(request, response, ownerContext, operationalBuild, env.CLOUD_VERSION_METADATA,
           passiveObservationSink({enabled:true, db:env.CLOUD_DB, ctx}));
         return response;

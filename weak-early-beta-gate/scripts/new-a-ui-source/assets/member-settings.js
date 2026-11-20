@@ -49,51 +49,54 @@
    fail() { busy = false; },
   };
  }
- function createForm(out) {
+ function createForm(out,{showDisplay=false}={}) {
   const form = document.createElement('form');
   form.className = 'cloud-settings-current';
-  const tablist = document.createElement('div');
-  tablist.className = 'settings-tabs';
-  tablist.setAttribute('role','tablist');
-  tablist.setAttribute('aria-label','設定の項目');
-  function tab(key,label) {
-   const button = document.createElement('button');
-   button.type = 'button';
-   button.id = 'cloud-setting-tab-' + key;
-   button.textContent = label;
-   button.setAttribute('role','tab');
-   button.setAttribute('aria-controls','cloud-setting-pane-' + key);
-   const panel = document.createElement('div');
-   panel.id = 'cloud-setting-pane-' + key;
-   panel.className = 'filters';
-   panel.setAttribute('role','tabpanel');
-   panel.setAttribute('aria-labelledby',button.id);
-   return { button, panel };
-  }
-  const trial = tab('trial','試算方法');
-  const display = tab('display','表示');
-  const tabs = [trial,display];
-  function selectTab(selected) {
-   for (const item of tabs) {
-    item.button.setAttribute('aria-selected',String(item === selected));
-    item.button.tabIndex = item === selected ? 0 : -1;
-    item.panel.hidden = item !== selected;
-   }
-  }
-  for (const [i,item] of tabs.entries()) {
-   item.button.addEventListener('click',() => selectTab(item));
-   item.button.addEventListener('keydown',event => {
-    if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
-    event.preventDefault();
-    const next = event.key === 'Home' ? tabs[0] : event.key === 'End' ? tabs.at(-1) : tabs[1-i];
-    selectTab(next);
-    next.button.focus();
+  const trial = document.createElement('div');
+  trial.className = 'filters';
+  const display = showDisplay ? document.createElement('div') : null;
+  if (display) {
+   const tablist = document.createElement('div');
+   tablist.className = 'settings-tabs';
+   tablist.setAttribute('role','tablist');
+   tablist.setAttribute('aria-label','設定の項目');
+   display.className = 'filters';
+   const tabs = [['trial','試算方法',trial],['display','表示',display]].map(([key,label,panel]) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.id = 'cloud-setting-tab-' + key;
+    button.textContent = label;
+    button.setAttribute('role','tab');
+    button.setAttribute('aria-controls','cloud-setting-pane-' + key);
+    panel.id = 'cloud-setting-pane-' + key;
+    panel.setAttribute('role','tabpanel');
+    panel.setAttribute('aria-labelledby',button.id);
+    tablist.append(button);
+    return { button,panel };
    });
-   tablist.append(item.button);
+   function selectTab(selected) {
+    for (const item of tabs) {
+     item.button.setAttribute('aria-selected',String(item === selected));
+     item.button.tabIndex = item === selected ? 0 : -1;
+     item.panel.hidden = item !== selected;
+    }
+   }
+   for (const [i,item] of tabs.entries()) {
+    item.button.addEventListener('click',() => selectTab(item));
+    item.button.addEventListener('keydown',event => {
+     if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+     event.preventDefault();
+     const next = event.key === 'Home' ? tabs[0] : event.key === 'End' ? tabs.at(-1) : tabs[1-i];
+     selectTab(next);
+     next.button.focus();
+    });
+   }
+   form.append(tablist,trial,display);
+   selectTab(tabs[0]);
+  } else {
+   form.append(trial);
   }
-  form.append(tablist, trial.panel, display.panel);
-  selectTab(trial);
-  const fields = specs.map(spec => {
+  const fields = specs.filter(spec => showDisplay || !spec.display).map(spec => {
    const label = document.createElement('label');
    label.className = 'filter-field';
    const caption = document.createElement('span');
@@ -116,7 +119,7 @@
     field.inputMode = spec.step === 1 ? 'numeric' : 'decimal';
    }
    label.append(caption,field);
-   (spec.display ? display.panel : trial.panel).append(label);
+   (spec.display ? display : trial).append(label);
    return { spec, field };
   });
   const actions = document.createElement('div');

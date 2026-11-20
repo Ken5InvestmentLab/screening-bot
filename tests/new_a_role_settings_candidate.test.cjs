@@ -90,7 +90,8 @@ function settingsHarness(owner) {
    const sent=JSON.parse(init.body);
    assert.equal(sent.expected_revision,pref.revision);
    assert.equal(sent.save_binding,pref.save_binding);
-   assert.deepEqual(sent.preferences,preferences);
+   assert.deepEqual(sent.preferences,owner?preferences:{...preferences,cost_percent:2});
+   if (!owner) assert.deepEqual(sent.view_preferences,view_preferences);
    pref={revision:pref.revision+1,save_binding:'c'.repeat(64),preferences:sent.preferences,view_preferences:sent.view_preferences};
    return Response.json({...fields,...pref,request_id:sent.request_id});
   }
@@ -128,6 +129,8 @@ for (const owner of [true,false]) {
   assert.equal(items(form).some(node=>node.name==='price_cap_yen'),false);
   assert.equal(items(form).some(node=>node.name==='exit_endpoint'),false);
   assert.equal(items(form).some(node=>node.textContent==='プッシュ通知'),false);
+  const shown=items(form).map(node=>node.name);
+  for (const key of ['theme','font_size','page_size']) assert.equal(shown.includes(key),owner);
   const preset=items(form).find(node=>node.name==='trial_preset');
   assert.equal(preset.value,'');
   assert.equal(preset.lastElementChild.hidden,false);
@@ -138,16 +141,21 @@ for (const owner of [true,false]) {
   assert.deepEqual(ui.paths,[['GET',ui.route]]);
  });
 
- test(scope+' saves a display choice with the unchanged full trial parameters and no quote/push request',async()=>{
+ test(scope+' saves its editable fields while preserving hidden fields and never requesting quotes or push',async()=>{
   const ui=settingsHarness(owner);
   ui.click();
   await flush();
   await flush();
   const form=ui.content.children[0];
-  items(form).find(node=>node.name==='theme').value='light';
+  items(form).find(node=>node.name===(owner?'theme':'cost_percent')).value=owner?'light':'2';
   await form.events.submit({preventDefault(){}});
-  assert.equal(ui.saved()?.state.viewPreferences?.theme??ui.saved()?.state.view_preferences?.theme,'light');
-  assert.equal(Boolean(ui.saved()?.trialChanged),false);
+  if (owner) {
+   assert.equal(ui.saved()?.state.viewPreferences?.theme,'light');
+   assert.equal(ui.saved()?.trialChanged,false);
+  } else {
+   assert.equal(ui.saved()?.state.preferences.cost_percent,2);
+   assert.deepEqual(ui.saved()?.state.view_preferences,view_preferences);
+  }
   assert.deepEqual(ui.paths,owner?[['GET',ui.route],['PUT',ui.route]]:[['GET',ui.route],['PUT',ui.route],['GET',ui.route]]);
   assert.match(ui.status.textContent,/設定を保存しました/);
  });

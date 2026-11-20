@@ -7,7 +7,7 @@
   transport,active, setBusy=()=>{},close,onSaved,onRevoked,
   dashboardPrices=false,recentAnalytics=false,
  }) {
-  const ui = g.NewAMemberSettings.createForm(out);
+  const ui = g.NewAMemberSettings.createForm(out,{showDisplay:true});
   function formValues(state) {
    return {
     preferences:state.draft,

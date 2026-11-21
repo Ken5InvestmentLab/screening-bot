@@ -42,7 +42,7 @@ export function verifyReleaseConfig(config) {
   assert.equal(config.vars?.CLOUD_MEMBER_STAGE_ORIGIN, undefined, 'a stage origin cannot be configured on production');
   if (memberEnabled === 'true') {
     assert.equal(memberDatabases.length, 1, 'member view requires a dedicated database');
-    assert.equal(config.vars?.CLOUD_MEMBER_AUDIENCE, 'role_only', 'production member data requires the Discord role');
+    assert.equal(config.vars?.CLOUD_MEMBER_AUDIENCE, 'tiered', 'production member view requires explicitly configured Discord access tiers');
   }
   if (memberDatabases.length) {
     const member = memberDatabases[0];

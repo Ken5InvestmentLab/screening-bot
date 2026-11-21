@@ -301,9 +301,15 @@ body[data-page="settings"] .topbar a[aria-disabled="true"]{opacity:.55;cursor:wa
 .cloud-help-dialog{width:min(520px,calc(100vw - 20px))}
 .cloud-help-copy p{margin:0 0 12px}
 .cloud-help-copy p:last-child{margin-bottom:0}
-.cloud-help-labels{display:grid;gap:8px;margin:0 0 12px}
+.cloud-help-section{margin:0 0 12px;padding:12px;border:1px solid var(--line);border-radius:12px}
+.cloud-help-section h3{margin:0 0 8px}
+.cloud-help-section p{color:var(--muted)}
+.cloud-help-labels{margin:0}
+.cloud-help-labels>div{padding:7px 0;border-top:1px solid var(--line)}
 .cloud-help-labels dt{font-weight:750}
-.cloud-help-labels dd{margin:0;color:var(--muted)}
+.cloud-help-labels dd{margin:2px 0 0;color:var(--muted)}
+.cloud-help-labels+p{margin-top:7px}
+.cloud-help-disclaimer{padding-top:12px;border-top:1px solid var(--line);color:var(--muted);font-size:.9em}
 .cloud-help-page{max-width:620px;margin-inline:auto}
 .cloud-help-page h1{margin-bottom:16px}
 </style>

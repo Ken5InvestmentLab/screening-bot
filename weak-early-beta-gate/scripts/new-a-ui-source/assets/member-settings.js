@@ -45,18 +45,20 @@
    fail() { busy = false; },
   };
  }
- function createForm(out,{showDisplay=false}={}) {
+ function createForm(out,{showDisplay=false,displayOnly=false}={}) {
   const form = document.createElement('form');
   form.className = 'cloud-settings-current';
-  const trial = document.createElement('div');
-  trial.className = 'filters';
-  const display = showDisplay ? document.createElement('div') : null;
-  if (display) {
+  const trial = displayOnly ? null : document.createElement('div');
+  const display = showDisplay || displayOnly ? document.createElement('div') : null;
+  if (trial) trial.className = 'filters';
+  if (display) display.className = 'filters';
+  if (displayOnly) {
+   form.append(display);
+  } else if (display) {
    const tablist = document.createElement('div');
    tablist.className = 'settings-tabs';
    tablist.setAttribute('role','tablist');
    tablist.setAttribute('aria-label','設定の項目');
-   display.className = 'filters';
    const tabs = [['trial','試算方法',trial],['display','表示',display]].map(([key,label,panel]) => {
     const button = document.createElement('button');
     button.type = 'button';
@@ -92,7 +94,7 @@
   } else {
    form.append(trial);
   }
-  const fields = specs.filter(spec => showDisplay || !spec.display).map(spec => {
+  const fields = specs.filter(spec => displayOnly ? spec.display : showDisplay || !spec.display).map(spec => {
    const label = document.createElement('label');
    label.className = 'filter-field';
    const caption = document.createElement('span');
@@ -156,7 +158,7 @@
  g.mountMemberSettings = async function(out,status,{ signal,active,session,verifyAccess,accessDenied,setBusy=()=>{},close,
     onLoaded=()=>{},onSaved=()=>{} }) {
   const model = state();
-  const ui = createForm(out,{showDisplay:true});
+  const ui = createForm(out,{displayOnly:true});
   const endpoint = '/api/cloud/new-a-view/preferences';
   async function request(options = {}) {
    const response = await fetch(endpoint,{ credentials:'same-origin',cache:'no-store',redirect:'manual',signal,

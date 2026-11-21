@@ -107,7 +107,7 @@ function settingsHarness(owner) {
    const sent=JSON.parse(init.body);
    assert.equal(sent.expected_revision,pref.revision);
    assert.equal(sent.save_binding,pref.save_binding);
-   assert.deepEqual(sent.preferences,owner?preferences:{...preferences,max_positions:15});
+   assert.deepEqual(sent.preferences,preferences);
    assert.deepEqual(sent.view_preferences,owner?{...view_preferences,theme:'light'}
     :{...view_preferences,theme:'light',font_size:'large',page_size:50});
    pref={revision:pref.revision+1,save_binding:'c'.repeat(64),preferences:sent.preferences,view_preferences:sent.view_preferences};
@@ -149,10 +149,15 @@ for (const owner of [true,false]) {
   assert.equal(items(form).some(node=>node.textContent==='プッシュ通知'),false);
   const shown=items(form).map(node=>node.name);
   for (const key of ['theme','font_size','page_size']) assert.ok(shown.includes(key));
-  const display = items(form).find(node=>node.textContent==='表示');
-  display.events.click();
-  assert.equal(display.attrs['aria-selected'],'true');
-  assert.equal(items(form).find(node=>node.id==='cloud-setting-pane-display').hidden,false);
+  if (owner) {
+   const display = items(form).find(node=>node.textContent==='表示');
+   display.events.click();
+   assert.equal(display.attrs['aria-selected'],'true');
+   assert.equal(items(form).find(node=>node.id==='cloud-setting-pane-display').hidden,false);
+  } else {
+   assert.deepEqual(shown.filter(Boolean),['theme','font_size','page_size']);
+   assert.equal(items(form).some(node=>node.textContent==='試算方法'||node.attrs.role==='tablist'),false);
+  }
   assert.equal(shown.includes('trial_preset'),false);
   assert.equal(shown.includes('cost_percent'),false);
   const cancel=items(form).find(node=>node.textContent==='キャンセル');
@@ -170,7 +175,6 @@ for (const owner of [true,false]) {
   const form=ui.content.children[0];
   items(form).find(node=>node.name==='theme').value='light';
   if (!owner) {
-   items(form).find(node=>node.name==='max_positions').value='15';
    items(form).find(node=>node.name==='font_size').value='large';
    items(form).find(node=>node.name==='page_size').value='50';
   }
@@ -180,7 +184,7 @@ for (const owner of [true,false]) {
    assert.equal(ui.saved()?.trialChanged,false);
   } else {
    assert.equal(ui.saved()?.state.preferences.cost_percent,0);
-   assert.equal(ui.saved()?.state.preferences.max_positions,15);
+   assert.deepEqual(ui.saved()?.state.preferences,preferences);
    assert.deepEqual(ui.saved()?.state.view_preferences,{...view_preferences,theme:'light',font_size:'large',page_size:50});
   }
   assert.deepEqual(ui.paths,owner?[['GET',ui.route],['PUT',ui.route]]:[['GET',ui.route],['PUT',ui.route],['GET',ui.route]]);

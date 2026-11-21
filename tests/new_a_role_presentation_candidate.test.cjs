@@ -290,6 +290,7 @@ test('free presentation shows server-provided closed history and one existing pu
  a.doesNotMatch(html,/today-summary|today-kpis|運用レベル/);
  a.equal((html.match(/href="\/purchase"/g)||[]).length,1);
  a.match(ui.view({mode:'settings',access:'free'}),/Premium会員限定.*href="\/purchase"/);
+ a.match(ui.view({mode:'home',access:'free',rows:[]}),/このページに仮想保有終了銘柄はありません。/);
  const analytics=ui.view({...premiumHome,mode:'analytics',access:'free',reference:true,personal:metrics});
  a.match(analytics,/<h1>アナリティクス<\/h1>.*id="member-preset".*id="member-reference-content"/);
  a.doesNotMatch(analytics,/href="\/purchase"|検出履歴|試算結果を準備中|TODAY_ONLY|234A/);

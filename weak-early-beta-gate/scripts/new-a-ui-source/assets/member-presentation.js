@@ -349,7 +349,7 @@ function freeHome(rows = null) {
   return '<div class="page-heading"><h1>検出履歴</h1></div>'
     + (closed === undefined ? '' : '<section class="panel" id="member-free-history" aria-label="仮想保有終了銘柄">'
       + '<p class="note">仮想保有が終了した銘柄を表示しています。</p>'
-      + (closed.length ? history(closed) : '<p class="note">仮想保有終了銘柄はありません。</p>') + '</section>')
+      + (closed.length ? history(closed) : '<p class="note">このページに仮想保有終了銘柄はありません。</p>') + '</section>')
     + '<section class="panel member-locked"><p>すべての検出履歴を確認するにはPremiumアクセス権が必要です。</p>'
     + purchase + '</section>';
 }

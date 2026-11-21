@@ -92,7 +92,7 @@
     return /^https:\/\/jp\.tradingview\.com\/chart\/\?symbol=TSE(?:%3A|:)[0-9A-Z]{4}$/.test(href);
   }
 
-  function verifiedReference(markup, asOf) {
+  function verifiedReference(markup, asOf, { aggregatesOnly = false } = {}) {
     const template = document.createElement('template');
     template.innerHTML = markup;
     const items = new Map();
@@ -108,26 +108,27 @@
       }
       for (const { name, value } of element.attributes) {
         if (/^(?:on|src)|^(?:action|form|formaction|ping|xlink:href|background|autofocus|is)$/i.test(name)
-          || (name === 'href' && (tag !== 'a' || !referenceLink(value)))
+          || (name === 'href' && (tag !== 'a' || !referenceLink(value)
+            || (aggregatesOnly && !value.startsWith('#'))))
           || (name === 'target' && (tag !== 'a' || value !== '_blank'))
           || (/@import|url\s*\(/i.test(value) && !/^url\(#[a-z][a-z0-9_-]*\)$/i.test(value))) throw Error(unavailable);
       }
       if (element.hasAttribute('data-member-fundamental')) {
         const item = element.dataset.memberFundamental;
         const row = g.NewAMemberPresentation.fundamentalSelector(item);
-        if (tag !== 'button' || !row || row.date > asOf) throw Error(unavailable);
+        if (aggregatesOnly || tag !== 'button' || !row || row.date > asOf) throw Error(unavailable);
         items.set(item, row);
       }
     }
     return { fragment: template.content, items };
   }
 
-  async function analyticsOverview(preset, options) {
+  async function analyticsOverview(preset, options, allowLegacy) {
     try {
       return await optionalReference('analytics.overview.' + preset, options);
     } catch (error) {
       // A tab may encounter an earlier Worker version while the UI is being deployed.
-      if (error.status !== 400) throw error;
+      if (!allowLegacy || error.status !== 400) throw error;
       return optionalReference('analytics.' + preset, options);
     }
   }
@@ -201,6 +202,12 @@
     for (const link of document.querySelectorAll('[data-member-premium-nav]')) {
       link.hidden = memberAccess !== 'premium';
     }
+    const home = document.getElementById('member-home-nav');
+    if (home && memberAccess) {
+      const label = memberAccess === 'free' ? '検出履歴' : 'ダッシュボード';
+      home.textContent = label;
+      if (document.body.dataset.page === 'home') document.title = label + ' | 天底極致 Cloud 2.0';
+    }
   }
 
   function clearDisplay(message, reauthenticate = false) {
@@ -259,7 +266,9 @@
         const newSession = memberSession === null;
         memberSession = session;
         memberAccess = access;
-        if (newSession && access === 'premium') await restorePreset(session);
+        if (newSession && (access === 'premium' || document.body.dataset.page === 'analytics')) {
+          await restorePreset(session);
+        }
         if (memberSession !== session) return false;
         updateNavigation();
         return true;
@@ -295,7 +304,7 @@
 
   function addPagination(pages, onPage) {
     const nav = historyPagination(page, pages, onPage);
-    if (nav) out.append(nav);
+    if (nav) document.getElementById('member-free-history').append(nav);
   }
 
   function stopHistorySearch() {
@@ -686,8 +695,10 @@
 
     const mode = document.body.dataset.page;
     const free = memberAccess === 'free';
+    const analytics = mode === 'analytics';
+    const freeHome = free && mode === 'home';
     try {
-      if (free && mode !== 'home') {
+      if (free && !freeHome && !analytics) {
         out.innerHTML = g.NewAMemberPresentation.lockedPage(mode);
         status.textContent = '';
         return;
@@ -704,28 +715,29 @@
           .catch(() => {});
       }
 
-      const analytics = mode === 'analytics';
       const options = { signal, generation: snapshot, session: memberSession };
       const [reference, history] = await Promise.all([
-        free ? null : analytics ? analyticsOverview(selected, options) : optionalReference('dashboard.' + selected, options),
-        free && !analytics ? g.NewAMemberTransport.history(page, options) : null,
+        analytics ? analyticsOverview(selected, options, !free)
+          : freeHome ? null : optionalReference('dashboard.' + selected, options),
+        freeHome ? g.NewAMemberTransport.history(page, options) : null,
       ]);
       if (!active()) return;
+      if (free && analytics && !reference) throw Error(unavailable);
       const legacyDashboard = !free && reference === null;
       const projection = legacyDashboard ? await legacyProjection(options, analytics) : {};
       if (!active()) return;
       const { summary, chart, personal, dashboard } = projection;
-      const source = free ? history : reference ?? summary;
+      const source = reference ?? summary ?? history;
       if (!source || !isToken(source.generation) || (snapshot !== null && snapshot !== source.generation)
         || [history, chart, personal, dashboard].some(result => result && result.generation !== source.generation)
         || [history, dashboard].some(result => result && result.as_of !== source.as_of)) {
         throw Error(changed);
       }
-      if (history && (!Array.isArray(history.rows) || !Number.isSafeInteger(history.pages)
+      if (history && (!Array.isArray(history.rows) || history.page !== page || !Number.isSafeInteger(history.pages)
         || history.pages < page || history.pages > 200)) {
         throw Error(unavailable);
       }
-      const display = reference && verifiedReference(reference.markup, reference.as_of);
+      const display = reference && verifiedReference(reference.markup, reference.as_of, { aggregatesOnly: free });
       if (!await verifyAccess() || !active()) return;
 
       snapshot = source.generation;
@@ -775,7 +787,7 @@
       });
     } catch (error) {
       if (!active()) return;
-      if (free && mode === 'home' && error.message !== accessDenied
+      if (freeHome && error.message !== accessDenied
         && await verifyAccess() && active() && memberAccess === 'free') {
         snapshot = null;
         page = 1;

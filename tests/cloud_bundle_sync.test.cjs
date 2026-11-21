@@ -11,8 +11,8 @@ function checkHelp(html,{stagedFree=false}={}){
  const popup=html.match(/<dialog id="cloud-help-dialog"[\s\S]*?<\/dialog>/)[0];
  assert.match(popup,/aria-labelledby="cloud-help-title"/);
  assert.match(popup,/aria-label="ヘルプを閉じる"/);
- assert.match(popup,/表示は仮想運用の試算です。売買の推奨や将来の成果の保証は行いません。投資判断はご自身で行ってください。/);
- assert.match(popup,/<h3>ラベルの見方<\/h3>/);
+ assert.match(popup,/<p class="cloud-help-disclaimer">表示は仮想運用の試算です。売買の推奨や将来の成果の保証は行いません。投資判断はご自身で行ってください。<\/p>/);
+ assert.match(popup,/<section class="cloud-help-section" aria-labelledby="cloud-help-labels-title">\s*<h3 id="cloud-help-labels-title">ラベルの見方<\/h3>/);
  const [labels,levels]=Array.from(popup.matchAll(/<dl class="cloud-help-labels">([\s\S]*?)<\/dl>/g), match=>match[1]);
  assert.deepEqual(Array.from(labels.matchAll(/<dt>([^<]+)<\/dt>/g), match=>match[1]),[
   '監視開始・監視中','監視終了','仮想保有開始候補（仮想買付候補）','仮想保有開始・仮想保有終了','データ保留','試算対象',
@@ -23,7 +23,7 @@ function checkHelp(html,{stagedFree=false}={}){
   '<strong>20取引日後</strong>を迎えたときも終了',
   '終値が支持線より<strong>3%以上</strong>',
  ]) assert.ok(labels.includes(explanation), explanation);
- assert.match(popup,/<h3>運用レベルの違い<\/h3>/);
+ assert.match(popup,/<section class="cloud-help-section" aria-labelledby="cloud-help-levels-title">\s*<h3 id="cloud-help-levels-title">運用レベルの違い<\/h3>/);
  assert.deepEqual(Array.from(levels.matchAll(/<dt>([^<]+)<\/dt><dd><strong>([^<]+)<\/strong>で終了。新規開始は<strong>([^<]+)<\/strong>/g), match=>match.slice(1)),[
   ['守り','5取引日目の始値','1日3銘柄まで'],
   ['中間','5取引日目の始値','1日の件数上限なし'],
@@ -80,7 +80,9 @@ test('actual sync builds the exact data-free public inventory and a worker-only 
  const premiumHome = renderMemberFrame('/weak_early_beta_latest.html', 'premium');
  checkHelp(premiumHome);
  checkHelp(freeHome,{stagedFree:true});
- assert.match(freeHome, /href="\.\/weak_early_beta_analytics\.html" data-member-premium-nav hidden/);
+ assert.match(freeHome, /<title>検出履歴 \| 天底極致 Cloud 2\.0<\/title>/);
+ assert.match(freeHome, /aria-current="page" href="\.\/weak_early_beta_latest\.html" id="member-home-nav">検出履歴<\/a>/);
+ assert.match(freeHome, /href="\.\/weak_early_beta_analytics\.html">アナリティクス<\/a>/);
  assert.match(freeHome, /href="\.\/weak_early_beta_settings\.html" data-member-premium-nav hidden/);
  assert.doesNotMatch(freeHome + freeSettings, /src="\/new-a-assets\/member-settings\.js"/);
  assert.match(premiumHome, /<dialog id="cloud-settings-dialog"/);
@@ -88,7 +90,12 @@ test('actual sync builds the exact data-free public inventory and a worker-only 
  assert.doesNotMatch(freeHome + freeSettings + premiumSettings, /<dialog id="cloud-settings-dialog"/);
  assert.match(premiumSettings, /src="\/new-a-assets\/member-settings\.js"/);
  const premiumAnalytics = renderMemberFrame('/weak_early_beta_analytics.html', 'premium');
- assert.match(premiumAnalytics, /src="\/new-a-assets\/reference-analytics\.js"/);
+ const freeAnalytics = renderMemberFrame('/weak_early_beta_analytics.html', 'free');
+ for (const html of [premiumAnalytics, freeAnalytics]) {
+  assert.match(html, /src="\/new-a-assets\/reference-analytics\.js"/);
+  assert.match(html, /aria-current="page" href="\.\/weak_early_beta_analytics\.html">アナリティクス<\/a>/);
+ }
+ assert.doesNotMatch(freeAnalytics, /member-settings\.js|<dialog id="cloud-settings-dialog"/);
  assert.doesNotMatch(premiumHome + freeHome, /reference-analytics/);
  const scan = spawnSync(process.execPath, [path.join(f.gate, 'scripts/verify-new-a-code-only.mjs')], {encoding: 'utf8'});
  assert.equal(scan.status, 0, scan.stderr);

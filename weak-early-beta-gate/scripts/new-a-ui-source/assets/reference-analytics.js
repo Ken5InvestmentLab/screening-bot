@@ -4,9 +4,12 @@
 
   const pageSize = 50;
   const number = value => value === null ? '未確定' : value.toLocaleString('ja-JP', { maximumFractionDigits: 2 });
-  const yen = value => value === null ? '未確定' : number(value) + '円';
   const status = unresolved => unresolved ? '保留' : '確定';
-  const format = [value => value, yen, yen, yen, number, status];
+  // Retained overview markup carries already-formatted amounts. Round its
+  // yen text and numeric equity ticks without changing data or graph geometry.
+  const fractionalAmount = /[+-]?[\d,]+\.\d+/;
+  const currency = new RegExp(fractionalAmount.source + '(?=円)', 'g');
+  const axisAmount = new RegExp('^' + fractionalAmount.source + '$');
   const date = /^\d{4}-\d{2}-\d{2}$/;
 
   function isDailyRow(row) {
@@ -24,8 +27,25 @@
     return daily;
   }
 
+  function roundYenText(root, wholeYen) {
+    const round = text => wholeYen(Number(text.replaceAll(',', '')));
+    for (const label of root.querySelectorAll('.kpi b, .scenario-stats dd, .cloud-annual-bars strong, td')) {
+      if (!label.childElementCount) {
+        const display = label.textContent.replace(currency, round);
+        if (display !== label.textContent) label.textContent = display;
+      }
+    }
+    for (const tick of root.querySelectorAll('svg.cloud-equity-chart text.axis-label')) {
+      if (axisAmount.test(tick.textContent)) tick.textContent = round(tick.textContent);
+    }
+  }
+
   function mount(root, loadDaily) {
     root.querySelector('section[aria-labelledby="analytics-export"]')?.remove();
+    const { wholeYen } = global.NewAMemberPresentation;
+    roundYenText(root, wholeYen);
+    const yen = value => value === null ? '未確定' : wholeYen(value) + '円';
+    const format = [value => value, yen, yen, yen, number, status];
     const source = root.querySelector('#new-a-reference-daily-values');
     const table = root.querySelector('#new-a-daily-table table');
     const more = root.querySelector('#new-a-daily-more');

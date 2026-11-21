@@ -1,6 +1,10 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),{webcrypto}=require('node:crypto');
 const source=path.join(__dirname,'../weak-early-beta-gate/scripts/new-a-ui-source');
+const memberSource=path.join(source,'assets/member-presentation.js');
+const memberContext={module:{exports:{}},require:require('node:module').createRequire(memberSource)};
+vm.runInNewContext(fs.readFileSync(memberSource,'utf8'),memberContext);
+const NewAMemberPresentation=memberContext.module.exports;
 const engine=require(path.join(source,'engine/finite-engine.cjs')),dataset=require(path.join(source,'engine/dataset-runtime.cjs'));
 const prefs={initial_cash_yen:10000000,max_positions:20,per_order_cap_yen:500000,base_shares:100,cost_percent:0,price_cap_yen:null,exit_endpoint:'d6_open',year_scope:'all',allocation:'all'};
 const policy={version:'A_OPEN_EXIT_V2',first_d5_entry_session:'2026-11-17',legacy_endpoint:'d6_open',new_endpoint:'d5_open'};
@@ -55,9 +59,9 @@ test('owner Analytics removes CSV and keeps the full chart and daily table pagin
  assert.equal(nodes['new-a-daily-more'].hidden,true);
 });
 
-test('Premium Analytics removes persisted CSV and pages daily values without export controls',()=>{
+test('shared analytics displays whole yen in retained markup and additional daily rows',()=>{
  const daily=Array.from({length:51},(_,offset)=>[
-  new Date(Date.UTC(2026,0,offset+1)).toISOString().slice(0,10),90,10,100,1,false,
+  new Date(Date.UTC(2026,0,offset+1)).toISOString().slice(0,10),90.75,-10.5,null,1,false,
  ]);
  let panelRemoved=false, templateRemoved=false, click;
  const element=()=>({dataset:{},children:[],append(child){this.children.push(child);}});
@@ -69,21 +73,32 @@ test('Premium Analytics removes persisted CSV and pages daily values without exp
   '#new-a-daily-more':{hidden:false,addEventListener(type,handler){if(type==='click')click=handler;}},
   'section[aria-labelledby="analytics-export"]':{remove(){panelRemoved=true;}},
  };
- const context={document:{createDocumentFragment:element,createElement:element}};
+ const amounts = ['190,092.48円','-390,980.5円','保有・注文上限 20銘柄・3,000.61円','-0.49円','-15.21%','2件']
+  .map(textContent=>({textContent}));
+ const axes = ['1,200.77','-2.5','2026-02-20','純資産（円）'].map(textContent=>({textContent}));
+ const context={NewAMemberPresentation,document:{createDocumentFragment:element,createElement:element}};
  vm.runInNewContext(fs.readFileSync(path.join(source,'assets/reference-analytics.js'),'utf8'),context);
- context.NewAReferenceAnalytics.mount({querySelector:selector=>nodes[selector]});
+ context.NewAReferenceAnalytics.mount({
+  querySelector:selector=>nodes[selector],
+  querySelectorAll:selector=>selector.startsWith('svg')?axes:amounts,
+ });
+ assert.deepEqual(amounts.map(label=>label.textContent),
+  ['190,092円','-390,981円','保有・注文上限 20銘柄・3,001円','0円','-15.21%','2件']);
+ assert.deepEqual(axes.map(label=>label.textContent), ['1,201','-3','2026-02-20','純資産（円）']);
  assert.equal(panelRemoved,true);
  assert.equal(templateRemoved,true);
  assert.equal(tableBody.rows.length,50);
  click();
  assert.equal(tableBody.rows.length,51);
- assert.equal(tableBody.rows[50].children[0].textContent,'2026-02-20');
+ assert.deepEqual(tableBody.rows[50].children.map(cell=>cell.textContent),
+  ['2026-02-20','91円','-11円','未確定','1','確定']);
+ assert.deepEqual(daily[50].slice(1,4), [90.75,-10.5,null]);
  assert.equal(nodes['#new-a-daily-more'].hidden,true);
 });
 
 test('Premium Analytics fetches the daily table on open, can retry, and pages without another fetch',async()=>{
  const daily=Array.from({length:51},(_,offset)=>[
-  new Date(Date.UTC(2026,0,offset+1)).toISOString().slice(0,10),90,10,100,1,false,
+  new Date(Date.UTC(2026,0,offset+1)).toISOString().slice(0,10),90.4,10.6,100,1,false,
  ]);
  const element=()=>({dataset:{},children:[],listeners:{},append(...children){this.children.push(...children);},
   setAttribute(){},addEventListener(event,fn){this.listeners[event]=fn;},remove(){this.removed=true;}});
@@ -92,10 +107,10 @@ test('Premium Analytics fetches the daily table on open, can retry, and pages wi
  const more=element();
  const table={closest:()=>details,tBodies:[tableBody],tHead:{rows:[{cells:daily[0].map(()=>({textContent:'見出し'}))}]}};
  const nodes={'#new-a-daily-table table':table,'#new-a-daily-more':more};
- const context={document:{createDocumentFragment:element,createElement:element}};
+ const context={NewAMemberPresentation,document:{createDocumentFragment:element,createElement:element}};
  vm.runInNewContext(fs.readFileSync(path.join(source,'assets/reference-analytics.js'),'utf8'),context);
  let calls=0, settle;
- context.NewAReferenceAnalytics.mount({querySelector:selector=>nodes[selector]},()=>{
+ context.NewAReferenceAnalytics.mount({querySelector:selector=>nodes[selector],querySelectorAll:()=>[]},()=>{
   calls++;
   if(calls===1) return Promise.reject(Error('temporary_error'));
   return new Promise(resolve=>{settle=resolve;});
@@ -116,6 +131,8 @@ test('Premium Analytics fetches the daily table on open, can retry, and pages wi
  settle(JSON.stringify({daily}));
  await loading;
  assert.equal(tableBody.rows.length,50);
+ assert.deepEqual(tableBody.rows[0].children.map(cell=>cell.textContent),
+  ['2026-01-01','90円','11円','100円','1','確定']);
  assert.equal(more.hidden,false);
  assert.equal(message.removed,true);
  assert.equal(retry.removed,true);

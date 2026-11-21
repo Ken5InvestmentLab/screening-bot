@@ -212,7 +212,9 @@ function browser(options = {}) {
     ? clearSearch : inputs[selector.split('"')[1]];
   const referenceRoot = element('div');
   const referenceMounts = [];
+  const dailyLoads = [];
   const premiumLink = { hidden: true };
+  const homeLink = element('a');
   const document = {
     documentElement: { dataset: {} },
     body: { dataset: { page: options.page ?? 'home' } },
@@ -220,6 +222,10 @@ function browser(options = {}) {
     events: {},
     getElementById(id) {
       if (id === 'member-reference-content' && nodes['member-content'].innerHTML === 'synthetic-reference-slot') return referenceRoot;
+      if (id === 'member-home-nav') return homeLink;
+      if (id === 'member-free-history' && nodes['member-content'].innerHTML === 'synthetic-closed-history') {
+        return nodes['member-content'];
+      }
       if (id === 'history') return historyPanel;
       if (id === 'member-history-content') return historyRegion;
       if (id === 'member-history-open') return historyButton;
@@ -234,7 +240,15 @@ function browser(options = {}) {
     querySelectorAll(selector) { return selector === '[data-member-premium-nav]' ? [premiumLink] : []; },
     createElement(type) {
       const node = element(type);
-      if (type === 'template') node.content = { querySelectorAll: () => options.referenceElements ?? [] };
+      if (type === 'template') {
+        const children = () => typeof options.referenceElements === 'function'
+          ? options.referenceElements(node.innerHTML) : options.referenceElements ?? [];
+        node.content = {
+          querySelectorAll: children,
+          querySelector: selector => children().find(item => '#' + item.id === selector),
+          get children() { return children(); },
+        };
+      }
       return node;
     },
     addEventListener(type, handler) { this.events[type] = handler; },
@@ -257,7 +271,7 @@ function browser(options = {}) {
     AbortController,
     addEventListener(name,handler) { windowEvents[name]=handler; },
     CloudSettingsDialog:settingsDialog,
-    NewAReferenceAnalytics:{ mount(root) { referenceMounts.push(root); } },
+    NewAReferenceAnalytics:{ mount(root, loadDaily) { referenceMounts.push(root); dailyLoads.push(loadDaily); } },
     structuredClone,
     setTimeout: callback => setImmediate(callback),
     clearTimeout: clearImmediate,
@@ -298,7 +312,7 @@ function browser(options = {}) {
   if (options.page === 'settings') vm.runInContext(settings, context);
   vm.runInContext(loader, context);
   return {
-    document, requests, nodes, premiumLink, referenceRoot, referenceMounts,
+    document, requests, nodes, premiumLink, homeLink, referenceRoot, referenceMounts, dailyLoads,
     historyFilters, historyResults, historyNotice, historyRegion, historyButton, historyState,
     historyRenderings, inputs, clearSearch, scrollToHistory() { intersectHistory(); },
     settingsDialog, restore() { windowEvents.pageshow({ persisted:true }); },
@@ -750,17 +764,78 @@ test('404 removes an unavailable row action and a mismatched generation clears c
   assert.match(newer.nodes['member-state'].textContent, /データが更新/);
 });
 
-test('free dashboard and paid direct pages never request Premium data or settings', async () => {
+test('free home pages completed history with its verified generation and settings remains locked', async () => {
   const free = browser({ tier: 'free' });
   await flush();
   assert.deepEqual(free.requests.map(request => request.name), ['session', 'history.json', 'session']);
   assert.equal(free.nodes['member-content'].innerHTML, 'synthetic-closed-history');
+  assert.equal(free.homeLink.textContent, '検出履歴');
   assert.equal(free.premiumLink.hidden, true);
-  for (const page of ['analytics', 'settings']) {
-    const locked = browser({ page, tier: 'free' });
+  free.nodes['member-content'].lastElementChild.lastElementChild.events.click();
+  await flush();
+  const history = free.requests.filter(request => request.name === 'history.json');
+  assert.deepEqual(history.map(request => request.url.searchParams.get('page')), ['1', '2']);
+  assert.equal(history[1].init.headers['x-cloud-generation'], initialToken);
+  assert.equal(history[1].init.headers['x-cloud-member-session'], initialSession);
+  assert.deepEqual(new Set(free.requests.map(request => request.name)), new Set(['session', 'history.json']));
+
+  const locked = browser({ page: 'settings', tier: 'free' });
+  await flush();
+  assert.deepEqual(locked.requests.map(request => request.name), ['session']);
+  assert.equal(locked.nodes['member-content'].innerHTML, 'synthetic-premium-lock-settings');
+});
+
+test('free analytics switches aggregate presets and loads daily only on demand', async () => {
+  const daily = JSON.stringify({ daily: [[day, 100, 0, 100, 0, false]] });
+  const dailyElement = projectedElement('template', { id: 'new-a-reference-daily-values' });
+  dailyElement.content = { children: [], textContent: daily };
+  const shown = [];
+  const view = browser({
+    page: 'analytics',
+    tier: 'free',
+    capture: values => shown.push(values.selected),
+    referenceElements: markup => markup === 'fixture-daily-template' ? [dailyElement] : [],
+    read(name, url) {
+      if (name !== 'reference.json') return null;
+      const item = url.searchParams.get('item');
+      return Response.json({ ...navigationView, item, ...(item.startsWith('analytics.daily.')
+        ? { markup: 'fixture-daily-template' } : {}) });
+    },
+  });
+  await flush();
+  const items = () => view.requests.filter(request => request.name === 'reference.json')
+    .map(request => request.url.searchParams.get('item'));
+  assert.deepEqual(items(), ['analytics.overview.return_priority']);
+  assert.equal(view.nodes['member-content'].innerHTML, 'synthetic-reference-slot');
+  assert.equal(view.settingsDialog.canOpen(), false);
+  assert.equal(await view.dailyLoads[0](), daily);
+  view.nodes['member-preset'].events.change({ target: { value: 'defensive' } });
+  await flush();
+  assert.deepEqual(shown, ['return_priority', 'defensive']);
+  assert.deepEqual(items(), ['analytics.overview.return_priority', 'analytics.daily.return_priority',
+    'analytics.overview.defensive']);
+  const dailyRead = view.requests.find(request => request.url.searchParams.get('item') === 'analytics.daily.return_priority');
+  assert.equal(dailyRead.init.headers['x-cloud-generation'], initialToken);
+  assert.equal(dailyRead.init.headers['x-cloud-member-session'], initialSession);
+  assert.deepEqual(new Set(view.requests.map(request => request.name)), new Set(['session', 'reference.json']));
+});
+
+test('free analytics rejects missing, legacy or protected overview data without using a broader API', async () => {
+  for (const [response, referenceElements] of [
+    [() => new Response(null, { status: 400 }), []],
+    [() => new Response(null, { status: 404 }), []],
+    [() => Response.json(navigationView), [projectedElement('a', { href: './weak_early_beta_settings.html' })]],
+    [() => Response.json(navigationView), [projectedElement('button', { 'data-member-fundamental': analysisItem })]],
+  ]) {
+    const view = browser({
+      page: 'analytics', tier: 'free', referenceElements,
+      read: name => name === 'reference.json' ? response() : null,
+    });
     await flush();
-    assert.deepEqual(locked.requests.map(request => request.name), ['session']);
-    assert.equal(locked.nodes['member-content'].innerHTML, 'synthetic-premium-lock-' + page);
+    assert.equal(view.nodes['member-content'].innerHTML, '');
+    assert.equal(view.nodes['member-retry'].hidden, false);
+    assert.deepEqual(view.requests.map(request => request.name), ['session', 'reference.json']);
+    assert.equal(view.requests[1].url.searchParams.get('item'), 'analytics.overview.return_priority');
   }
 });
 

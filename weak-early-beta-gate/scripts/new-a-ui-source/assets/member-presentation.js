@@ -2,7 +2,9 @@
 (function(g){'use strict';
 const fundamentalText = require('../fundamental-text.cjs');
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const number=v=>typeof v==='number'&&Number.isFinite(v)?v.toLocaleString('ja-JP',{maximumFractionDigits:2}):'未確定';
+const number=(v, maximumFractionDigits=2)=>typeof v==='number'&&Number.isFinite(v)
+  ? v.toLocaleString('ja-JP',{maximumFractionDigits}) : '未確定';
+const wholeYen=v=>number(typeof v==='number' && Math.abs(v)<0.5 ? 0 : v, 0);
 const names={defensive:'守り',medium:'中間',return_priority:'利益優先'};
 const states={
  WATCHING:'監視中',TRIGGERED:'検出',EXPIRED:'期限終了',UP_ESCAPED:'上抜け',DOWN_INVALIDATED:'下抜け',REFERENCE_ONLY:'参考',
@@ -14,7 +16,7 @@ function metrics(m, annualized) {
   ['勝率',m?.win_rate_pct,'%'],['決済件数',m?.trade_count,'件']];
  if(annualized!==undefined)items.splice(1,0,['年率換算損益率',annualized,'%','累積損益率を経過年数で割った値']);
  return '<div class="kpis">'+items.map(([label,value,unit,hint])=>'<div class="kpi"><span'
-  +(hint?' title="'+hint+'"':'')+'>'+label+'</span><b>'+number(value)+(value==null?'':unit)
+  +(hint?' title="'+hint+'"':'')+'>'+label+'</span><b>'+(unit==='円'?wholeYen(value):number(value))+(value==null?'':unit)
   +'</b></div>').join('')+'</div>';
 }
 function chart(rows){
@@ -22,7 +24,7 @@ function chart(rows){
  const valid=rows.filter(r=>typeof r.equity_yen==='number'&&Number.isFinite(r.equity_yen));if(!valid.length)return '<p class="note">日次推移は未確定です。</p>';
  const min=Math.min(...valid.map(r=>r.equity_yen)),max=Math.max(...valid.map(r=>r.equity_yen)),span=Math.max(max-min,1);let segments=[],points=[];
  rows.forEach((r,i)=>{if(r.equity_yen==null){if(points.length)segments.push(points);points=[];return;}points.push((48+ i/Math.max(rows.length-1,1)*844).toFixed(2)+','+(220-(r.equity_yen-min)/span*180).toFixed(2));});if(points.length)segments.push(points);
- return '<div class="research-chart"><svg role="img" aria-label="仮想資金の日次推移。欠測区間は線を結びません" viewBox="0 0 940 275" style="width:100%;height:auto"><text x="48" y="22" fill="currentColor">'+esc(number(max))+'円</text><text x="48" y="252" fill="currentColor">'+esc(rows[0].date)+'</text><text text-anchor="end" x="892" y="252" fill="currentColor">'+esc(rows.at(-1).date)+'</text>'+segments.map(p=>'<polyline fill="none" stroke="var(--blue)" stroke-width="3" points="'+p.join(' ')+'"/>').join('')+'</svg></div>';
+ return '<div class="research-chart"><svg role="img" aria-label="仮想資金の日次推移。欠測区間は線を結びません" viewBox="0 0 940 275" style="width:100%;height:auto"><text x="48" y="22" fill="currentColor">'+wholeYen(max)+'円</text><text x="48" y="252" fill="currentColor">'+esc(rows[0].date)+'</text><text text-anchor="end" x="892" y="252" fill="currentColor">'+esc(rows.at(-1).date)+'</text>'+segments.map(p=>'<polyline fill="none" stroke="var(--blue)" stroke-width="3" points="'+p.join(' ')+'"/>').join('')+'</svg></div>';
 }
 const fundamentalLabels = ['材料インパクト','事業概要','足元材料','ファンダ要点','注意点','開示リンク','Sources'];
 const day = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
@@ -344,14 +346,18 @@ function premiumHome({asOf, selected, rows, chartRows, dashboard, historyPage, r
 }
 function freeHome(rows = null) {
   const closed = rows?.filter(row => row.state === 'HOLD_ENDED');
-  return heading('home') + '<section class="panel member-locked"><h2>今日の動きと監視状況</h2>'
-    + '<p>今日の検出と監視中の銘柄はPremium会員限定です。</p>' + purchase + '</section>'
-    + (closed === undefined ? '' : '<section class="panel"><h2>仮想保有終了銘柄</h2>'
-      + (closed.length ? history(closed) : '<p class="note">このページに仮想保有終了銘柄はありません。</p>') + '</section>');
+  return '<div class="page-heading"><h1>検出履歴</h1></div>'
+    + (closed === undefined ? '' : '<section class="panel" id="member-free-history" aria-label="仮想保有終了銘柄">'
+      + '<p class="note">仮想保有が終了した銘柄を表示しています。</p>'
+      + (closed.length ? history(closed) : '<p class="note">仮想保有終了銘柄はありません。</p>') + '</section>')
+    + '<section class="panel member-locked"><p>すべての検出履歴を確認するにはPremiumアクセス権が必要です。</p>'
+    + purchase + '</section>';
 }
 function view({mode,access,asOf,presets,selected,rows,chartRows,personal,dashboard,historyPage,reference,referenceHistoryRows,deferHistory}){
- if(access==='free')return mode==='home'?freeHome(rows):lockedPage(mode);
- if(access!=='premium')throw Error('access_unavailable');
+ if(access==='free'){
+  if(mode==='home')return freeHome(rows);
+  if(mode!=='analytics'||reference!==true)return lockedPage(mode);
+ }else if(access!=='premium')throw Error('access_unavailable');
  if(reference===true)return premiumHeading(mode,asOf,selected)+'<div id="member-reference-content"></div>'
   +(mode==='home'?historyPanel(rows,historyPage,referenceHistoryRows,selected,deferHistory):'');
  const current=presets.find(x=>x.preset===selected);if(!current)throw Error('preset_unavailable');
@@ -360,7 +366,7 @@ function view({mode,access,asOf,presets,selected,rows,chartRows,personal,dashboa
   +'</section><section class="panel"><h2>日次資金推移</h2>'+chart(chartRows)+'</section><section class="panel"><h2>あなたの保存条件による試算</h2>'
   +(personal?metrics(personal):'<p role="status">保存した条件による試算結果を準備中です。</p>')+'</section>';
 }
-g.NewAMemberPresentation={metrics,chart,history,view,lockedPage,freeHome,operatingLevel,referencePayload,referenceHistory,
+g.NewAMemberPresentation={metrics,chart,history,view,lockedPage,freeHome,operatingLevel,wholeYen,referencePayload,referenceHistory,
   referenceHistoryIndex,matchingHistory,referenceHistoryTable,historyContent,
   fundamentalItem,fundamentalSelector,fundamentalMarkup};
 if(typeof module!=='undefined')module.exports=g.NewAMemberPresentation;

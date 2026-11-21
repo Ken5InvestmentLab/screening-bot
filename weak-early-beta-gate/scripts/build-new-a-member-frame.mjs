@@ -21,7 +21,8 @@ export async function buildNewAMemberFrame(gate, html, settingsModal, settingsTr
     .replace(ownerGuard, '')
     .replace(ownerLoader, '{{MEMBER_PAGE_SCRIPTS}}' + memberScripts)
     .replace('<body data-page=', '<body data-cloud-mode="member" data-page=')
-    .replaceAll(/href="\.\/weak_early_beta_(?:analytics|settings)\.html"/g, '$& data-member-premium-nav hidden')
+    .replace('class="nav-link" href="./weak_early_beta_latest.html"', '$& id="member-home-nav"')
+    .replace('href="./weak_early_beta_settings.html"', '$& data-member-premium-nav hidden')
     .replace('id="cloud-help-open"', 'id="cloud-help-open" data-member-premium-nav hidden')
     .replace('</style>', memberStyles + '</style>');
   const generated = [
@@ -32,12 +33,13 @@ export async function buildNewAMemberFrame(gate, html, settingsModal, settingsTr
     'const SETTINGS_TRIGGER=' + JSON.stringify(settingsTrigger) + ';',
     'export function memberFrame(path: string, tier: "premium" | "free" = "premium"): string {',
     '  const page = path === "/weak_early_beta_analytics.html" ? "analytics" : path === "/weak_early_beta_settings.html" ? "settings" : "home";',
-    '  const title = page === "analytics" ? "アナリティクス" : page === "settings" ? "設定" : "ダッシュボード";',
+    '  const homeTitle = tier === "free" ? "検出履歴" : "ダッシュボード";',
+    '  const title = page === "analytics" ? "アナリティクス" : page === "settings" ? "設定" : homeTitle;',
     '  const content = \'<p id="member-state" role="status">読込中</p><button id="member-retry" hidden>再試行</button><div id="member-content"></div>\';',
     '  const view = page === "settings" && tier === "premium" ? \'<section class="panel cloud-settings" aria-labelledby="cloud-settings-title"><h1 id="cloud-settings-title">設定</h1>\' + content + \'</section>\' : content;',
-    '  const pageScript = tier !== "premium" ? "" : page === "settings" ? \'<script src="/new-a-assets/member-settings.js" defer></script>\' : page === "analytics" ? \'<script src="/new-a-assets/reference-analytics.js" defer></script>\' : "";',
+    '  const pageScript = page === "settings" && tier === "premium" ? \'<script src="/new-a-assets/member-settings.js" defer></script>\' : page === "analytics" ? \'<script src="/new-a-assets/reference-analytics.js" defer></script>\' : "";',
     '  const selected = "./weak_early_beta_" + (page === "home" ? "latest" : page) + ".html";',
-    '  return SHELL.replaceAll("{{INITIAL_THEME}}", "dark").replace("{{INITIAL_THEME_SCRIPT}}", "").replaceAll("{{TITLE}}", title).replaceAll("{{PAGE}}", page).replace("{{MEMBER_PAGE_SCRIPTS}}", pageScript).replace("{{HELP_DIALOG}}", HELP_DIALOG).replace("{{SETTINGS_DIALOG}}", page !== "settings" && tier === "premium" ? SETTINGS_DIALOG : "").replace("{{SETTINGS_TRIGGER}}", page !== "settings" && tier === "premium" ? SETTINGS_TRIGGER : "").replace("{{VIEW}}", view).replace(\'class="nav-link" href="\' + selected + \'"\', \'class="nav-link active" aria-current="page" href="\' + selected + \'"\');',
+    '  return SHELL.replace(">ダッシュボード</a>", ">" + homeTitle + "</a>").replace(" ダッシュボードへ", " " + homeTitle + "へ").replaceAll("{{INITIAL_THEME}}", "dark").replace("{{INITIAL_THEME_SCRIPT}}", "").replaceAll("{{TITLE}}", title).replaceAll("{{PAGE}}", page).replace("{{MEMBER_PAGE_SCRIPTS}}", pageScript).replace("{{HELP_DIALOG}}", HELP_DIALOG).replace("{{SETTINGS_DIALOG}}", page !== "settings" && tier === "premium" ? SETTINGS_DIALOG : "").replace("{{SETTINGS_TRIGGER}}", page !== "settings" && tier === "premium" ? SETTINGS_TRIGGER : "").replace("{{VIEW}}", view).replace(\'class="nav-link" href="\' + selected + \'"\', \'class="nav-link active" aria-current="page" href="\' + selected + \'"\');',
     '}',
     '',
   ].join('\n');

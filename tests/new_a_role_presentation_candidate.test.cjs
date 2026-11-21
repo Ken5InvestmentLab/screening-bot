@@ -116,7 +116,7 @@ async function renderLevelPage({mode,session,storage,access='premium'}) {
    }});
    if(url.pathname.endsWith('/reference.json'))return new Response(null,{status:404});
    if(url.pathname.endsWith('/chart.json'))requested.push(url.searchParams.get('preset'));
-   return Response.json({as_of:premiumHome.asOf,generation:'2'.repeat(64),presets,rows:[],pages:1});
+   return Response.json({as_of:premiumHome.asOf,generation:'2'.repeat(64),presets,rows:[],page:1,pages:1});
   },
  });
  const initial=await rendered.promise;
@@ -285,11 +285,14 @@ test('history index lookup supports legacy code/name, date range and sort while 
 });
 test('free presentation shows server-provided closed history and one existing purchase action',()=>{
  const html=ui.view({mode:'home',access:'free',asOf:'2026-11-19',presets,selected:'medium',rows:[{date:'2026-11-18',symbol:'1234',state:'HOLD_ENDED'},{date:'2026-11-18',symbol:'4321',state:'EXPIRED'}],chartRows:[],personal:metrics,dashboard:{today:[{symbol:'TODAY_ONLY'}],watching:[{symbol:'WATCH_ONLY'}]}});
- for(const value of ['仮想保有終了銘柄','1234','仮想保有終了','今日の動きと監視状況','href="/purchase"'])a.ok(html.includes(value),value);
- a.doesNotMatch(html,/4321|TODAY_ONLY|WATCH_ONLY|member-preset|日次資金推移|対象日 2026-11-19/);
+ for(const value of ['<h1>検出履歴</h1>','member-free-history','仮想保有終了銘柄','1234','仮想保有終了','href="/purchase"'])a.ok(html.includes(value),value);
+ a.doesNotMatch(html,/4321|TODAY_ONLY|WATCH_ONLY|member-preset|日次資金推移|対象日の動き|現在の監視|ダッシュボード/);
  a.doesNotMatch(html,/today-summary|today-kpis|運用レベル/);
  a.equal((html.match(/href="\/purchase"/g)||[]).length,1);
- for(const mode of ['analytics','settings'])a.match(ui.view({mode,access:'free'}),/Premium会員限定.*href="\/purchase"/);
+ a.match(ui.view({mode:'settings',access:'free'}),/Premium会員限定.*href="\/purchase"/);
+ const analytics=ui.view({...premiumHome,mode:'analytics',access:'free',reference:true,personal:metrics});
+ a.match(analytics,/<h1>アナリティクス<\/h1>.*id="member-preset".*id="member-reference-content"/);
+ a.doesNotMatch(analytics,/href="\/purchase"|検出履歴|試算結果を準備中|TODAY_ONLY|234A/);
 });
 test('only verified Premium history rows have the exact page, date and symbol analysis button',()=>{
  const match={date:'2026-11-18',symbol:'234A',state:'EXPIRED',has_fundamental:true};

@@ -16,6 +16,7 @@ from . import continuing_transition as transition
 from .files import atomic_write, digest, file_sha, private_root, read
 from .member_release_source_review import (
     ENTRY_NOTICE_REVIEW_SCHEMA, FIXED_TRIAL_FEE_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA, SHARED_DEFAULTS_REVIEW_SCHEMA,
+    FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA,
     CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_UI_REVIEW_SCHEMA,
     COMPLETED_TIMING_REVIEW_SCHEMA,
     FUNDAMENTAL_IMPACT_REVIEW_SCHEMA, FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA,
@@ -45,12 +46,14 @@ MEMBER_SUCCESSORS = {
     UNIFIED_MEMBER_UI_REVIEW_SCHEMA: LOADING_AND_ZERO_REVIEW_SCHEMA,
     LOADING_AND_ZERO_REVIEW_SCHEMA: SHARED_DEFAULTS_REVIEW_SCHEMA,
     SHARED_DEFAULTS_REVIEW_SCHEMA: FIXED_TRIAL_FEE_REVIEW_SCHEMA,
+    FIXED_TRIAL_FEE_REVIEW_SCHEMA: FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA,
 }
 VERSION_BOUND_HANDOVERS = frozenset({
     JOURNAL_REVIEW_SCHEMA, FUNDAMENTAL_POPUP_REVIEW_SCHEMA, FUNDAMENTAL_IMPACT_REVIEW_SCHEMA, CLOUD_UI_REVIEW_SCHEMA,
     CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA, FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA,
     UNIFIED_MEMBER_UI_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA, SHARED_DEFAULTS_REVIEW_SCHEMA,
     ENTRY_NOTICE_REVIEW_SCHEMA, FIXED_TRIAL_FEE_REVIEW_SCHEMA,
+    FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA,
 })
 DECISION = "CONTINUING_DAILY_WITH_DORMANT_DESIGNATED_MEMBER_VIEW"
 ORDINARY_DECISION = "CONTINUING_DAILY_WITH_NONOWNER_UNMEASURED"
@@ -269,8 +272,9 @@ def _review(plan, old, source_review, deployment, policy, room_transfer):
         existing_access_policy_preserved=True, owner_room_transfer=room_transfer,
     )
     if source_review["schema"] in VERSION_BOUND_HANDOVERS | {ROLE_ONLY_REVIEW_SCHEMA}:
-        ca.require(source_review.get("member_audience") == "role_only", "verified role-only audience required")
-        review["member_audience"] = "role_only"
+        audience = "tiered" if source_review["schema"] == FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA else "role_only"
+        ca.require(source_review.get("member_audience") == audience, "verified member audience required")
+        review["member_audience"] = audience
     if source_review["schema"] in VERSION_BOUND_HANDOVERS:
         review["predecessor_member_policy_sha256"] = digest(plan["predecessor_member_policy"])
     if "prior_release_restoration" in plan:

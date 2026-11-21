@@ -30,6 +30,7 @@ LOADING_AND_ZERO_REVIEW_SCHEMA = "NEW_A_MEMBER_LOADING_AND_ZERO_SUCCESSOR_SOURCE
 SHARED_DEFAULTS_REVIEW_SCHEMA = "NEW_A_MEMBER_SHARED_DEFAULTS_SUCCESSOR_SOURCE_REVIEW_V1"
 ENTRY_NOTICE_REVIEW_SCHEMA = "NEW_A_MEMBER_ENTRY_NOTICE_SUCCESSOR_SOURCE_REVIEW_V1"
 FIXED_TRIAL_FEE_REVIEW_SCHEMA = "NEW_A_MEMBER_FIXED_TRIAL_FEE_SUCCESSOR_SOURCE_REVIEW_V1"
+FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA = "NEW_A_MEMBER_FREE_COMPLETED_ANALYTICS_SUCCESSOR_SOURCE_REVIEW_V1"
 _PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumのアクセス権を購入する</a>'.encode()
 _NEW_PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumアクセス権を購入する</a>'.encode()
 _SUCCESSOR_REVIEW_PATHS = frozenset({
@@ -97,6 +98,7 @@ _FUNDAMENTAL_PRODUCT_SHA256 = "0fa5bc7d4f39a024b0031fdb0613d4630c7082d60f718ec82
 _ROLE_ONLY_BASELINE = "df7210db699677669e0b5c6d3fc2ea941bd37b96"
 _ROLE_ONLY_CONFIG_LINE = b'    "CLOUD_MEMBER_VIEW_ENABLED": "true",\n'
 _ROLE_ONLY_AUDIENCE_LINE = b'    "CLOUD_MEMBER_AUDIENCE": "role_only",\n'
+_TIERED_AUDIENCE_LINE = b'    "CLOUD_MEMBER_AUDIENCE": "tiered",\n'
 _ROLE_ONLY_MIGRATION = "weak-early-beta-gate/member-migrations/0006_new_a_role_only_response_observations.sql"
 _ROLE_ONLY_PRODUCT_PATHS = frozenset({
     _ROLE_ONLY_MIGRATION,
@@ -324,6 +326,27 @@ _FIXED_TRIAL_FEE_AUDIT_REPAIR_PATHS = _FIXED_TRIAL_FEE_PRODUCT_PATHS | {
     "weak_early_beta/new_a/continuing_acceptance.py",
 }
 _FIXED_TRIAL_FEE_AUDIT_REPAIR_SHA256 = "3670ea456b0a53c4a9c5d2c9f76844ae4d9d4427e9cba411371ec02dad4bea93"
+_FREE_COMPLETED_ANALYTICS_BASELINE = "717eb480e19ad82ed9ca2ae41e6c866a7f418255"
+_FREE_COMPLETED_ANALYTICS_CALENDAR = "weak-early-beta-gate/src/new-a-market-calendar.ts"
+_FREE_COMPLETED_ANALYTICS_PRODUCT_PATHS = _MEMBER_DASHBOARD_PATHS | {
+    _FREE_COMPLETED_ANALYTICS_CALENDAR,
+    "weak-early-beta-gate/src/new-a-role-facade.ts",
+    "weak-early-beta-gate/src/new-a-member-services.ts",
+    "weak-early-beta-gate/src/new-a-member-reference.ts",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/reference-analytics.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/member-settings.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/frame.html",
+    "weak-early-beta-gate/scripts/new-a-ui-source/guide-body.html",
+    "weak-early-beta-gate/scripts/verify-release-config.mjs",
+    "tests/cloud_bundle_sync.test.cjs",
+    "tests/cloud_release_config.test.cjs",
+    "tests/new_a_member_consistency.test.cjs",
+    "tests/new_a_member_worker.test.cjs",
+    "tests/new_a_role_facade_candidate.test.cjs",
+    "tests/new_a_role_settings_candidate.test.cjs",
+    "tests/new_a_analytics_presets.test.cjs",
+}
+_FREE_COMPLETED_ANALYTICS_PRODUCT_SHA256 = "98cde576c29fc24985eb75c62cf3386f53b86339b2bdae45023e1e758421979a"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
     CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
     FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA, UNIFIED_MEMBER_UI_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA,
@@ -421,7 +444,14 @@ def _check_role_only_successor(repo, candidate, paths):
 
 
 def _member_successor(repo, baseline, candidate):
-    if baseline == _ENTRY_NOTICE_BASELINE:
+    if baseline == _FREE_COMPLETED_ANALYTICS_BASELINE:
+        paths = _successor_paths(repo, baseline, candidate, allowed_additions=(_FREE_COMPLETED_ANALYTICS_CALENDAR,))
+        if paths != _FREE_COMPLETED_ANALYTICS_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS | {CONFIG}:
+            raise ValueError("Free completed history and analytics differ from the reviewed source scope")
+        if _product_digest(repo, candidate, _FREE_COMPLETED_ANALYTICS_PRODUCT_PATHS) != _FREE_COMPLETED_ANALYTICS_PRODUCT_SHA256:
+            raise ValueError("Free completed history and analytics differ from the reviewed bytes")
+        schema = FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA
+    elif baseline == _ENTRY_NOTICE_BASELINE:
         paths = _successor_paths(repo, baseline, candidate)
         if paths == _ENTRY_NOTICE_PRODUCT_PATHS | _CLOUD_OWNER_REFERENCE_REVIEW_PATHS:
             if _product_digest(repo, candidate, _ENTRY_NOTICE_PRODUCT_PATHS) != _ENTRY_NOTICE_PRODUCT_SHA256:
@@ -537,6 +567,7 @@ def _member_successor(repo, baseline, candidate):
         "member_support_configured": True,
         "owner_only_gate_preserved": True,
         **({"member_audience": "role_only"} if schema in _ROLE_ONLY_SUCCESSOR_SCHEMAS else {}),
+        **({"member_audience": "tiered"} if schema == FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA else {}),
         **({"reviewed_runner_commit": _JOURNAL_REVIEWED_RUNNER} if schema == JOURNAL_REVIEW_SCHEMA else {}),
     }
 
@@ -571,6 +602,8 @@ def review_member_release_source(repo, baseline, candidate):
         if baseline == _ROLE_ONLY_BASELINE:
             expected_config = unique_replace(expected_config, _ROLE_ONLY_CONFIG_LINE,
                                              _ROLE_ONLY_CONFIG_LINE + _ROLE_ONLY_AUDIENCE_LINE)
+        elif baseline == _FREE_COMPLETED_ANALYTICS_BASELINE:
+            expected_config = unique_replace(expected_config, _ROLE_ONLY_AUDIENCE_LINE, _TIERED_AUDIENCE_LINE)
         if (expected_config != candidate_config_bytes or common_config.get("name") != acceptance.SERVICE
                 or common_config["vars"].get("CLOUD_MEMBER_VIEW_ENABLED") != "true" or prior_members != [MEMBER_BINDING]):
             raise ValueError("Member successor changes the approved Worker configuration or member D1")

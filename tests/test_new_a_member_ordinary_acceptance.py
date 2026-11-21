@@ -16,7 +16,7 @@ from weak_early_beta.new_a import release_maintenance
 from weak_early_beta.new_a.files import atomic_write, digest, file_sha, private_root, read
 from weak_early_beta.new_a.member_release_source_review import (
     CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_UI_REVIEW_SCHEMA, COMPLETED_TIMING_REVIEW_SCHEMA,
-    ENTRY, FUNDAMENTAL_IMPACT_REVIEW_SCHEMA,
+    ENTRY, FIXED_TRIAL_FEE_REVIEW_SCHEMA, FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA, FUNDAMENTAL_IMPACT_REVIEW_SCHEMA,
     FUNDAMENTAL_POPUP_REVIEW_SCHEMA,
     FUNDAMENTAL_REVIEW_SCHEMA, INITIAL_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA, MEMBER_BINDING, PRESENTATION_REVIEW_SCHEMA,
     ROLE_ONLY_REVIEW_SCHEMA,
@@ -413,6 +413,15 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
                                 source_review, deployment, row, None)
         self.assertEqual(review['member_audience'], 'role_only')
         self.assertEqual(review['predecessor_member_policy_sha256'], digest(incumbent))
+        self.assertEqual(member.MEMBER_SUCCESSORS[FIXED_TRIAL_FEE_REVIEW_SCHEMA],
+                         FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA)
+        tiered = {**source_review, 'schema': FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA, 'member_audience': 'tiered'}
+        tiered_plan = {**self.plan, 'predecessor_member_policy': incumbent}
+        tiered_review = member._review(tiered_plan, self.old, tiered, deployment, row, None)
+        self.assertEqual(tiered_review['member_audience'], 'tiered')
+        self.assertEqual(tiered_review['predecessor_member_policy_sha256'], digest(incumbent))
+        with self.assertRaisesRegex(ValueError, 'verified member audience'):
+            member._review(tiered_plan, self.old, dict(tiered, member_audience='role_only'), deployment, row, None)
         old_build = previous['build_input_sha256']
         with self.assertRaisesRegex(ValueError, 'exact normal CI'):
             observe(self.ci, dict(self.deployment, build_input_sha256=old_build), effective_off)

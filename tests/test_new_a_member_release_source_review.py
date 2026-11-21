@@ -503,3 +503,38 @@ class PresentationSuccessorReviewTest(unittest.TestCase):
             changed = self.commit("Unreviewed rollback behavior")
             with self.assertRaisesRegex(ValueError, "Fixed Cloud trial fee successor differs from the reviewed bytes"):
                 review.review_member_release_source(self.repo, baseline, changed)
+
+    def test_free_completed_history_and_analytics_requires_the_exact_tiered_release(self):
+        config = json.dumps(self.config, indent=2).encode()
+        config = config.replace(b'    "CLOUD_MEMBER_VIEW_ENABLED": "true",\n',
+                                review._ROLE_ONLY_CONFIG_LINE + review._ROLE_ONLY_AUDIENCE_LINE)
+        self.assertIn(review._ROLE_ONLY_AUDIENCE_LINE, config)
+        self.write(review.CONFIG, config)
+        paths = review._FREE_COMPLETED_ANALYTICS_PRODUCT_PATHS | review._SUCCESSOR_REVIEW_PATHS
+        for path in sorted(paths - {review._FREE_COMPLETED_ANALYTICS_CALENDAR}):
+            self.write(path, b"prior " + path.encode())
+        baseline = self.commit("Prior role-only Cloud")
+        for path in sorted(paths):
+            self.write(path, b"reviewed " + path.encode())
+        tiered = config.replace(review._ROLE_ONLY_AUDIENCE_LINE, review._TIERED_AUDIENCE_LINE)
+        self.write(review.CONFIG, tiered)
+        candidate = self.commit("Exact tiered Cloud")
+        product_sha = review._product_digest(self.repo, candidate, review._FREE_COMPLETED_ANALYTICS_PRODUCT_PATHS)
+        with (patch.object(review, "_FREE_COMPLETED_ANALYTICS_BASELINE", baseline),
+              patch.object(review, "_FREE_COMPLETED_ANALYTICS_PRODUCT_SHA256", product_sha)):
+            result = review.review_member_release_source(self.repo, baseline, candidate)
+            self.assertEqual(result["schema"], review.FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA)
+            self.assertEqual(result["member_audience"], "tiered")
+            self.assertTrue(result["owner_only_gate_preserved"])
+
+            self.write(review.CONFIG, tiered.replace(b'"fixed"', b'"unreviewed-role"'))
+            wrong_role = self.commit("Changed Discord role")
+            with self.assertRaisesRegex(ValueError, "approved Worker configuration"):
+                review.review_member_release_source(self.repo, baseline, wrong_role)
+
+            self.write(review.CONFIG, tiered)
+            path = "weak-early-beta-gate/src/new-a-role-facade.ts"
+            self.write(path, b"unreviewed Free access change")
+            wrong_gate = self.commit("Changed reviewed Free access")
+            with self.assertRaisesRegex(ValueError, "differ from the reviewed bytes"):
+                review.review_member_release_source(self.repo, baseline, wrong_gate)

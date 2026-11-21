@@ -241,8 +241,10 @@ body[data-page="home"] #new-a-trial-preset-field{display:block}
 .cloud-kpi-detail{margin-top:16px}
 .cloud-kpi-detail summary,.cloud-table-details summary{min-height:44px;display:list-item;padding:8px 0;cursor:pointer;color:var(--blue);font-weight:700}
 .cloud-chart{margin-top:12px;min-width:0}
-.cloud-annual-bars{list-style:none;padding:0;margin:12px 0;display:grid;gap:10px}
-.cloud-annual-bars li{display:grid;grid-template-columns:4.2rem minmax(0,1fr) minmax(5rem,auto);align-items:center;gap:8px;font-variant-numeric:tabular-nums}
+.cloud-annual-bars{list-style:none;padding:0;margin:12px 0;display:grid;grid-template-columns:4.2rem minmax(0,1fr) fit-content(50%);gap:10px 8px}
+.cloud-annual-bars li{display:grid;grid-column:1/-1;grid-template-columns:4.2rem minmax(0,1fr) minmax(5rem,14ch);align-items:center;column-gap:8px;font-variant-numeric:tabular-nums}
+.cloud-annual-bars li>strong{text-align:right;overflow-wrap:anywhere}
+@supports(grid-template-columns:subgrid){.cloud-annual-bars li{grid-template-columns:subgrid}}
 .cloud-annual-track{height:12px;background:var(--bg);border-radius:6px;position:relative}
 .cloud-annual-track:after{content:"";position:absolute;height:100%;width:1px;background:var(--muted);left:50%}
 .cloud-annual-bar{position:absolute;height:100%;border-radius:8px;background:var(--cyan)}

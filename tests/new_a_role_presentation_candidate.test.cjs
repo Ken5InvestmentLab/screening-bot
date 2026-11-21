@@ -100,6 +100,7 @@ async function renderLevelPage({mode,session,storage,access='premium'}) {
  const elements={
   'member-state':status,'member-retry':retry,'member-content':out,'member-preset':preset,
   history:node(),'member-history-content':node(),'member-history-open':node(),'member-history-state':node(),
+  'member-free-history':{...node(),replaceChildren(){}},
  };
  const document={
   body,activeElement:body,visibilityState:'visible',createElement:node,addEventListener(){},
@@ -108,7 +109,7 @@ async function renderLevelPage({mode,session,storage,access='premium'}) {
  vm.runInNewContext(fs.readFileSync(path.join(src,'member-loader.js'),'utf8'),{
   document,location:{hash:''},AbortController,AbortSignal,TextEncoder,crypto:webcrypto,sessionStorage:storage,
   addEventListener(){},setInterval(){},
-  NewAMemberPresentation:{view(value){rendered.resolve(value);return '';}},
+  NewAMemberPresentation:{view(value){rendered.resolve(value);return '';},freeHistoryRows:ui.freeHistoryRows},
   async fetch(route){
    const url=new URL(route,'https://fixture.invalid');
    if(url.pathname.endsWith('/session'))return new Response(null,{status:204,headers:{
@@ -283,7 +284,7 @@ test('history index lookup supports legacy code/name, date range and sort while 
   a.equal(ui.referenceHistoryIndex(JSON.stringify(invalid),asOf,1),null);
  }
 });
-test('free presentation retains closed history and offers data-free Premium previews',()=>{
+test('free dashboard shares the Premium section order with data-free locked rows',()=>{
  const rows=[
   {date:'2026-11-18',symbol:'1234',state:'HOLD_ENDED'},
   {date:'2026-11-18',symbol:'4321',state:'EXPIRED'},
@@ -294,22 +295,25 @@ test('free presentation retains closed history and offers data-free Premium prev
  const shell={...premiumHome,access:'free',rows,personal:metrics};
  const html=ui.view({...shell,dashboard});
  a.equal(html,ui.view({...shell,dashboard:undefined}));
- for(const value of ['<h1>検出履歴</h1>','member-free-history','仮想保有終了銘柄','1234','仮想保有終了'])a.ok(html.includes(value),value);
- a.doesNotMatch(html,/4321|999Z|567Z|PRIVATE_NAME|987654|member-preset|日次資金推移|現在の監視|ダッシュボード/);
- a.doesNotMatch(html,/today-summary|today-kpis|運用レベル|data-symbol|data-member-fundamental/);
+ for(const value of ['<h1>ダッシュボード</h1>','member-free-history','仮想保有が終了した銘柄','1234','仮想保有終了'])a.ok(html.includes(value),value);
+ a.doesNotMatch(html,/4321|999Z|567Z|PRIVATE_NAME|987654|member-preset|日次資金推移/);
+ a.doesNotMatch(html,/today-summary|today-kpis|運用レベル|data-symbol|data-member-fundamental|class="badge"|member-locked-mask/);
 
- const cards=Array.from(html.matchAll(/<section class="panel member-locked-card"><h2>([^<]+)<\/h2>([\s\S]*?)<\/section>/g));
- a.deepEqual(cards.map(card=>card[1]),['対象日の動き','監視中','仮想保有中']);
- for(const [,name,body] of cards){
-  a.match(body,/<div class="member-locked-mask" aria-hidden="true"><span><\/span><span><\/span><\/div>/);
-  a.ok(body.includes('<details class="cloud-table-details"><summary aria-label="' + name + 'の詳細を見る">詳細を見る</summary>'));
-  a.match(body,/Premium会員限定です。<\/p><a class="member-purchase" href="\/purchase">Premiumアクセス権を購入する<\/a><\/details>$/);
+ const headings=markup=>Array.from(markup.matchAll(/<h2 [^>]+>([^<]+)<\/h2>/g),entry=>entry[1]);
+ const premium=ui.view(premiumHome);
+ a.deepEqual(headings(html),['対象日の動き','現在の仮想保有','現在の監視','検出履歴']);
+ a.deepEqual(headings(html),headings(premium));
+ const rowsWithUpgrade=Array.from(html.matchAll(/<details class="member-locked-row">([\s\S]*?)<\/details>/g));
+ a.equal(rowsWithUpgrade.length,3);
+ for(const [index,[,body]] of rowsWithUpgrade.entries()){
+  a.ok(body.includes('<summary aria-label="' + headings(html)[index] + 'の詳細を見る">'));
+  a.match(body,/<span class="member-locked-message">銘柄・詳細はPremium限定<\/span><span class="member-locked-action">詳細を見る<\/span><\/summary>/);
+  a.match(body,/<a class="member-purchase" href="\/purchase">Premiumアクセス権を購入する<\/a><\/div>$/);
  }
- a.equal((html.match(/href="\/purchase"/g)||[]).length,cards.length);
- a.doesNotMatch(ui.view(premiumHome),/member-locked-preview|member-locked-mask/);
- a.match(ui.freeHome(),/member-locked-preview/);
- a.doesNotMatch(ui.freeHome(),/member-free-history/);
- a.match(ui.view({mode:'settings',access:'free'}),/Premium会員限定.*href="\/purchase"/);
+ a.equal((html.match(/href="\/purchase"/g)||[]).length,rowsWithUpgrade.length);
+ a.doesNotMatch(premium,/member-locked-row/);
+ a.match(ui.freeHome(),/member-locked-row/);
+ a.match(ui.freeHome(),/<div id="member-free-history"><\/div>/);
  a.match(ui.view({mode:'home',access:'free',rows:[]}),/このページに仮想保有終了銘柄はありません。/);
  const analytics=ui.view({...premiumHome,mode:'analytics',access:'free',reference:true,personal:metrics});
  a.match(analytics,/<h1>アナリティクス<\/h1>.*id="member-preset".*id="member-reference-content"/);

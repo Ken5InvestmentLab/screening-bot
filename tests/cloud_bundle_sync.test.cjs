@@ -2,11 +2,11 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path'),{spawnSync}=require('node:child_process'),{createHash}=require('node:crypto');
 const repo=path.resolve(__dirname,'..'),sourceGate=path.join(repo,'weak-early-beta-gate'),baseline=process.env.NEW_A_TEST_BASELINE_ROOT||repo;
 const {pathToFileURL}=require('node:url');
-function checkHelp(html,{stagedFree=false}={}){
+function checkHelp(html){
  const nav=html.match(/<nav class="nav"[\s\S]*?<\/nav>/)[0];
  const opener=nav.match(/<button id="cloud-help-open"[^>]*>ヘルプ<\/button>/)[0];
  assert.match(opener,/aria-haspopup="dialog" aria-controls="cloud-help-dialog"/);
- if(stagedFree)assert.match(opener,/data-member-premium-nav hidden/);
+ assert.doesNotMatch(opener,/\bhidden\b/);
  assert.doesNotMatch(nav,/>その他<|weak_early_beta_(?:silence|dive|shadow|fusion|balance)\.html/);
  const popup=html.match(/<dialog id="cloud-help-dialog"[\s\S]*?<\/dialog>/)[0];
  assert.match(popup,/aria-labelledby="cloud-help-title"/);
@@ -82,23 +82,26 @@ test('actual sync builds the exact data-free public inventory and a worker-only 
  const premiumSettings = renderMemberFrame('/weak_early_beta_settings.html', 'premium');
  const premiumHome = renderMemberFrame('/weak_early_beta_latest.html', 'premium');
  checkHelp(premiumHome);
- checkHelp(freeHome,{stagedFree:true});
- assert.match(freeHome, /<title>検出履歴 \| 天底極致 Cloud 2\.0<\/title>/);
- assert.match(freeHome, /aria-current="page" href="\.\/weak_early_beta_latest\.html" id="member-home-nav">検出履歴<\/a>/);
+ checkHelp(freeHome);
+ assert.equal(freeHome,premiumHome);
+ assert.equal(freeSettings,premiumSettings);
+ assert.match(freeHome, /<title>ダッシュボード \| 天底極致 Cloud 2\.0<\/title>/);
+ assert.match(freeHome, /aria-current="page" href="\.\/weak_early_beta_latest\.html">ダッシュボード<\/a>/);
  assert.match(freeHome, /href="\.\/weak_early_beta_analytics\.html">アナリティクス<\/a>/);
- assert.match(freeHome, /href="\.\/weak_early_beta_settings\.html" data-member-premium-nav hidden/);
- assert.doesNotMatch(freeHome + freeSettings, /src="\/new-a-assets\/member-settings\.js"/);
- assert.match(premiumHome, /<dialog id="cloud-settings-dialog"/);
- assert.match(premiumHome, /aria-haspopup="dialog" aria-controls="cloud-settings-dialog"/);
- assert.doesNotMatch(freeHome + freeSettings + premiumSettings, /<dialog id="cloud-settings-dialog"/);
- assert.match(premiumSettings, /src="\/new-a-assets\/member-settings\.js"/);
+ assert.match(freeHome, /href="\.\/weak_early_beta_settings\.html" aria-haspopup="dialog" aria-controls="cloud-settings-dialog"/);
+ assert.match(freeHome, /<dialog id="cloud-settings-dialog"/);
+ assert.doesNotMatch(freeHome, /src="\/new-a-assets\/member-settings\.js"|data-member-premium-nav/);
+ assert.doesNotMatch(freeSettings, /<dialog id="cloud-settings-dialog"/);
+ assert.match(freeSettings, /src="\/new-a-assets\/member-settings\.js"/);
  const premiumAnalytics = renderMemberFrame('/weak_early_beta_analytics.html', 'premium');
  const freeAnalytics = renderMemberFrame('/weak_early_beta_analytics.html', 'free');
  for (const html of [premiumAnalytics, freeAnalytics]) {
   assert.match(html, /src="\/new-a-assets\/reference-analytics\.js"/);
   assert.match(html, /aria-current="page" href="\.\/weak_early_beta_analytics\.html">アナリティクス<\/a>/);
  }
- assert.doesNotMatch(freeAnalytics, /member-settings\.js|<dialog id="cloud-settings-dialog"/);
+ assert.equal(freeAnalytics,premiumAnalytics);
+ assert.match(freeAnalytics, /<dialog id="cloud-settings-dialog"/);
+ assert.doesNotMatch(freeAnalytics, /member-settings\.js/);
  assert.doesNotMatch(premiumHome + freeHome, /reference-analytics/);
  const scan = spawnSync(process.execPath, [path.join(f.gate, 'scripts/verify-new-a-code-only.mjs')], {encoding: 'utf8'});
  assert.equal(scan.status, 0, scan.stderr);

@@ -187,7 +187,7 @@
 
   function applyDisplaySettings(saved, session) {
     const { revision, view_preferences: view } = saved ?? {};
-    if (memberSession !== session || memberAccess !== 'premium' || !Number.isSafeInteger(revision)
+    if (memberSession !== session || memberAccess === null || !Number.isSafeInteger(revision)
       || revision < displayRevision || !['dark', 'light', 'system'].includes(view?.theme)
       || !['small', 'standard', 'large'].includes(view.font_size) || ![20, 50, 100].includes(view.page_size)) return;
     const sizeChanged = display.page_size !== view.page_size;
@@ -196,18 +196,6 @@
     paintTheme();
     document.documentElement.dataset.fontSize = view.font_size;
     if (sizeChanged) updateHistorySize?.();
-  }
-
-  function updateNavigation() {
-    for (const link of document.querySelectorAll('[data-member-premium-nav]')) {
-      link.hidden = memberAccess !== 'premium';
-    }
-    const home = document.getElementById('member-home-nav');
-    if (home && memberAccess) {
-      const label = memberAccess === 'free' ? '検出履歴' : 'ダッシュボード';
-      home.textContent = label;
-      if (document.body.dataset.page === 'home') document.title = label + ' | 天底極致 Cloud 2.0';
-    }
   }
 
   function clearDisplay(message, reauthenticate = false) {
@@ -226,7 +214,6 @@
     displayRevision = -1;
     paintTheme();
     delete document.documentElement.dataset.fontSize;
-    updateNavigation();
     page = 1;
     historyOffset = 0;
     updateHistorySize = undefined;
@@ -270,7 +257,6 @@
           await restorePreset(session);
         }
         if (memberSession !== session) return false;
-        updateNavigation();
         return true;
       } catch {
         clearDisplay(unavailable);
@@ -284,27 +270,59 @@
     return accessCheck;
   }
 
-  function historyPagination(current, pages, onPage, exact = true) {
-    if (pages <= 1) return null;
+  function historyNavigation(label, previous, next, step) {
+    if (!previous && !next) return null;
     const nav = document.createElement('nav');
     nav.setAttribute('class', 'history-pagination');
     nav.setAttribute('aria-label', '検出履歴のページ');
     const position = document.createElement('span');
-    position.textContent = exact ? current + ' / ' + pages + 'ページ' : current + 'ページ';
-    for (const [label, number] of [['前へ', current - 1], ['次へ', current + 1]]) {
+    position.textContent = label;
+    for (const [text, available, direction] of [['前へ', previous, -1], ['次へ', next, 1]]) {
       const button = document.createElement('button');
-      button.textContent = label;
-      button.disabled = number < 1 || number > pages;
-      button.addEventListener('click', () => onPage(number));
+      button.textContent = text;
+      button.disabled = !available;
+      button.addEventListener('click', () => step(direction));
       nav.append(button);
-      if (number < current) nav.append(position);
+      if (direction < 0) nav.append(position);
     }
     return nav;
   }
 
-  function addPagination(pages, onPage) {
-    const nav = historyPagination(page, pages, onPage);
-    if (nav) document.getElementById('member-free-history').append(nav);
+  function historyPagination(current, pages, onPage, exact = true) {
+    const label = exact ? current + ' / ' + pages + 'ページ' : current + 'ページ';
+    return historyNavigation(label, current > 1, current < pages, direction => onPage(current + direction));
+  }
+
+  function mountFreeHistory(history, active) {
+    const region = document.getElementById('member-free-history');
+    const rows = history.rows.filter(row => row.state === 'HOLD_ENDED');
+
+    function render() {
+      const size = display.page_size ?? historyPartSize;
+      const chunks = Math.max(1, Math.ceil(rows.length / size));
+      const current = Math.min(Math.floor(historyOffset / size) + 1, chunks);
+      historyOffset = (current - 1) * size;
+      region.replaceChildren();
+      region.innerHTML = g.NewAMemberPresentation.freeHistoryRows(rows.slice(historyOffset, historyOffset + size));
+      const label = page + ' / ' + history.pages + 'ページ'
+        + (chunks > 1 ? '（' + current + ' / ' + chunks + '）' : '');
+      const nav = historyNavigation(label, current > 1 || page > 1, current < chunks || page < history.pages,
+        async direction => {
+          const next = current + direction;
+          if (next >= 1 && next <= chunks) {
+            if (!await verifyAccess() || !active()) return;
+            historyOffset = (next - 1) * size;
+            render();
+          } else {
+            page += direction;
+            historyOffset = direction > 0 ? 0 : historyPartSize;
+            load();
+          }
+        });
+      if (nav) region.append(nav);
+    }
+    updateHistorySize = render;
+    render();
   }
 
   function stopHistorySearch() {
@@ -545,7 +563,7 @@
 
   async function openSettings(target, message, context) {
     const session = memberSession;
-    const active = () => context.active() && memberSession === session && memberAccess === 'premium';
+    const active = () => context.active() && memberSession === session && memberAccess !== null;
     await prepareSettings();
     if (!active()) return;
     await g.mountMemberSettings(target, message, {
@@ -556,7 +574,7 @@
     });
   }
 
-  g.CloudSettingsDialog?.connect(openSettings, () => memberAccess === 'premium' && !out.hidden);
+  g.CloudSettingsDialog?.connect(openSettings, () => memberAccess !== null && !out.hidden);
 
   function mountDeferredHistory(scope, dashboardItems, isDashboardActive) {
     const panel = document.getElementById('history');
@@ -698,16 +716,11 @@
     const analytics = mode === 'analytics';
     const freeHome = free && mode === 'home';
     try {
-      if (free && !freeHome && !analytics) {
-        out.innerHTML = g.NewAMemberPresentation.lockedPage(mode);
-        status.textContent = '';
-        return;
-      }
       if (mode === 'settings') {
         await openSettings(out, status, { signal, active });
         return;
       }
-      if (!free && displayRevision < 0) {
+      if (displayRevision < 0) {
         const session = memberSession;
         // Preferences are independent of market data and must not delay the cards.
         void g.NewAMemberTransport.preferences({ signal, session })
@@ -781,16 +794,14 @@
         preset?.querySelector('input:checked')?.focus();
       }
       if (!free && !analytics) mountDeferredHistory(scope, dashboardAnalyses, active);
-      if (history) addPagination(history.pages, number => {
-        page = number;
-        load();
-      });
+      if (history) mountFreeHistory(history, active);
     } catch (error) {
       if (!active()) return;
       if (freeHome && error.message !== accessDenied
         && await verifyAccess() && active() && memberAccess === 'free') {
         snapshot = null;
         page = 1;
+        historyOffset = 0;
         out.innerHTML = g.NewAMemberPresentation.freeHome();
         status.textContent = error.message === changed ? changed : '終了済みの検出履歴を読み込めませんでした。';
         retry.hidden = false;

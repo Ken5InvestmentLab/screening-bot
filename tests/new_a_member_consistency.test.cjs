@@ -134,7 +134,7 @@ const presenter = { require: require('node:module').createRequire(path.join(asse
 vm.runInNewContext(fs.readFileSync(path.join(assets, 'member-presentation.js'), 'utf8'), presenter);
 const {
   fundamentalItem, fundamentalMarkup, fundamentalSelector, referencePayload, referenceHistory,
-  referenceHistoryIndex, matchingHistory, referenceHistoryTable, historyContent,
+  referenceHistoryIndex, matchingHistory, referenceHistoryTable, historyContent, freeHistoryRows,
 } = presenter.module.exports;
 const initialToken = 'a'.repeat(64);
 const nextToken = 'b'.repeat(64);
@@ -187,7 +187,7 @@ function browser(options = {}) {
   const windowEvents = {};
   const settingsDialog = {
     open:false,
-    connect(_mount,canOpen) { this.canOpen=canOpen; },
+    connect(mount,canOpen) { this.mount=mount; this.canOpen=canOpen; },
     close(force) { assert.equal(force,true); this.open=false; },
   };
   const nodes = Object.fromEntries(['state', 'retry', 'content', 'preset'].map(key => ['member-' + key, element()]));
@@ -211,8 +211,7 @@ function browser(options = {}) {
   const referenceRoot = element('div');
   const referenceMounts = [];
   const dailyLoads = [];
-  const premiumLink = { hidden: true };
-  const homeLink = element('a');
+  const freeHistoryRegion = element('div');
   const document = {
     documentElement: { dataset: {} },
     body: { dataset: { page: options.page ?? 'home' } },
@@ -220,10 +219,7 @@ function browser(options = {}) {
     events: {},
     getElementById(id) {
       if (id === 'member-reference-content' && nodes['member-content'].innerHTML === 'synthetic-reference-slot') return referenceRoot;
-      if (id === 'member-home-nav') return homeLink;
-      if (id === 'member-free-history' && nodes['member-content'].innerHTML === 'synthetic-closed-history') {
-        return nodes['member-content'];
-      }
+      if (id === 'member-free-history') return freeHistoryRegion;
       if (id === 'history') return historyPanel;
       if (id === 'member-history-content') return historyRegion;
       if (id === 'member-history-open') return historyButton;
@@ -235,7 +231,7 @@ function browser(options = {}) {
       }
       return nodes[id];
     },
-    querySelectorAll(selector) { return selector === '[data-member-premium-nav]' ? [premiumLink] : []; },
+    querySelectorAll() { return []; },
     createElement(type) {
       const node = element(type);
       if (type === 'template') {
@@ -281,7 +277,7 @@ function browser(options = {}) {
           : values.access === 'premium' ? 'synthetic-private-content' : 'synthetic-closed-history';
       },
       lockedPage: mode => 'synthetic-premium-lock-' + mode,
-      freeHome: () => 'synthetic-premium-purchase',
+      freeHome: () => 'synthetic-premium-purchase', freeHistoryRows,
       fundamentalItem, fundamentalMarkup, fundamentalSelector, referencePayload, referenceHistory,
       referenceHistoryIndex, matchingHistory, referenceHistoryTable,
       historyContent(rows, page, referenceRows, selected) {
@@ -307,10 +303,10 @@ function browser(options = {}) {
     },
   };
   vm.createContext(context);
-  if (options.page === 'settings') vm.runInContext(settings, context);
+  if (options.page === 'settings' || options.sharedSettings) vm.runInContext(settings, context);
   vm.runInContext(loader, context);
   return {
-    document, requests, nodes, premiumLink, homeLink, referenceRoot, referenceMounts, dailyLoads,
+    document, requests, nodes, freeHistoryRegion, referenceRoot, referenceMounts, dailyLoads,
     historyFilters, historyResults, historyNotice, historyRegion, historyButton, historyState,
     historyRenderings, inputs, clearSearch, scrollToHistory() { intersectHistory(); },
     settingsDialog, restore() { windowEvents.pageshow({ persisted:true }); },
@@ -762,25 +758,76 @@ test('404 removes an unavailable row action and a mismatched generation clears c
   assert.match(newer.nodes['member-state'].textContent, /データが更新/);
 });
 
-test('free home pages completed history with its verified generation and settings remains locked', async () => {
+test('free home pages completed history with its verified generation', async () => {
   const free = browser({ tier: 'free' });
   await flush();
-  assert.deepEqual(free.requests.map(request => request.name), ['session', 'history.json', 'session']);
+  assert.deepEqual(free.requests.map(request => request.name), ['session', 'preferences', 'history.json', 'session']);
   assert.equal(free.nodes['member-content'].innerHTML, 'synthetic-closed-history');
-  assert.equal(free.homeLink.textContent, '検出履歴');
-  assert.equal(free.premiumLink.hidden, true);
-  free.nodes['member-content'].lastElementChild.lastElementChild.events.click();
+  assert.equal(free.settingsDialog.canOpen(), true);
+  free.freeHistoryRegion.lastElementChild.lastElementChild.events.click();
   await flush();
   const history = free.requests.filter(request => request.name === 'history.json');
   assert.deepEqual(history.map(request => request.url.searchParams.get('page')), ['1', '2']);
   assert.equal(history[1].init.headers['x-cloud-generation'], initialToken);
   assert.equal(history[1].init.headers['x-cloud-member-session'], initialSession);
-  assert.deepEqual(new Set(free.requests.map(request => request.name)), new Set(['session', 'history.json']));
+  assert.deepEqual(new Set(free.requests.map(request => request.name)), new Set(['session', 'preferences', 'history.json']));
+});
 
-  const locked = browser({ page: 'settings', tier: 'free' });
+test('free settings save only display fields and update history page size without extra market requests', async () => {
+  const anchors = { initial_cash_yen: 1000000, max_positions: 12, per_order_cap_yen: 100000 };
+  let saved = { revision: 1, save_binding: 'binding-one', preferences: anchors,
+    view_preferences: { theme: 'dark', font_size: 'standard', page_size: 100 } };
+  let writes = 0;
+  const rows = Array.from({ length: 25 }, (_, index) => ({ date: day, symbol: String(1100 + index), state: 'HOLD_ENDED' }));
+  const read = (name, url, options) => {
+    if (name === 'preferences') {
+      assert.equal(options.headers['x-cloud-member-session'], initialSession);
+      if (options.method === 'PUT') {
+        const update = JSON.parse(options.body);
+        assert.deepEqual(update.preferences, anchors);
+        assert.deepEqual(update.view_preferences, { theme: 'light', font_size: 'large', page_size: 20 });
+        assert.equal(update.expected_revision, 1);
+        assert.equal(update.save_binding, saved.save_binding);
+        saved = { ...saved, revision: 2, save_binding: 'binding-two', view_preferences: update.view_preferences };
+        writes++;
+      }
+      return Response.json(saved);
+    }
+    if (name === 'history.json') {
+      const page = Number(url.searchParams.get('page'));
+      return Response.json({ as_of: day, generation: initialToken, page, pages: 2,
+        rows: page === 1 ? rows : [{ ...rows[0], symbol: '1200' }] });
+    }
+    return null;
+  };
+  const view = browser({ tier: 'free', sharedSettings: true, read });
   await flush();
-  assert.deepEqual(locked.requests.map(request => request.name), ['session']);
-  assert.equal(locked.nodes['member-content'].innerHTML, 'synthetic-premium-lock-settings');
+  assert.match(view.freeHistoryRegion.innerHTML, />1124</);
+  const target = element('div');
+  await view.settingsDialog.mount(target, element('p'), { signal: new AbortController().signal, active: () => true });
+  const form = target.children[0];
+  const fields = form.children[0].children.map(label => label.children[1]);
+  assert.deepEqual(fields.map(field => field.name), ['theme', 'font_size', 'page_size']);
+  [fields[0].value, fields[1].value, fields[2].value] = ['light', 'large', '20'];
+  await form.events.submit({ preventDefault() {} });
+  assert.equal(writes, 1);
+  assert.deepEqual(view.document.documentElement.dataset, { theme: 'light', fontSize: 'large' });
+  assert.match(view.freeHistoryRegion.innerHTML, />1119</);
+  assert.doesNotMatch(view.freeHistoryRegion.innerHTML, />1124</);
+
+  const next = () => view.freeHistoryRegion.lastElementChild.lastElementChild.events.click();
+  await next();
+  assert.match(view.freeHistoryRegion.innerHTML, />1124</);
+  assert.doesNotMatch(view.freeHistoryRegion.innerHTML, />1100</);
+  assert.equal(view.requests.filter(request => request.name === 'history.json').length, 1);
+  await next();
+  await flush();
+  assert.match(view.freeHistoryRegion.innerHTML, />1200</);
+
+  const direct = browser({ page: 'settings', tier: 'free', read });
+  await flush();
+  assert.deepEqual(direct.requests.map(request => request.name), ['session', 'preferences', 'session']);
+  assert.equal(direct.nodes['member-content'].children[0].type, 'form');
 });
 
 test('free analytics switches aggregate presets and loads daily only on demand', async () => {
@@ -805,7 +852,7 @@ test('free analytics switches aggregate presets and loads daily only on demand',
     .map(request => request.url.searchParams.get('item'));
   assert.deepEqual(items(), ['analytics.overview.return_priority']);
   assert.equal(view.nodes['member-content'].innerHTML, 'synthetic-reference-slot');
-  assert.equal(view.settingsDialog.canOpen(), false);
+  assert.equal(view.settingsDialog.canOpen(), true);
   assert.equal(await view.dailyLoads[0](), daily);
   view.nodes['member-preset'].events.change({ target: { value: 'defensive' } });
   await flush();
@@ -815,7 +862,7 @@ test('free analytics switches aggregate presets and loads daily only on demand',
   const dailyRead = view.requests.find(request => request.url.searchParams.get('item') === 'analytics.daily.return_priority');
   assert.equal(dailyRead.init.headers['x-cloud-generation'], initialToken);
   assert.equal(dailyRead.init.headers['x-cloud-member-session'], initialSession);
-  assert.deepEqual(new Set(view.requests.map(request => request.name)), new Set(['session', 'reference.json']));
+  assert.deepEqual(new Set(view.requests.map(request => request.name)), new Set(['session', 'preferences', 'reference.json']));
 });
 
 test('free analytics rejects missing, legacy or protected overview data without using a broader API', async () => {
@@ -832,8 +879,8 @@ test('free analytics rejects missing, legacy or protected overview data without 
     await flush();
     assert.equal(view.nodes['member-content'].innerHTML, '');
     assert.equal(view.nodes['member-retry'].hidden, false);
-    assert.deepEqual(view.requests.map(request => request.name), ['session', 'reference.json']);
-    assert.equal(view.requests[1].url.searchParams.get('item'), 'analytics.overview.return_priority');
+    assert.deepEqual(view.requests.map(request => request.name), ['session', 'preferences', 'reference.json']);
+    assert.equal(view.requests[2].url.searchParams.get('item'), 'analytics.overview.return_priority');
   }
 });
 
@@ -846,7 +893,7 @@ test('confirmed Free access keeps the purchase action during a history outage', 
   assert.equal(view.nodes['member-content'].innerHTML, 'synthetic-premium-purchase');
   assert.match(view.nodes['member-state'].textContent, /履歴を読み込めません/);
   assert.equal(view.nodes['member-retry'].hidden, false);
-  assert.deepEqual(view.requests.map(request => request.name), ['session', 'history.json', 'session']);
+  assert.deepEqual(view.requests.map(request => request.name), ['session', 'preferences', 'history.json', 'session']);
 
   historyStatus = 200;
   view.nodes['member-retry'].events.click();
@@ -854,7 +901,7 @@ test('confirmed Free access keeps the purchase action during a history outage', 
   assert.equal(view.nodes['member-content'].innerHTML, 'synthetic-closed-history');
 
   historyStatus = 403;
-  view.nodes['member-content'].children[0].lastElementChild.events.click();
+  view.freeHistoryRegion.lastElementChild.lastElementChild.events.click();
   await flush();
   assert.equal(view.nodes['member-content'].innerHTML, '');
 });
@@ -862,17 +909,17 @@ test('confirmed Free access keeps the purchase action during a history outage', 
 test('changed tier clears the older Premium view before it can repaint', async () => {
   const view = browser();
   await flush();
-  assert.equal(view.premiumLink.hidden, false);
+  assert.equal(view.settingsDialog.canOpen(), true);
   assert.equal(view.nodes['member-content'].innerHTML, 'synthetic-private-content');
   view.setTier('free');
   view.poll();
   await flush();
-  assert.equal(view.premiumLink.hidden, true);
+  assert.equal(view.settingsDialog.canOpen(), false);
   assert.equal(view.nodes['member-content'].innerHTML, '');
   const before = view.requests.length;
   view.nodes['member-retry'].events.click();
   await flush();
-  assert.deepEqual(view.requests.slice(before).map(request => request.name), ['session', 'history.json', 'session']);
+  assert.deepEqual(view.requests.slice(before).map(request => request.name), ['session', 'preferences', 'history.json', 'session']);
   assert.equal(view.nodes['member-content'].innerHTML, 'synthetic-closed-history');
 });
 

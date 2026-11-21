@@ -7,6 +7,8 @@
   const changed = 'データが更新されました。再試行してください。';
   const presets = new Set(['defensive', 'medium', 'return_priority']);
   const defaultPreset = 'return_priority';
+  const historyPartSize = 100;
+  const defaultDisplay = { theme: 'dark', font_size: null, page_size: null };
   const isToken = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
   const requiresLogin = response => response.type === 'opaqueredirect' || response.status === 401;
   const denied = response => requiresLogin(response) || response.status === 403;
@@ -51,6 +53,11 @@
   let selected = defaultPreset;
   let presetStorageKey = null;
   let page = 1;
+  let historyOffset = 0;
+  let display = defaultDisplay;
+  let displayRevision = -1;
+  let updateHistorySize;
+  const systemTheme = g.matchMedia?.('(prefers-color-scheme: dark)');
   let snapshot = null;
   let memberSession = null;
   let memberAccess = null;
@@ -171,6 +178,25 @@
     }
   }
 
+  function paintTheme() {
+    document.documentElement.dataset.theme = display.theme === 'system'
+      ? systemTheme?.matches ? 'dark' : 'light' : display.theme;
+  }
+  systemTheme?.addEventListener?.('change', paintTheme);
+
+  function applyDisplaySettings(saved, session) {
+    const { revision, view_preferences: view } = saved ?? {};
+    if (memberSession !== session || memberAccess !== 'premium' || !Number.isSafeInteger(revision)
+      || revision < displayRevision || !['dark', 'light', 'system'].includes(view?.theme)
+      || !['small', 'standard', 'large'].includes(view.font_size) || ![20, 50, 100].includes(view.page_size)) return;
+    const sizeChanged = display.page_size !== view.page_size;
+    display = view;
+    displayRevision = revision;
+    paintTheme();
+    document.documentElement.dataset.fontSize = view.font_size;
+    if (sizeChanged) updateHistorySize?.();
+  }
+
   function updateNavigation() {
     for (const link of document.querySelectorAll('[data-member-premium-nav]')) {
       link.hidden = memberAccess !== 'premium';
@@ -189,8 +215,14 @@
     memberAccess = null;
     selected = defaultPreset;
     presetStorageKey = null;
+    display = defaultDisplay;
+    displayRevision = -1;
+    paintTheme();
+    delete document.documentElement.dataset.fontSize;
     updateNavigation();
     page = 1;
+    historyOffset = 0;
+    updateHistorySize = undefined;
     out.replaceChildren();
     status.textContent = message;
     if (reauthenticate) {
@@ -243,13 +275,13 @@
     return accessCheck;
   }
 
-  function historyPagination(current, pages, onPage) {
+  function historyPagination(current, pages, onPage, exact = true) {
     if (pages <= 1) return null;
     const nav = document.createElement('nav');
     nav.setAttribute('class', 'history-pagination');
     nav.setAttribute('aria-label', '検出履歴のページ');
     const position = document.createElement('span');
-    position.textContent = current + ' / ' + pages + 'ページ';
+    position.textContent = exact ? current + ' / ' + pages + 'ページ' : current + 'ページ';
     for (const [label, number] of [['前へ', current - 1], ['次へ', current + 1]]) {
       const button = document.createElement('button');
       button.textContent = label;
@@ -261,9 +293,9 @@
     return nav;
   }
 
-  function addPagination(pages, onPage, container = out) {
+  function addPagination(pages, onPage) {
     const nav = historyPagination(page, pages, onPage);
-    if (nav) (document.getElementById('member-history-results') ?? container).append(nav);
+    if (nav) out.append(nav);
   }
 
   function stopHistorySearch() {
@@ -281,7 +313,7 @@
     stopHistorySearch();
   }
 
-  function mountHistorySearch(native, scope, dashboardItems, onPage) {
+  function mountHistorySearch(native, scope, dashboardItems, resetPage) {
     const controls = document.getElementById('member-history-filters');
     const target = document.getElementById('member-history-results');
     const notice = document.getElementById('member-history-filter-status');
@@ -315,15 +347,15 @@
       updateScope([]);
       target.replaceChildren();
       if (!usingFilter()) {
-        if (page !== 1) {
-          onPage(1);
-          return;
-        }
-        target.innerHTML = ui.referenceHistoryTable(native.rows, selected);
-        updateScope(native.rows);
         notice.textContent = '';
         target.removeAttribute('aria-busy');
-        addPagination(native.pages, onPage, target);
+        if (native.page !== 1 || historyOffset !== 0) {
+          resetPage();
+          return;
+        }
+        target.innerHTML = ui.referenceHistoryTable(native.visible, selected);
+        updateScope(native.visible);
+        if (native.nav) target.append(native.nav);
         return;
       }
       const { from, through } = historyQuery;
@@ -342,7 +374,7 @@
           if (!active()) return;
           const index = ui.referenceHistoryIndex(markup, scope.asOf, native.pages);
           if (!index) throw Error(unavailable);
-          const first = (page - 1) * 100;
+          const first = (native.page - 1) * historyPartSize;
           if (native.rows.some((row,offset) => {
             const item = index.rows[first + offset];
             return !item || row.date !== item[0] || row.symbol !== item[1] || row.companyName !== (index.names[item[2]] ?? null);
@@ -350,12 +382,13 @@
           state.index = index;
         }
         const matches = ui.matchingHistory(state.index, historyQuery);
-        const offsets = matches.slice((resultPage - 1) * 20, resultPage * 20);
-        const needed = new Set(offsets.map(offset => Math.floor(offset / 100) + 1));
+        const size = display.page_size ?? 20;
+        const offsets = matches.slice((resultPage - 1) * size, resultPage * size);
+        const needed = new Set(offsets.map(offset => Math.floor(offset / historyPartSize) + 1));
         const available = new Map(await Promise.all([...needed].map(async number => {
-          if (number === page) return [number,native.rows];
-          const first = (number - 1) * 100;
-          const expected = state.index.rows.slice(first,first + 100).map(([date,symbol,name]) => ({
+          if (number === native.page) return [number,native.rows];
+          const first = (number - 1) * historyPartSize;
+          const expected = state.index.rows.slice(first,first + historyPartSize).map(([date,symbol,name]) => ({
             date, symbol, companyName: state.index.names[name] ?? null,
           }));
           const markup = await readReference('history.' + number, options);
@@ -364,11 +397,11 @@
           return [number,rows];
         })));
         if (!active() || !await verifyAccess() || !active()) return;
-        const rows = offsets.map(offset => available.get(Math.floor(offset / 100) + 1)[offset % 100]);
+        const rows = offsets.map(offset => available.get(Math.floor(offset / historyPartSize) + 1)[offset % historyPartSize]);
         updateScope(rows);
         target.innerHTML = ui.referenceHistoryTable(rows, selected);
         notice.textContent = '検索結果 ' + matches.length.toLocaleString('ja-JP') + '件';
-        const nav = historyPagination(resultPage, Math.ceil(matches.length / 20), number => {
+        const nav = historyPagination(resultPage, Math.ceil(matches.length / size), number => {
           notice.setAttribute('tabindex','-1');
           notice.focus();
           apply(number);
@@ -509,6 +542,8 @@
     await g.mountMemberSettings(target, message, {
       ...context, active, session, verifyAccess,
       accessDenied: reauthenticate => clearDisplay(accessDenied, reauthenticate),
+      onLoaded: saved => applyDisplaySettings(saved, session),
+      onSaved: saved => applyDisplaySettings(saved, session),
     });
   }
 
@@ -521,12 +556,60 @@
     const button = document.getElementById('member-history-open');
     const ui = g.NewAMemberPresentation;
     let requestedPage = page;
+    let requestedOffset = historyOffset;
+    let loaded;
+    let knownPageCount;
     const active = () => isDashboardActive() && scope.generation === snapshot
       && scope.session === memberSession && memberAccess === 'premium';
 
-    async function readHistory(number, restoreFocus = false) {
+    function renderHistory(number, offset, { history, referenceRows }, restoreFocus = false) {
+      stopHistorySearch();
+      if (openFundamental && region.contains(openFundamental.button)) dismissFundamental();
+      if (restoreFocus) panel.focus();
+      const size = display.page_size ?? historyPartSize;
+      const pagesPerPart = historyPartSize / size;
+      page = number;
+      historyOffset = Math.floor(offset / size) * size;
+      const basic = history.rows.slice(historyOffset, historyOffset + size);
+      const detailed = referenceRows && referenceRows.slice(historyOffset, historyOffset + size);
+      const rows = new Map(dashboardItems);
+      if (detailed) {
+        for (const row of detailed) if (row.item && !rows.has(row.item)) rows.set(row.item, row);
+      } else {
+        for (const row of basic) {
+          if (row.has_fundamental !== true) continue;
+          const item = ui.fundamentalItem(number, row);
+          if (item && !rows.has(item)) rows.set(item, row);
+        }
+      }
+      scope.rows = rows;
+      region.innerHTML = ui.historyContent(basic, number, detailed, selected);
+      notice.textContent = detailed ? '' : '検出履歴の詳細を読み込めませんでした。';
+      button.textContent = '再試行';
+      button.hidden = !!detailed;
+      if (number === history.pages) knownPageCount = (history.pages - 1) * historyPartSize + history.rows.length;
+      const current = (number - 1) * pagesPerPart + historyOffset / size + 1;
+      const total = knownPageCount === undefined ? history.pages * pagesPerPart : Math.ceil(knownPageCount / size);
+      const go = next => readHistory(Math.ceil(next / pagesPerPart), true, (next - 1) % pagesPerPart * size);
+      const nav = historyPagination(current, total, go, pagesPerPart === 1 || knownPageCount !== undefined);
+      if (nav) (document.getElementById('member-history-results') ?? region).append(nav);
+      if (referenceRows) mountHistorySearch({ rows: referenceRows, page: number, pages: history.pages, visible: detailed, nav },
+        scope, dashboardItems, () => readHistory(1));
+    }
+
+    updateHistorySize = () => {
+      if (active() && loaded && !historyAttempt) renderHistory(page, historyOffset, loaded);
+    };
+
+    async function readHistory(number, restoreFocus = false, offset = 0, force = false) {
       if (!active() || historyAttempt) return;
       requestedPage = number;
+      requestedOffset = offset;
+      if (loaded?.history.page === number && !force) {
+        if (!await verifyAccess() || !active() || historyAttempt || requestedPage !== number || requestedOffset !== offset) return;
+        renderHistory(number, offset, loaded, restoreFocus);
+        return;
+      }
       stopHistory();
       if (openFundamental && region.contains(openFundamental.button)) dismissFundamental();
       scope.rows = new Map(dashboardItems);
@@ -557,25 +640,8 @@
         if (reference && !referenceRows) throw Error(unavailable);
         if (!await verifyAccess() || !current()) return;
 
-        page = number;
-        const rows = new Map(dashboardItems);
-        if (referenceRows) {
-          for (const row of referenceRows) if (row.item && !rows.has(row.item)) rows.set(row.item, row);
-        } else {
-          for (const row of history.rows) {
-            if (row.has_fundamental !== true) continue;
-            const item = ui.fundamentalItem(number, row);
-            if (item && !rows.has(item)) rows.set(item, row);
-          }
-        }
-        scope.rows = rows;
-        region.innerHTML = ui.historyContent(history.rows, number, referenceRows, selected);
-        notice.textContent = reference ? '' : '検出履歴の詳細を読み込めませんでした。';
-        button.textContent = '再試行';
-        button.hidden = !!reference;
-        const onPage = nextPage => readHistory(nextPage, true);
-        addPagination(history.pages, onPage, region);
-        if (referenceRows) mountHistorySearch({ rows: referenceRows, pages: history.pages }, scope, dashboardItems, onPage);
+        loaded = { history, referenceRows };
+        renderHistory(number, offset, loaded);
       } catch (error) {
         if (!current()) return;
         if (error.message === changed || error.message === accessDenied) {
@@ -593,12 +659,12 @@
       }
     }
 
-    button.addEventListener('click', () => readHistory(requestedPage, true));
+    button.addEventListener('click', () => readHistory(requestedPage, true, requestedOffset, true));
     if (g.location.hash === '#history') {
-      readHistory(page);
+      readHistory(page, false, historyOffset);
     } else if (typeof g.IntersectionObserver === 'function') {
       historyObserver = new g.IntersectionObserver(entries => {
-        if (entries.some(entry => entry.isIntersecting)) readHistory(page);
+        if (entries.some(entry => entry.isIntersecting)) readHistory(page, false, historyOffset);
       }, { rootMargin: '200px 0px' });
       historyObserver.observe(panel);
     }
@@ -606,6 +672,7 @@
 
   async function load({ restorePresetFocus = false } = {}) {
     stopHistory();
+    updateHistorySize = undefined;
     clearFundamentalPage();
     attempt?.abort();
     const controller = new AbortController();
@@ -628,6 +695,13 @@
       if (mode === 'settings') {
         await openSettings(out, status, { signal, active });
         return;
+      }
+      if (!free && displayRevision < 0) {
+        const session = memberSession;
+        // Preferences are independent of market data and must not delay the cards.
+        void g.NewAMemberTransport.preferences({ signal, session })
+          .then(saved => { if (active()) applyDisplaySettings(saved, session); })
+          .catch(() => {});
       }
 
       const analytics = mode === 'analytics';

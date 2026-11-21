@@ -92,7 +92,8 @@ function settingsHarness(owner) {
    assert.equal(sent.expected_revision,pref.revision);
    assert.equal(sent.save_binding,pref.save_binding);
    assert.deepEqual(sent.preferences,owner?preferences:{...preferences,cost_percent:2});
-   if (!owner) assert.deepEqual(sent.view_preferences,view_preferences);
+   assert.deepEqual(sent.view_preferences,owner?{...view_preferences,theme:'light'}
+    :{...view_preferences,theme:'light',font_size:'large',page_size:50});
    pref={revision:pref.revision+1,save_binding:'c'.repeat(64),preferences:sent.preferences,view_preferences:sent.view_preferences};
    return Response.json({...fields,...pref,request_id:sent.request_id});
   }
@@ -131,7 +132,11 @@ for (const owner of [true,false]) {
   assert.equal(items(form).some(node=>node.name==='exit_endpoint'),false);
   assert.equal(items(form).some(node=>node.textContent==='プッシュ通知'),false);
   const shown=items(form).map(node=>node.name);
-  for (const key of ['theme','font_size','page_size']) assert.equal(shown.includes(key),owner);
+  for (const key of ['theme','font_size','page_size']) assert.ok(shown.includes(key));
+  const display = items(form).find(node=>node.textContent==='表示');
+  display.events.click();
+  assert.equal(display.attrs['aria-selected'],'true');
+  assert.equal(items(form).find(node=>node.id==='cloud-setting-pane-display').hidden,false);
   assert.equal(shown.includes('trial_preset'),false);
   const cancel=items(form).find(node=>node.textContent==='キャンセル');
   cancel.events.click();
@@ -146,14 +151,19 @@ for (const owner of [true,false]) {
   await flush();
   await flush();
   const form=ui.content.children[0];
-  items(form).find(node=>node.name===(owner?'theme':'cost_percent')).value=owner?'light':'2';
+  items(form).find(node=>node.name==='theme').value='light';
+  if (!owner) {
+   items(form).find(node=>node.name==='cost_percent').value='2';
+   items(form).find(node=>node.name==='font_size').value='large';
+   items(form).find(node=>node.name==='page_size').value='50';
+  }
   await form.events.submit({preventDefault(){}});
   if (owner) {
    assert.deepEqual(JSON.parse(JSON.stringify(ui.saved()?.state.viewPreferences)),{...view_preferences,theme:'light'});
    assert.equal(ui.saved()?.trialChanged,false);
   } else {
    assert.equal(ui.saved()?.state.preferences.cost_percent,2);
-   assert.deepEqual(ui.saved()?.state.view_preferences,view_preferences);
+   assert.deepEqual(ui.saved()?.state.view_preferences,{...view_preferences,theme:'light',font_size:'large',page_size:50});
   }
   assert.deepEqual(ui.paths,owner?[['GET',ui.route],['PUT',ui.route]]:[['GET',ui.route],['PUT',ui.route],['GET',ui.route]]);
   assert.match(ui.status.textContent,/設定を保存しました/);

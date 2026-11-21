@@ -13,7 +13,11 @@ function checkHelp(html,{stagedFree=false}={}){
  assert.match(popup,/aria-label="ヘルプを閉じる"/);
  assert.match(popup,/表示は仮想運用の試算です。売買の推奨や将来の成果の保証は行いません。投資判断はご自身で行ってください。/);
  assert.equal((popup.match(/<p>/g)||[]).length,2);
- assert.doesNotMatch(popup,/<a |<ol |<dl /);
+ assert.match(popup,/<h3>ラベルの見方<\/h3>/);
+ assert.deepEqual(Array.from(popup.matchAll(/<dt>([^<]+)<\/dt>/g), match=>match[1]),[
+  '監視開始・監視中','監視終了','買付候補','仮想保有開始・仮想保有終了','データ保留','試算対象',
+ ]);
+ assert.doesNotMatch(popup,/<a |<ol /);
  assert.match(html,/\.cloud-help-dialog\{width:min\(520px,calc\(100vw - 20px\)\)\}/);
  assert.match(html,/\.topbar \.cloud-primary-nav\{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:4px\}/);
 }

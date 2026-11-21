@@ -154,9 +154,10 @@
  }
  g.NewAMemberSettings = { state, specs, createForm };
  if (typeof module !== 'undefined') module.exports = g.NewAMemberSettings;
- g.mountMemberSettings = async function(out,status,{ signal,active,session,verifyAccess,accessDenied,setBusy=()=>{},close,onSaved=()=>{} }) {
+ g.mountMemberSettings = async function(out,status,{ signal,active,session,verifyAccess,accessDenied,setBusy=()=>{},close,
+    onLoaded=()=>{},onSaved=()=>{} }) {
   const model = state();
-  const ui = createForm(out);
+  const ui = createForm(out,{showDisplay:true});
   const endpoint = '/api/cloud/new-a-view/preferences';
   async function request(options = {}) {
    const response = await fetch(endpoint,{ credentials:'same-origin',cache:'no-store',redirect:'manual',signal,
@@ -182,6 +183,7 @@
    model.load(saved);
    ui.paint(saved);
    ui.lock(false);
+   onLoaded(saved);
   }
   ui.cancel.addEventListener('click',() => {
    if (!active()) return;

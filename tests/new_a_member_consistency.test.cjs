@@ -178,6 +178,7 @@ function browser(options = {}) {
   const referenceMounts = [];
   const premiumLink = { hidden: true };
   const document = {
+    documentElement: { dataset: {} },
     body: { dataset: { page: options.page ?? 'home' } },
     visibilityState: 'visible',
     events: {},
@@ -315,8 +316,8 @@ test('approved reference renders with pinned member scope and uses neither legac
     await flush();
     const requests = view.requests.map(request=>request.name);
     assert.deepEqual(requests, mode === 'home'
-      ? ['session','reference.json','session','session','history.json','reference.json','session']
-      : ['session','reference.json','session']);
+      ? ['session','preferences','reference.json','session','session','history.json','reference.json','session']
+      : ['session','preferences','reference.json','session']);
     const fetched = view.requests.find(request=>request.name==='reference.json');
     assert.equal(fetched.url.searchParams.get('item'),item);
     assert.equal(fetched.init.headers['x-cloud-member-session'],initialSession);
@@ -339,7 +340,7 @@ test('dashboard cards render before offscreen or stalled history and history use
     },
   });
   await flush();
-  assert.deepEqual(dashboard.requests.map(call => call.name), ['session', 'reference.json', 'session']);
+  assert.deepEqual(dashboard.requests.map(call => call.name), ['session', 'preferences', 'reference.json', 'session']);
   assert.equal(dashboard.referenceRoot.children.length, 1);
   assert.equal(dashboard.historyRenderings.length, 0);
   dashboard.scrollToHistory();
@@ -356,6 +357,51 @@ test('dashboard cards render before offscreen or stalled history and history use
   assert.equal(dashboard.historyRenderings.length, 1);
   assert.equal(dashboard.historyRegion.getAttribute('aria-busy'), undefined);
   assert.equal(dashboard.referenceRoot.children.length, 1);
+});
+
+test('account display settings apply without blocking cards or skipping saved history', async () => {
+  const preferences = Promise.withResolvers();
+  const rows = Array.from({ length: 107 }, (_, index) => ({
+    date: day, symbol: String(1000 + index), state: 'EXPIRED',
+  }));
+  const view = browser({ historyOffscreen: true, read: (name, url, init) => {
+    if (name === 'preferences') {
+      assert.equal(init.headers['x-cloud-member-session'], initialSession);
+      return preferences.promise;
+    }
+    if (url.searchParams.get('item') === 'dashboard.return_priority') {
+      return Response.json({ ...navigationView, item: 'dashboard.return_priority' });
+    }
+    if (name === 'history.json') {
+      const page = Number(url.searchParams.get('page'));
+      return Response.json({ ...navigationView, page, pages: 2, rows: rows.slice((page - 1) * 100, page * 100) });
+    }
+    return null;
+  } });
+  await flush();
+  assert.equal(view.nodes['member-content'].innerHTML, 'synthetic-reference-slot');
+  preferences.resolve(Response.json({ revision: 2, view_preferences: { theme: 'light', font_size: 'large', page_size: 20 } }));
+  await flush();
+  assert.deepEqual(view.document.documentElement.dataset, { theme: 'light', fontSize: 'large' });
+  view.scrollToHistory();
+  const next = () => view.historyRegion.lastElementChild.children.at(-1).events.click();
+  const historyReads = () => view.requests.filter(request => request.name === 'history.json');
+  for (let index = 0; index < 5; index++) {
+    await flush();
+    assert.match(view.historyRegion.innerHTML, new RegExp(String(1000 + index * 20)));
+    assert.doesNotMatch(view.historyRegion.innerHTML, new RegExp(String(1000 + (index + 1) * 20)));
+    assert.equal(historyReads().length, 1);
+    next();
+  }
+  await flush();
+  assert.match(view.historyRegion.innerHTML, /1100/);
+  assert.match(view.historyRegion.innerHTML, /1106/);
+  assert.equal(view.historyRegion.lastElementChild.children.at(-1).disabled, true);
+  assert.equal(historyReads().length, 2);
+  view.setAccess(403);
+  view.poll();
+  await flush();
+  assert.deepEqual(view.document.documentElement.dataset, { theme: 'dark' });
 });
 
 test('role loss aborts delayed dashboard history and does not repaint either protected region', async () => {

@@ -74,18 +74,47 @@ export function parseMemberReferenceRequest(item: string): { item: string; view:
   return isMemberReferenceItem(item) ? { item, view: 'full' } : null;
 }
 
-export function memberReferenceMarkup(markup: string, view: ReferenceView): string | null {
-  if (view === 'full') return markup;
+export function isMemberAnalyticsReference(item: string): boolean {
+  return analyticsPart.exec(item)?.[0] === item;
+}
+
+function freeDailyValues(text: string): string | null {
+  let daily: unknown;
+  try {
+    daily = JSON.parse(text)?.daily;
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(daily) || !daily.every(row => Array.isArray(row) && row.length === 6
+    && typeof row[0] === 'string' && tradingDay.test(row[0])
+    && row.slice(1, 4).every(value => value === null || Number.isFinite(value))
+    && (row[4] === null || Number.isSafeInteger(row[4]) && row[4] >= 0)
+    && typeof row[5] === 'boolean')) return null;
+  return JSON.stringify({ daily });
+}
+
+export function memberReferenceMarkup(markup: string, view: ReferenceView, free = false): string | null {
+  if (view === 'full') return free ? null : markup;
   // Read from the already verified canonical markup so earlier generations work without a republish.
   const table = markup.indexOf(dailyTable);
   const start = table === -1 ? -1 : markup.indexOf(dailyBodyStart, table + dailyTable.length);
   const end = start === -1 ? -1 : markup.indexOf(dailyBodyEnd, start + dailyBodyStart.length);
   const template = markup.lastIndexOf(dailyTemplate);
   const hasDaily = end !== -1 && template >= end + dailyBodyEnd.length && markup.endsWith('</template>');
-  if (!hasDaily) return view === 'overview' ? markup : null;
-  if (view === 'daily') return markup.slice(template);
+  if (!hasDaily) return !free && view === 'overview' ? markup : null;
+  const dailyJson = markup.slice(template + dailyTemplate.length, -'</template>'.length);
+  if (!free && view === 'daily') return markup.slice(template);
   const overview = markup.slice(0, start + dailyBodyStart.length) + markup.slice(end, template);
-  return withEquityDates(overview, markup.slice(template + dailyTemplate.length, -'</template>'.length));
+  if (!free) return withEquityDates(overview, dailyJson);
+  const checkedDaily = freeDailyValues(dailyJson);
+  if (checkedDaily === null) return null;
+  if (view === 'daily') return dailyTemplate + checkedDaily + '</template>';
+  // The aggregate view shares its canonical renderer with Premium. The Free
+  // response has no settings/export actions, or other embedded data templates.
+  if (/<(?:template|script)\b|data-finite-table="holdings"|data-member-fundamental\b|data-symbol\s*=/i.test(overview)) return null;
+  return withEquityDates(overview
+    .replace(/<details class="cloud-kpi-detail"><summary>適用中の設定<\/summary>[\s\S]*?<\/details>/, '')
+    .replace(/<section class="panel" aria-labelledby="analytics-export">[\s\S]*?<\/section>/, ''), checkedDaily);
 }
 
 function identity(source: ReadyPointer) {

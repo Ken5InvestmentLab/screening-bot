@@ -68,9 +68,11 @@ export function memberServices(d: MemberAdapters, generationSecret: string | und
       const personal = url.pathname.endsWith('/personal.json');
       const dashboard = url.pathname.endsWith('/dashboard.json');
       const fundamental = url.pathname.endsWith('/fundamental.json');
-      if (tier === 'free' && !history) return json({ error: 'role_required' }, 403);
       const reference = url.pathname.endsWith('/reference.json');
       const referenceRequest = reference ? parseMemberReferenceRequest(url.searchParams.get('item') ?? '') : null;
+      if (tier === 'free' && !history && (!referenceRequest || referenceRequest.view === 'full')) {
+        return json({ error: 'role_required' }, 403);
+      }
       if (reference && !referenceRequest) return json({ error: 'invalid_query' }, 400);
       const item = fundamental ? fundamentalSelector(url) : null;
       const raw = item?.page ?? url.searchParams.get('page') ?? '1';
@@ -95,7 +97,7 @@ export function memberServices(d: MemberAdapters, generationSecret: string | und
       if (referenceRequest) {
         const published = await d.reference?.(source, referenceRequest.item);
         if (!same(source, await d.current())) return json({ error: 'source_changed' }, 409);
-        const markup = published && memberReferenceMarkup(published, referenceRequest.view);
+        const markup = published && memberReferenceMarkup(published, referenceRequest.view, tier === 'free');
         if (!markup) return json({ error: 'reference_unavailable' }, 404);
         return json({ ...capture, markup });
       }

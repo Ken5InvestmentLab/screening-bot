@@ -1,5 +1,6 @@
 const {test}=require('node:test'),a=require('node:assert/strict');
-const {roleFacade:routeWithRelease}=require('../weak-early-beta-gate/src/new-a-role-facade.ts');
+const {modules}=require('./helpers/cloud-worker-modules.cjs');
+const {roleFacade:routeWithRelease}=modules().load('new-a-role-facade');
 const roleFacade=(request,env,denial,services)=>routeWithRelease(request,env,denial,services,async()=>true);
 const origin='https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev';
 const env={CLOUD_OWNER_ONLY_ENABLED:'true',CLOUD_MEMBER_VIEW_ENABLED:'true',CLOUD_MEMBER_AUDIENCE:'role_only',DISCORD_GUILD_ID:'1479418833352785944',DISCORD_ALLOWED_ROLE_IDS:'1487089073385373828',SESSION_SECRET:'synthetic-test-key'};
@@ -86,17 +87,33 @@ test('the release check can restrict both independently verified access tiers', 
   a.deepEqual(calls, []);
 });
 
-test('Free reaches only the tiered shell and history; paid APIs never reach services', async () => {
+test('Free reaches shared history and aggregate analytics after explicit production opt-in', async () => {
   const subject = '123456789012345678';
   const { s, calls } = setup({ subject, discord_authorized: false });
   const observations = [];
   const observe = (res, actor, role) => observations.push([res.status, actor, role]);
-  const call = (path, init) => routeWithRelease(stageRequest(path, init), tieredStage, deny(), s, async () => true, observe);
-  for (const path of ['/', '/weak_early_beta_latest.html', '/weak_early_beta_analytics.html', '/weak_early_beta_settings.html']) {
+  const tiered = { ...env, CLOUD_MEMBER_AUDIENCE: 'tiered' };
+  const call = (path, init) => routeWithRelease(req(path, init), tiered, deny(), s, async () => true, observe);
+  for (const path of ['/', '/weak_early_beta_latest.html', '/weak_early_beta_analytics.html']) {
     a.equal((await call(path)).status, 200);
   }
+  a.equal((await call('/weak_early_beta_settings.html')).status, 403);
   a.equal((await call('/new-a-assets/member-loader.js')).status, 200);
+  a.equal((await call('/new-a-assets/reference-analytics.js')).status, 200);
+  a.equal((await call('/new-a-assets/member-settings.js')).status, 403);
   a.equal((await call('/api/cloud/new-a-view/history.json?page=2')).status, 200);
+  const ref = '/api/cloud/new-a-view/reference.json?item=';
+  const session = await call('/api/cloud/new-a-view/session');
+  const token = session.headers.get('x-cloud-member-session');
+  const signed = { headers: { 'x-cloud-member-session': token } };
+  for (const item of ['analytics.overview.return_priority', 'analytics.daily.defensive']) {
+    a.equal((await call(ref + item)).status, 403);
+    a.equal((await call(ref + item, signed)).status, 200);
+  }
+  for (const item of ['history.index', 'history.1', 'data.analytics', 'dashboard.return_priority',
+    'analytics.return_priority', 'analytics.daily.invalid', 'analytics.overview.medium%0a']) {
+    a.deepEqual(await (await call(ref + item, signed)).json(), { error: 'role_required' });
+  }
   for (const endpoint of ['dashboard.json', 'analytics.json', 'chart.json', 'personal.json', 'preferences']) {
     const res = await call('/api/cloud/new-a-view/' + endpoint, { headers: { 'x-cloud-member-access': 'premium' } });
     a.equal(res.status, 403);
@@ -104,8 +121,9 @@ test('Free reaches only the tiered shell and history; paid APIs never reach serv
   }
   a.equal((await call('/api/cloud/new-a-view/preferences', { method: 'PUT' })).status, 403);
   a.deepEqual(calls, [
-    ...Array.from({ length: 4 }, () => ['document', subject, 'free']),
-    ['asset', subject, 'free'], ['aggregate', subject, 'free'],
+    ...Array.from({ length: 3 }, () => ['document', subject, 'free']),
+    ...Array.from({ length: 2 }, () => ['asset', subject, 'free']),
+    ...Array.from({ length: 3 }, () => ['aggregate', subject, 'free']),
   ]);
   a.ok(observations.every(([, actor, role]) => actor === subject && role === 'denied'));
   a.ok(observations.some(([status]) => status === 200));

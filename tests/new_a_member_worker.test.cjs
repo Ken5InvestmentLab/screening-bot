@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const { createHash, createHmac } = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
+const { runInNewContext } = require('node:vm');
 const { DatabaseSync } = require('node:sqlite');
 const { test } = require('node:test');
 const { modules } = require('./helpers/cloud-worker-modules.cjs');
@@ -114,8 +115,8 @@ function setup(t, { report } = {}) {
   }
   const paid = new Set([allowed, otherAllowed, owner]);
   const env = {
-    ASSETS: { fetch: async url => new Response(url.endsWith('/member-loader.js') ? 'fixture code' : null,
-      { status: url.endsWith('/member-loader.js') ? 200 : 404 }) },
+    ASSETS: { fetch: async url => /\/(member-loader|reference-analytics)\.js$/.test(url)
+      ? new Response('fixture code') : new Response(null, { status: 404 }) },
     CLOUD_DB: ownerDb.binding, CLOUD_MEMBER_DB: memberDb.binding, CLOUD_OWNER_DISCORD_ID: owner, CLOUD_OWNER_ONLY_ENABLED: 'true',
     CLOUD_MEMBER_VIEW_ENABLED: 'true', CLOUD_MEMBER_STAGE_ORIGIN: stage, PUBLIC_BASE_URL: stage,
     DISCORD_GUILD_ID: '1479418833352785944', DISCORD_ALLOWED_ROLE_IDS: '1487089073385373828',
@@ -305,7 +306,7 @@ test('normal origin preserves the existing owner response and requires a matchin
       assert.doesNotMatch(html, /123A|0010|0020|data-cloud-mode|<script/);
     } else assert.deepEqual(await deniedResponse.json(), { error: 'role_required' });
   }
-  for (const audience of [undefined, 'tiered', 'unknown']) {
+  for (const audience of [undefined, 'unknown']) {
     const invalid = { ...f.env, CLOUD_MEMBER_AUDIENCE: audience };
     assert.equal((await f.call(history, allowed, invalid)).status, 403);
     assert.deepEqual(await (await f.call('/api/cloud/new-a-finite/access', owner, invalid)).json(),
@@ -606,7 +607,7 @@ test('worker never counts Discord lookup failure or an observation revoked befor
   assert.equal(f.rows().length, 0);
 });
 
-test('the reference view requires the Premium session and verified same-generation chunks', async t => {
+test('reference views require tier-bound sessions and Free receives only aggregate analytics from verified chunks', async t => {
   const f = productionFixture(t);
   f.migrate();
   f.setPolicy('enabled');
@@ -627,17 +628,36 @@ test('the reference view requires the Premium session and verified same-generati
     ...summary.map(({ preset }) => ['data.chart.' + preset, chartRows]),
   ]);
   keys.push(...data.keys());
-  const dailyMarkup = '<template id="new-a-reference-daily-values">{"daily":[["2026-11-19",90,10,100,1,false]]}</template>';
+  const dailyMarkup = '<template id="new-a-reference-daily-values">'
+    + '{"daily":[["2026-11-19",90,10,100,1,false]],"summary":[["private probe","123A"]]}</template>';
   const chartMarkup = '<div class="cloud-chart" id="new-a-daily-chart"><svg><path d="M1 1"></path></svg></div>';
   const dailyTable = '<div id="new-a-daily-table"><div class="table-wrap"><table class="scenario-table" data-finite-table="daily">'
     + '<thead><tr><th>日付</th></tr></thead><tbody><tr><td>2026-11-19</td></tr></tbody></table></div></div>'
     + '<button id="new-a-daily-more" hidden>次の50営業日</button>';
   const analyticsMarkup = chartMarkup + '<details><summary>日次表</summary>' + dailyTable + '</details>' + dailyMarkup;
+  const finiteModule = { exports: {} };
+  const finitePath = path.resolve(__dirname, '../weak-early-beta-gate/scripts/new-a-ui-source/assets/finite-controller.js');
+  runInNewContext(fs.readFileSync(finitePath, 'utf8'), { module: finiteModule });
+  const finite = finiteModule.exports;
+  const { analyticsReferenceMarkup } = require('../weak-early-beta-gate/scripts/new-a-ui-source/reference-analytics.cjs');
+  const generated = analyticsReferenceMarkup({
+    preferences: finite.BASE,
+    result: {
+      period: ['2026-11-18', day], counts: { WATCHING: 1, FILLED: 1 }, resolved: true, yearly: [],
+      metrics: { initialCash: 100, endEquity: 103, netProfit: 3, realizedProfit: 2, unrealizedProfit: 1, closed: 1 },
+      open_positions: { '5678': { symbol: '5678' } },
+      watches: [{ symbol: '123A' }, { symbol: '5678' }],
+      trades: [{ symbol: '0020', profit: 2 }],
+      daily: [{ date: day, cash: 90, holdings_value: 13, equity_diagnostic: 103, positions: 1,
+        unresolved: false, symbols: ['123A', '5678'] }],
+    },
+  }, finite);
   const chunks = [];
   const variants = keys.map((item, index) => {
     const markup = data.has(item) ? JSON.stringify(data.get(item))
       : item === 'history.1' ? '{"page":1,"rows":[{"symbol":"123A"}]}'
-      : item === 'analytics.return_priority' ? analyticsMarkup : '<section>表示 ' + item + '</section>';
+      : item === 'analytics.return_priority' ? analyticsMarkup
+      : item === 'analytics.medium' ? generated : '<section>表示 ' + item + '</section>';
     const json = JSON.stringify({ markup });
     chunks.push(json);
     return { item, bytes: Buffer.byteLength(markup), sha256: digest(markup),
@@ -661,11 +681,11 @@ test('the reference view requires the Premium session and verified same-generati
   const tag = session.headers.get('x-cloud-member-session');
   const historyResponse = await f.call(history, allowed);
   const { generation } = await historyResponse.json();
-  const fetchReference = async (path, member = allowed, token = tag, generationPin = generation) => {
+  const fetchReference = async (path, member = allowed, token = tag, generationPin = generation, env = f.env) => {
     const request = await f.request(path, member, production);
     request.headers.set('x-cloud-member-session', token);
     request.headers.set('x-cloud-generation', generationPin);
-    return worker.fetch(request, f.env);
+    return worker.fetch(request, env);
   };
   assert.equal((await f.call(route, denied)).status, 403);
   assert.equal((await f.call(route, allowed)).status, 403);
@@ -719,6 +739,42 @@ test('the reference view requires the Premium session and verified same-generati
   assert.equal((await fetchReference(route, otherAllowed)).status, 403);
   assert.equal((await fetchReference(route, allowed, tag, 'f'.repeat(64))).status, 409);
   assert.equal((await fetchReference('/api/cloud/new-a-view/reference.json?item=history.999')).status, 400);
+
+  const tiered = { ...f.env, CLOUD_MEMBER_AUDIENCE: 'tiered' };
+  const freeSession = await f.call(sessionPath, denied, tiered);
+  assert.equal(freeSession.status, 204);
+  const freeTag = freeSession.headers.get('x-cloud-member-session');
+  const freeHistory = await (await f.call(history, denied, tiered)).json();
+  assert.deepEqual(freeHistory.rows, [closed]);
+  assert.doesNotMatch(JSON.stringify(freeHistory), /123A|5678|0010|completed_on/);
+  const freeGeneration = freeHistory.generation;
+  const freeReference = (route, token = freeTag, pin = freeGeneration) => fetchReference(route, denied, token, pin, tiered);
+  const analyticsPage = await f.call('/weak_early_beta_analytics.html', denied, tiered);
+  assert.equal(analyticsPage.status, 200);
+  assert.equal(analyticsPage.headers.get('x-cloud-member-access'), 'free');
+  assert.doesNotMatch(await analyticsPage.text(), /123A|5678|0010/);
+  assert.equal((await f.call('/new-a-assets/reference-analytics.js', denied, tiered)).status, 200);
+  assert.equal((await f.call('/weak_early_beta_settings.html', denied, tiered)).status, 403);
+  assert.equal((await f.call(overviewRoute, denied, tiered)).status, 403);
+  assert.equal((await freeReference(dailyRoute, tag)).status, 403);
+  assert.equal((await freeReference(dailyRoute, freeTag, generation)).status, 409);
+  const freeDaily = await freeReference(dailyRoute);
+  assert.equal(freeDaily.status, 200);
+  assert.deepEqual(await freeDaily.json(), { as_of: day, generation: freeGeneration,
+    markup: '<template id="new-a-reference-daily-values">{"daily":[["2026-11-19",90,10,100,1,false]]}</template>' });
+  const freeOverview = await freeReference(overviewRoute.replace('return_priority', 'medium'));
+  assert.equal(freeOverview.status, 200, await freeOverview.clone().text());
+  const { markup: freeMarkup } = await freeOverview.json();
+  assert.match(freeMarkup, /日次資金推移/);
+  assert.match(freeMarkup, /class="equity-line"/);
+  assert.doesNotMatch(freeMarkup, /123A|5678|0020|new-a-reference-daily-values|適用中の設定|weak_early_beta_settings|analytics-export/);
+  assert.equal((await freeReference(overviewRoute.replace('return_priority', 'defensive'))).status, 404);
+  for (const restricted of [route, dashboard, preferences, '/api/cloud/new-a-finite/input/manifest.json',
+    '/api/cloud/new-a-view/chart.json?preset=medium', '/api/cloud/new-a-view/reference.json?item=analytics.medium',
+    '/api/cloud/new-a-view/reference.json?item=history.index', '/api/cloud/new-a-view/reference.json?item=history.1',
+    '/api/cloud/new-a-view/fundamental.json?item=1.2026-11-18.0020']) {
+    assert.equal((await freeReference(restricted)).status, 403, restricted);
+  }
   storage.prepare("UPDATE private_projection_part SET json='{}' WHERE identity=? AND kind='analytics' AND idx=2").run(identity);
   assert.equal((await fetchReference(route)).status, 503);
 });

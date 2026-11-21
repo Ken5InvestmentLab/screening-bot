@@ -1,4 +1,5 @@
 import type { MemberResponseObserver } from './new-a-member-observation';
+import { isMemberAnalyticsReference } from './new-a-member-reference';
 
 export type RoleEnv = {
   CLOUD_OWNER_ONLY_ENABLED?: string;
@@ -30,9 +31,11 @@ export type RoleServices = {
 
 const productionOrigin = 'https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev';
 const isolatedStageOrigin = 'https://tentei-kyokuchi-cloud-member-stage.ipo-ken5-5489.workers.dev';
+const settingsPage = '/weak_early_beta_settings.html';
+const settingsAsset = '/new-a-assets/member-settings.js';
 const documents = new Set([
   '/', '/report', '/index.html',
-  '/weak_early_beta_latest.html', '/weak_early_beta_analytics.html', '/weak_early_beta_settings.html',
+  '/weak_early_beta_latest.html', '/weak_early_beta_analytics.html', settingsPage,
 ]);
 const historyPath = '/api/cloud/new-a-view/history.json';
 const fundamentalPath = '/api/cloud/new-a-view/fundamental.json';
@@ -53,7 +56,7 @@ const memberAccessHeader = 'x-cloud-member-access';
 const assets = new Set([
   '/new-a-assets/member-loader.js',
   '/new-a-assets/member-presentation.js',
-  '/new-a-assets/member-settings.js',
+  settingsAsset,
   '/new-a-assets/reference-analytics.js',
   '/new-a-assets/report-assets/cloud-logo-light.png',
   '/new-a-assets/report-assets/cloud-logo-dark.png',
@@ -106,8 +109,8 @@ export function memberOrigin(url: URL, env: RoleEnv): 'production' | 'stage' | n
 
 export function memberAudience(env: RoleEnv, origin: 'production' | 'stage'): MemberAudience | null {
   const audience = env.CLOUD_MEMBER_AUDIENCE;
-  if (audience === 'role_only') return audience;
-  if (origin === 'stage' && (audience === 'tiered' || audience === undefined)) return 'tiered';
+  if (audience === 'role_only' || audience === 'tiered') return audience;
+  if (origin === 'stage' && audience === undefined) return 'tiered';
   return null;
 }
 
@@ -182,7 +185,10 @@ export async function roleFacade(
     const tier: MemberTier = identity.discord_authorized ? 'premium' : 'free';
     const role = tier === 'premium' ? 'allowed' : 'denied';
     if (releaseOrigin === 'production' && await productionAllowed?.(subject, tier) !== true) return ownerDenial;
-    if (tier === 'free' && (audience === 'role_only' || preferences || (aggregate && pathname !== historyPath))) {
+    const freeAggregate = pathname === historyPath || (pathname === referencePath
+      && isMemberAnalyticsReference(url.searchParams.get('item') ?? ''));
+    if (tier === 'free' && (audience === 'role_only' || preferences || pathname === settingsPage
+      || pathname === settingsAsset || (aggregate && !freeAggregate))) {
       const response = document ? roleRequiredPage(request) : reject(request, 403, 'role_required');
       observe?.(response, subject, role);
       return response;

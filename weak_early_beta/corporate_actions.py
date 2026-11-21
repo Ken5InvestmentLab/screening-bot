@@ -25,6 +25,7 @@ VERSION = "CLOUD_SPLIT_BASIS_V1"
 PRICE_BASIS = "yahoo_daily_split_adjusted"
 ACTION_SOURCE = "Yahoo Finance Stock Splits"
 OHLC = ("open", "high", "low", "close")
+DAILY_FIELDS = (*OHLC, "volume", "stock_splits")
 ACTUAL_COLUMNS = tuple(f"actual_{name}" for name in (*OHLC, "volume"))
 BASIS_COLUMNS = (
     "split_ratio", "split_factor", "basis_asof", "price_basis",
@@ -102,6 +103,17 @@ def _numeric(frame: pd.DataFrame, columns: tuple[str, ...]) -> None:
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
         if not np.isfinite(frame[column].to_numpy(dtype=float)).all():
             raise CorporateActionError(f"non-finite {column} in corporate-action source")
+
+
+def _inconsistent_ohlc(frame: pd.DataFrame) -> pd.Series:
+    tolerance = frame["high"].abs() * 1e-6
+    return (
+        (frame["low"] > frame["high"] + tolerance)
+        | (frame["open"] < frame["low"] - tolerance)
+        | (frame["open"] > frame["high"] + tolerance)
+        | (frame["close"] < frame["low"] - tolerance)
+        | (frame["close"] > frame["high"] + tolerance)
+    )
 
 
 def _validate_adjusted_boundary(group: pd.DataFrame, external: list[dict[str, Any]] | None = None) -> None:
@@ -227,14 +239,7 @@ def normalize_daily(
         raise CorporateActionError("non-positive price or negative share volume")
     if (result["split_ratio"] < 0).any():
         raise CorporateActionError("split ratio must be positive, or zero for no event")
-    tolerance = result["high"].abs() * 1e-6
-    invalid_ohlc = (
-        (result["low"] > result["high"] + tolerance)
-        | (result["open"] < result["low"] - tolerance)
-        | (result["open"] > result["high"] + tolerance)
-        | (result["close"] < result["low"] - tolerance)
-        | (result["close"] > result["high"] + tolerance)
-    )
+    invalid_ohlc = _inconsistent_ohlc(result)
     # Preserve the vendor bar and its action instead of inventing a repaired
     # range or deleting a session. Downstream scoring masks these untrusted bars
     # and the affected lookback/outcome windows; other symbols can continue.
@@ -856,6 +861,22 @@ def _provider_errors(yf: Any) -> dict:
     return errors if isinstance(errors, dict) else {}
 
 
+def _ticker_history(
+    yf: Any, ticker: str, period: str, archive: AcquisitionArchive | None,
+    *, session: pd.Timestamp | None = None,
+) -> pd.DataFrame:
+    _provider_errors(yf).pop(ticker.upper(), None)
+    kwargs = dict(period=period, interval="1d", auto_adjust=False,
+                  actions=True, repair=True, raise_errors=False, timeout=30)
+    request = {"kind": "history", "ticker": ticker, "kwargs": kwargs}
+    if session is not None:
+        request.update(kind="target-session-history", session=session.date().isoformat())
+    operation = lambda: yf.Ticker(ticker).history(**kwargs)
+    response = (archive.request(request, operation, lambda: _provider_errors(yf))
+                if archive else operation())
+    return _ticker_source(response, ticker, single=True)
+
+
 def _retry_ticker(yf: Any, ticker: str, period: str, *, archive: AcquisitionArchive | None = None) -> pd.DataFrame:
     """Retry only failed tickers, retaining repaired daily bars and split evidence.
 
@@ -868,14 +889,8 @@ def _retry_ticker(yf: Any, ticker: str, period: str, *, archive: AcquisitionArch
     last_error = None
     for attempt in range(3):
         last_error = None
-        _provider_errors(yf).pop(ticker.upper(), None)
         try:
-            kwargs = dict(period=period, interval="1d", auto_adjust=False,
-                          actions=True, repair=True, raise_errors=False, timeout=30)
-            operation = lambda: yf.Ticker(ticker).history(**kwargs)
-            response = (archive.request({"kind": "history", "ticker": ticker, "kwargs": kwargs},
-                                        operation, lambda: _provider_errors(yf)) if archive else operation())
-            source = _ticker_source(response, ticker, single=True)
+            source = _ticker_history(yf, ticker, period, archive)
             problem = _source_problem(source)
             if problem is None:
                 return source
@@ -907,6 +922,66 @@ def _retry_ticker(yf: Any, ticker: str, period: str, *, archive: AcquisitionArch
     raise CorporateActionError(f"Yahoo {problem} for {ticker} after 3 individual attempts")
 
 
+def _valid_target_row(row: pd.DataFrame) -> bool:
+    if len(row) != 1:
+        return False
+    values = row[list(DAILY_FIELDS)].apply(pd.to_numeric, errors="coerce")
+    return (np.isfinite(values.to_numpy(dtype=float)).all()
+            and values[list(OHLC)].gt(0).all().all()
+            and values[["volume", "stock_splits"]].ge(0).all().all()
+            and not _inconsistent_ohlc(values).any())
+
+
+def _prior_ticker_history(source: pd.DataFrame, dates: pd.DatetimeIndex, target: pd.Timestamp) -> pd.DataFrame:
+    # Ignore dates padded by the batch index, retaining even price-free split events.
+    relevant = source[list(OHLC)].notna().any(axis=1) | source["stock_splits"].fillna(0).ne(0)
+    mask = relevant & (dates < target)
+    return source.loc[mask, list(DAILY_FIELDS)].set_axis(dates[mask]).sort_index()
+
+
+def _retry_target_session(
+    yf: Any, ticker: str, period: str, archive: AcquisitionArchive | None,
+    batch_source: pd.DataFrame, dates: pd.DatetimeIndex, target: pd.Timestamp,
+) -> pd.DataFrame | None:
+    target_mask = dates == target
+    batch_row = batch_source.loc[target_mask]
+    if len(batch_row) > 1 or _valid_target_row(batch_row):
+        return None
+    try:
+        single = _ticker_history(yf, ticker, period, archive, session=target)
+    except Exception as exc:
+        if permanent_network_error(exc):
+            raise CorporateActionError(f"Yahoo target session request failed for {ticker}: {exc}") from exc
+        if not transient_network_error(exc):
+            raise
+        return None
+    provider_error = _provider_errors(yf).get(ticker.upper())
+    if provider_error and permanent_network_error(provider_error):
+        raise CorporateActionError(f"Yahoo target session request failed for {ticker}: {provider_error}")
+    if _source_problem(single) is not None:
+        return None
+    single_dates = _dates(single.index)
+    single_row = single.loc[single_dates == target]
+    # No executed volume cannot establish a replacement trading bar.
+    if (single_dates.has_duplicates or single_dates.max() > target or dates.max() > target
+            or not _valid_target_row(single_row) or float(single_row["volume"].iloc[0]) == 0):
+        return None
+
+    before = _prior_ticker_history(batch_source, dates, target)
+    confirmed = _prior_ticker_history(single, single_dates, target)
+    if (before.empty or not before.index.equals(confirmed.index)
+            or not np.array_equal(before.to_numpy(dtype=float), confirmed.to_numpy(dtype=float), equal_nan=True)):
+        return None
+    if (not batch_row.empty and pd.notna(batch_row["stock_splits"].iloc[0])
+            and batch_row["stock_splits"].iloc[0] != single_row["stock_splits"].iloc[0]):
+        return None
+
+    # The single request proves one missing/invalid bar, never a historical rewrite.
+    fields = [*DAILY_FIELDS, "repaired?"] if "repaired?" in single_row else list(DAILY_FIELDS)
+    return pd.concat((batch_source.loc[~target_mask].set_axis(dates[~target_mask]),
+                      single_row[fields].set_axis(pd.DatetimeIndex([target]))))
+
+
 def fetch_daily(
     universe: pd.DataFrame,
     period: str,
@@ -914,12 +989,15 @@ def fetch_daily(
     *,
     previous: pd.DataFrame | None = None,
     archive: AcquisitionArchive | None = None,
+    required_session: str | None = None,
+    session_retry_exclusions: frozenset[str] = frozenset(),
 ) -> pd.DataFrame:
     """Fetch Cloud daily bars with actions, without changing legacy research IO."""
     import yfinance as yf
 
     if batch <= 0:
         raise ValueError("batch must be positive")
+    target = _dates([required_session])[0] if required_session is not None else None
     previous_source_sha256 = (
         previous.attrs.get("source_sha256") if previous is not None else None
     )
@@ -964,13 +1042,18 @@ def fetch_daily(
             source = _ticker_source(data, ticker, single=len(part) == 1)
             if _source_problem(source) is not None:
                 source = _retry_ticker(yf, ticker, period, archive=archive)
-            required = [*OHLC, "volume", "stock_splits"]
+            dates = _dates(source.index)
+            if target is not None and ticker.removesuffix(".T") not in session_retry_exclusions:
+                recovered = _retry_target_session(yf, ticker, period, archive, source, dates, target)
+                if recovered is not None:
+                    source = recovered
+                    dates = recovered.index
+            required = list(DAILY_FIELDS)
             if "repaired?" in source:
                 source["provider_repaired"] = source["repaired?"].fillna(False)
             else:
                 source["provider_repaired"] = False
             no_prices = source[list(OHLC)].isna().all(axis=1)
-            dates = _dates(source.index)
             provider_snapshot = max(provider_snapshot, dates.max()) if pd.notna(provider_snapshot) else dates.max()
             detached_events = []
             for position in np.flatnonzero((no_prices & source["stock_splits"].fillna(0).ne(0)).to_numpy()):

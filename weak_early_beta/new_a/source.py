@@ -162,6 +162,26 @@ def _write_daily_cache(frame: pd.DataFrame, path: Path) -> None:
         os.replace(temporary, path)
     finally:
         temporary.unlink(missing_ok=True)
+
+
+def _target_session_retry_policy(args, date, tickers, restrictions, retained):
+    if retained:
+        # Older archives retain their original request sequence.
+        context = json.loads((Path(retained) / "manifest.json").read_text(encoding="utf-8"))["context"]
+        if "targetSessionRetry" not in context:
+            return None
+    elif not args.refresh_live or getattr(args, "new_a_isolated", False):
+        return None
+
+    from .packet import restriction_intervals
+
+    universe = {ticker.removesuffix(".T") for ticker in tickers}
+    excluded = sorted(symbol for symbol, rules in restriction_intervals(restrictions).items()
+                      if symbol in universe and any(rule["start"] <= date
+                         and (not rule.get("end") or date < rule["end"]) for rule in rules))
+    return {"session": date, "excludedSymbols": excluded}
+
+
 def acquire_and_validate(args):
     # Heavy TV-free runtime dependencies are needed only for the daily scorer;
     # report/bootstrap operations stay lightweight and deterministic.
@@ -264,20 +284,34 @@ def acquire_and_validate(args):
                 "CLOUD_DAILY_ACQUISITION_DIR",
                 str(daily_path.parent / "acquisitions" / f"{tradability_date}-{uuid4().hex}"),
             ))
-            archive = finite["archive"] if finite else AcquisitionArchive(archive_path, {
-                "date": tradability_date, "period": args.period,
-                "tickers": universe.get("ticker", universe["code"].astype(str) + ".T").astype(str).tolist(),
-                "previousSourceSha256": previous.attrs.get("source_sha256") if previous is not None else None,
-            }, replay=bool(retained))
+            retry_policy = None
+            if finite:
+                archive = finite["archive"]
+            else:
+                tickers = universe.get("ticker", universe["code"].astype(str) + ".T").astype(str).tolist()
+                retry_policy = _target_session_retry_policy(args, tradability_date, tickers, restrictions, retained)
+                context = {
+                    "date": tradability_date, "period": args.period, "tickers": tickers,
+                    "previousSourceSha256": previous.attrs.get("source_sha256") if previous is not None else None,
+                }
+                if retry_policy is not None:
+                    context["targetSessionRetry"] = retry_policy
+                archive = AcquisitionArchive(archive_path, context, replay=bool(retained))
+                if retained and retry_policy is not None:
+                    archive.network_fallback_allowed = False
             print(json.dumps({"identity": "CLOUD_DAILY_PHASE_V1", "stage": "acquisition-evidence",
                               "event": "replay" if retained else "retaining", "directory": str(archive.directory)}),
                   file=sys.stderr, flush=True)
             try:
-                raw = fetch_daily(universe, args.period, previous=previous, archive=archive)
+                retry_options = {} if retry_policy is None else {
+                    "required_session": retry_policy["session"],
+                    "session_retry_exclusions": frozenset(retry_policy["excludedSymbols"]),
+                }
+                raw = fetch_daily(universe, args.period, previous=previous, archive=archive, **retry_options)
             except BaseException as error:
                 archive.mark("failed", error=f"{type(error).__name__}: {error}")
                 raise
-            if finite and archive.sequence != archive.manifest["requests"]:
+            if (finite or (retained and retry_policy is not None)) and archive.sequence != archive.manifest["requests"]:
                 raise ValueError("fixed source replay did not consume every original request")
             archive.mark("source_validated")
             source_revision = raw.attrs.get("source_revision_receipt", {})

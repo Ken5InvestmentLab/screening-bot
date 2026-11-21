@@ -1,6 +1,7 @@
 import { SHARED_TRIAL_DEFAULTS, validateTrial, validateView, type TrialPreferences, type ViewPreferences } from './new-a-preferences';
 import { digest, type NewADatabase } from './new-a-private';
 import type { MemberAdapters, ReadyPointer } from './new-a-member-services';
+import type { MemberTier } from './new-a-role-facade';
 
 type Settings = { revision: number; preferences: TrialPreferences; view_preferences: ViewPreferences };
 type SettingsRow = { revision: number; trial_json: string; view_json: string };
@@ -10,8 +11,9 @@ const maxBodySize = 8192;
 const readSettingsSql = 'SELECT revision, trial_json, view_json FROM new_a_member_settings WHERE scope = ?';
 const saveSettingsSql = `INSERT INTO new_a_member_settings (scope, revision, trial_json, view_json, requested_at)
   SELECT ?, ?, ?, ?, ? WHERE COALESCE((SELECT revision FROM new_a_member_settings WHERE scope = ?), 0) = ?
-  ON CONFLICT(scope) DO UPDATE SET revision = excluded.revision, trial_json = excluded.trial_json,
-    view_json = excluded.view_json, requested_at = excluded.requested_at
+  ON CONFLICT(scope) DO UPDATE SET revision = excluded.revision, view_json = excluded.view_json,
+    trial_json = CASE WHEN ? THEN excluded.trial_json ELSE new_a_member_settings.trial_json END,
+    requested_at = CASE WHEN ? THEN excluded.requested_at ELSE new_a_member_settings.requested_at END
   RETURNING revision`;
 const readResultSql = `SELECT r.metrics_json
   FROM new_a_member_settings s JOIN new_a_member_results r ON r.scope = s.scope AND r.settings_revision = s.revision
@@ -34,23 +36,24 @@ function response(request: Request, status: number, body: unknown): Response {
   });
 }
 
-async function readSettings(db: NewADatabase, scope: string): Promise<Settings> {
+async function readSettings(db: NewADatabase, scope: string, tier: MemberTier): Promise<Settings> {
   const row = await db.prepare(readSettingsSql).bind(scope).first<SettingsRow>();
   if (!row) return { revision: 0, preferences: SHARED_TRIAL_DEFAULTS, view_preferences: defaultView };
   if (!Number.isSafeInteger(row.revision) || row.revision < 1) throw new Error('invalid_member_revision');
   return {
     revision: row.revision,
-    preferences: validateTrial(JSON.parse(row.trial_json)),
+    preferences: tier === 'free' ? SHARED_TRIAL_DEFAULTS : validateTrial(JSON.parse(row.trial_json)),
     view_preferences: validateView(JSON.parse(row.view_json)),
   };
 }
 
-function bindingInput(scope: string, revision: number): Uint8Array<ArrayBuffer> {
-  return new Uint8Array(encoder.encode(JSON.stringify(['new-a-member-settings-v1', scope, revision])));
+function bindingInput(scope: string, revision: number, tier: MemberTier): Uint8Array<ArrayBuffer> {
+  const domain = tier === 'free' ? 'new-a-member-display-settings-v1' : 'new-a-member-settings-v1';
+  return new Uint8Array(encoder.encode(JSON.stringify([domain, scope, revision])));
 }
 
-async function withBinding(key: CryptoKey, scope: string, state: Settings) {
-  const bytes = await crypto.subtle.sign('HMAC', key, bindingInput(scope, state.revision));
+async function withBinding(key: CryptoKey, scope: string, state: Settings, tier: MemberTier) {
+  const bytes = await crypto.subtle.sign('HMAC', key, bindingInput(scope, state.revision, tier));
   const save_binding = Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, '0')).join('');
   return { ...state, save_binding };
 }
@@ -64,7 +67,7 @@ function requestState(value: unknown): { revision: number; binding: string } | n
 }
 
 export function createMemberSettings(db: NewADatabase, secret: string): MemberAdapters['preferences'] {
-  return async (request, subject) => {
+  return async (request, subject, tier) => {
     const reply = (status: number, value: unknown) => response(request, status, value);
     const fail = (status: number, error: string) => reply(status, { error });
     if (new URL(request.url).search) return fail(404, 'not_found');
@@ -74,7 +77,10 @@ export function createMemberSettings(db: NewADatabase, secret: string): MemberAd
     const scope = await scopeFor(subject);
     const key = await crypto.subtle.importKey('raw', encoder.encode(secret),
       { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
-    if (request.method !== 'PUT') return reply(200, await withBinding(key, scope, await readSettings(db, scope)));
+    if (request.method !== 'PUT') {
+      const state = await readSettings(db, scope, tier);
+      return reply(200, await withBinding(key, scope, state, tier));
+    }
 
     if (request.headers.get('origin') !== new URL(request.url).origin || request.headers.get('sec-fetch-site') === 'cross-site') {
       return fail(403, 'origin_required');
@@ -88,20 +94,29 @@ export function createMemberSettings(db: NewADatabase, secret: string): MemberAd
     const state = requestState(body);
     if (!state || !object(body)) return fail(400, 'request_fields');
     const signature = Uint8Array.from({ length: 32 }, (_, index) => parseInt(state.binding.slice(index * 2, index * 2 + 2), 16));
-    if (!await crypto.subtle.verify('HMAC', key, signature, bindingInput(scope, state.revision))) {
+    if (!await crypto.subtle.verify('HMAC', key, signature, bindingInput(scope, state.revision, tier))) {
       return fail(409, 'settings_session_changed');
     }
+    const trialEditable = tier === 'premium';
     let next: Settings;
     try {
-      next = { revision: state.revision + 1, preferences: validateTrial(body.preferences), view_preferences: validateView(body.view_preferences) };
+      const preferences = validateTrial(body.preferences);
+      if (!trialEditable && object(body.preferences) && Object.entries(body.preferences).some(([key, value]) =>
+        SHARED_TRIAL_DEFAULTS[key as keyof TrialPreferences] !== value)) return fail(400, 'invalid_preferences');
+      next = {
+        revision: state.revision + 1,
+        preferences: trialEditable ? preferences : SHARED_TRIAL_DEFAULTS,
+        view_preferences: validateView(body.view_preferences),
+      };
     } catch {
       return fail(400, 'invalid_preferences');
     }
-    // The revision row doubles as the durable request for the private trial runner.
+    // Only Premium saves may update a stored trial request. Free saves share the display revision.
     // Preparing the receipt first avoids hiding a successful write behind a signing error.
-    const payload = await withBinding(key, scope, next);
+    const payload = await withBinding(key, scope, next, tier);
     const saved = await db.prepare(saveSettingsSql).bind(scope, next.revision, JSON.stringify(next.preferences),
-      JSON.stringify(next.view_preferences), new Date().toISOString(), scope, state.revision).first<{ revision: number }>();
+      JSON.stringify(next.view_preferences), new Date().toISOString(), scope, state.revision,
+      Number(trialEditable), Number(trialEditable)).first<{ revision: number }>();
     if (!saved) return fail(409, 'revision_conflict');
     if (saved.revision !== next.revision) throw new Error('member_save_revision');
     return reply(200, payload);

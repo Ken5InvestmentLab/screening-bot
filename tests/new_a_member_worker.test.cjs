@@ -115,7 +115,7 @@ function setup(t, { report } = {}) {
   }
   const paid = new Set([allowed, otherAllowed, owner]);
   const env = {
-    ASSETS: { fetch: async url => /\/(member-loader|reference-analytics)\.js$/.test(url)
+    ASSETS: { fetch: async url => /\/(member-loader|member-settings|reference-analytics)\.js$/.test(url)
       ? new Response('fixture code') : new Response(null, { status: 404 }) },
     CLOUD_DB: ownerDb.binding, CLOUD_MEMBER_DB: memberDb.binding, CLOUD_OWNER_DISCORD_ID: owner, CLOUD_OWNER_ONLY_ENABLED: 'true',
     CLOUD_MEMBER_VIEW_ENABLED: 'true', CLOUD_MEMBER_STAGE_ORIGIN: stage, PUBLIC_BASE_URL: stage,
@@ -199,6 +199,57 @@ test('the Worker serves assets and shared data to a verified member while keepin
   assert.deepEqual((await premiumDashboard.json()).watching, [{ date: day, symbol: '123A', state: 'WATCHING' }]);
   f.ownerDb.db.exec('UPDATE new_a_active_pointer SET revision=2');
   assert.equal((await call(history, allowed)).status, 503);
+});
+
+test('an authenticated Free member can save only their display settings in the tiered Worker', async t => {
+  const f = productionFixture(t);
+  f.migrate();
+  f.setPolicy('enabled');
+  const page = '/weak_early_beta_settings.html';
+  const asset = '/new-a-assets/member-settings.js';
+  for (const path of [page, asset, preferences]) {
+    assert.equal((await f.call(path, denied)).status, 403, path);
+  }
+  const tiered = { ...f.env, CLOUD_MEMBER_AUDIENCE: 'tiered' };
+  for (const path of [page, asset]) {
+    const response = await f.call(path, denied, tiered);
+    assert.equal(response.status, 200, path);
+    assert.equal(response.headers.get('x-cloud-member-access'), 'free');
+    assert.equal(response.headers.get('cache-control'), 'private, no-store');
+  }
+  assert.equal((await f.call(preferences, undefined, tiered)).status, 401);
+  assert.deepEqual(await (await f.call(preferences, denied, tiered)).json(), { error: 'member_session_required' });
+
+  const sessionTag = async user => (await f.call(sessionPath, user, tiered)).headers.get('x-cloud-member-session');
+  const [tag, otherTag, premiumTag] = await Promise.all([denied, otherFree, allowed].map(sessionTag));
+  const settings = async (user, token, body) => {
+    const request = await f.request(preferences, user, production);
+    request.headers.set('x-cloud-member-session', token);
+    if (body === undefined) return worker.fetch(request, tiered);
+    request.headers.set('origin', production);
+    request.headers.set('content-type', 'application/json');
+    return worker.fetch(new Request(request, { method: 'PUT', body: JSON.stringify(body) }), tiered);
+  };
+  assert.equal((await settings(denied, premiumTag)).status, 403);
+  assert.equal((await settings(denied, otherTag)).status, 403);
+  const start = await (await settings(denied, tag)).json();
+  const other = await (await settings(otherFree, otherTag)).json();
+  const edit = {
+    expected_revision: start.revision, save_binding: start.save_binding, preferences: start.preferences,
+    view_preferences: { ...start.view_preferences, theme: 'light', font_size: 'large', page_size: 50 },
+  };
+  assert.equal((await settings(otherFree, otherTag, edit)).status, 409);
+  assert.equal((await settings(denied, tag, { ...edit, preferences: { ...edit.preferences, base_shares: 200 } })).status, 400);
+  const response = await settings(denied, tag, edit);
+  assert.equal(response.status, 200);
+  const saved = await response.json();
+  assert.equal(saved.revision, start.revision + 1);
+  assert.deepEqual(saved.view_preferences, edit.view_preferences);
+  assert.deepEqual(saved.preferences, start.preferences);
+  assert.deepEqual(await (await settings(denied, tag)).json(), saved);
+  assert.deepEqual(await (await settings(otherFree, otherTag)).json(), other);
+  assert.equal((await f.call(dashboard, denied, tiered)).status, 403);
+  assert.equal((await f.call('/api/cloud/new-a-finite/input/manifest.json', denied, tiered)).status, 403);
 });
 
 test('Fundamentals requires the fresh Premium session and the exact visible history generation', async t => {
@@ -792,7 +843,6 @@ test('reference views require tier-bound sessions and Free receives only aggrega
   assert.equal(analyticsPage.headers.get('x-cloud-member-access'), 'free');
   assert.doesNotMatch(await analyticsPage.text(), /123A|5678|0010/);
   assert.equal((await f.call('/new-a-assets/reference-analytics.js', denied, tiered)).status, 200);
-  assert.equal((await f.call('/weak_early_beta_settings.html', denied, tiered)).status, 403);
   assert.equal((await f.call(overviewRoute, denied, tiered)).status, 403);
   assert.equal((await freeReference(dailyRoute, tag)).status, 403);
   assert.equal((await freeReference(dailyRoute, freeTag, generation)).status, 409);
@@ -807,7 +857,7 @@ test('reference views require tier-bound sessions and Free receives only aggrega
   assert.match(freeMarkup, /class="equity-line"/);
   assert.doesNotMatch(freeMarkup, /123A|5678|0020|new-a-reference-daily-values|適用中の設定|weak_early_beta_settings|analytics-export/);
   assert.equal((await freeReference(overviewRoute.replace('return_priority', 'defensive'))).status, 404);
-  for (const restricted of [route, dashboard, preferences, '/api/cloud/new-a-finite/input/manifest.json',
+  for (const restricted of [route, dashboard, '/api/cloud/new-a-finite/input/manifest.json',
     '/api/cloud/new-a-view/chart.json?preset=medium', '/api/cloud/new-a-view/reference.json?item=analytics.medium',
     '/api/cloud/new-a-view/reference.json?item=history.index', '/api/cloud/new-a-view/reference.json?item=history.1',
     '/api/cloud/new-a-view/fundamental.json?item=1.2026-11-18.0020']) {

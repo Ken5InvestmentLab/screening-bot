@@ -25,17 +25,15 @@ export type RoleServices = {
   identity: (request: Request) => Promise<RoleIdentity>;
   document: (request: Request, subject: string, tier: MemberTier) => Promise<Response>;
   aggregate: (request: Request, subject: string, tier: MemberTier) => Promise<Response>;
-  preferences: (request: Request, subject: string) => Promise<Response>;
+  preferences: (request: Request, subject: string, tier: MemberTier) => Promise<Response>;
   asset: (request: Request) => Promise<Response>;
 };
 
 const productionOrigin = 'https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev';
 const isolatedStageOrigin = 'https://tentei-kyokuchi-cloud-member-stage.ipo-ken5-5489.workers.dev';
-const settingsPage = '/weak_early_beta_settings.html';
-const settingsAsset = '/new-a-assets/member-settings.js';
 const documents = new Set([
   '/', '/report', '/index.html',
-  '/weak_early_beta_latest.html', '/weak_early_beta_analytics.html', settingsPage,
+  '/weak_early_beta_latest.html', '/weak_early_beta_analytics.html', '/weak_early_beta_settings.html',
 ]);
 const historyPath = '/api/cloud/new-a-view/history.json';
 const fundamentalPath = '/api/cloud/new-a-view/fundamental.json';
@@ -56,7 +54,7 @@ const memberAccessHeader = 'x-cloud-member-access';
 const assets = new Set([
   '/new-a-assets/member-loader.js',
   '/new-a-assets/member-presentation.js',
-  settingsAsset,
+  '/new-a-assets/member-settings.js',
   '/new-a-assets/reference-analytics.js',
   '/new-a-assets/report-assets/cloud-logo-light.png',
   '/new-a-assets/report-assets/cloud-logo-dark.png',
@@ -187,14 +185,14 @@ export async function roleFacade(
     if (releaseOrigin === 'production' && await productionAllowed?.(subject, tier) !== true) return ownerDenial;
     const freeAggregate = pathname === historyPath || (pathname === referencePath
       && isMemberAnalyticsReference(url.searchParams.get('item') ?? ''));
-    if (tier === 'free' && (audience === 'role_only' || preferences || pathname === settingsPage
-      || pathname === settingsAsset || (aggregate && !freeAggregate))) {
+    if (tier === 'free' && (audience === 'role_only' || (aggregate && !freeAggregate))) {
       const response = document ? roleRequiredPage(request) : reject(request, 403, 'role_required');
       observe?.(response, subject, role);
       return response;
     }
     const expectedSession = aggregate || preferences ? request.headers.get(memberSessionHeader) : null;
-    if ((pathname === fundamentalPath || pathname === referencePath) && expectedSession === null) return reject(request, 403, 'member_session_required');
+    if ((pathname === fundamentalPath || pathname === referencePath || (preferences && tier === 'free'))
+      && expectedSession === null) return reject(request, 403, 'member_session_required');
     if (session || expectedSession !== null) {
       if (!env.SESSION_SECRET) return reject(request, 503, 'member_service_unavailable');
       const tag = await memberSessionTag(env.SESSION_SECRET, subject, tier);

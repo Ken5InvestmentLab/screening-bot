@@ -27,7 +27,9 @@ function makeDb(t) {
       return { bind: (...params) => ({ first: async () => statement.get(...params) ?? null }) };
     },
   };
-  return { sqlite, settings: createMemberSettings(db, 'test-secret-member-settings'), personal: createMemberPersonalReader(db) };
+  const memberSettings = createMemberSettings(db, 'test-secret-member-settings');
+  const settings = (request, subject, tier = 'premium') => memberSettings(request, subject, tier);
+  return { sqlite, settings, personal: createMemberPersonalReader(db) };
 }
 
 function payload(state, theme = 'light') {
@@ -86,6 +88,41 @@ test('saved and requested legacy trial fees are fixed at zero', async t => {
   const next = await settings(save({ ...payload(accepted), preferences: noFeeInput }), first);
   assert.equal(next.status, 200);
   assert.deepEqual((await next.json()).preferences, accepted.preferences);
+});
+
+test('Free display saves preserve the stored trial and reject stale tiers and other accounts', async t => {
+  const { sqlite, settings } = makeDb(t);
+  const initial = await (await settings(new Request(url), first)).json();
+  const adjusted = { ...initial.preferences, initial_cash_yen: 5_000_000, base_shares: 200 };
+  const premium = await (await settings(save({ ...payload(initial, 'system'), preferences: adjusted }), first)).json();
+  sqlite.prepare('UPDATE new_a_member_settings SET trial_json=?, requested_at=?')
+    .run(JSON.stringify({ ...adjusted, cost_percent: 0.25 }), '2026-11-19T07:00:00Z');
+  const trialRow = () => sqlite.prepare('SELECT trial_json, requested_at FROM new_a_member_settings').get();
+  const priorTrial = trialRow();
+
+  const free = await (await settings(new Request(url), first, 'free')).json();
+  assert.equal(free.revision, premium.revision);
+  assert.equal(free.view_preferences.theme, 'system');
+  assert.deepEqual(free.preferences, initial.preferences);
+  assert.notEqual(free.save_binding, premium.save_binding);
+  assert.equal((await settings(save(payload(premium)), first, 'free')).status, 409);
+  assert.equal((await settings(save(payload(free)), first)).status, 409);
+  assert.equal((await settings(save(payload(free)), second, 'free')).status, 409);
+  for (const preferences of [adjusted, { ...free.preferences, cost_percent: 1 }]) {
+    assert.equal((await settings(save({ ...payload(free), preferences }), first, 'free')).status, 400);
+  }
+  const result = await settings(save(payload(free, 'light')), first, 'free');
+  assert.equal(result.status, 200);
+  const saved = await result.json();
+  assert.equal(saved.revision, free.revision + 1);
+  assert.equal(saved.view_preferences.theme, 'light');
+  assert.deepEqual(saved.preferences, initial.preferences);
+  assert.deepEqual(trialRow(), priorTrial);
+  assert.equal((await settings(save(payload(free)), first, 'free')).status, 409);
+  const restored = await (await settings(new Request(url), first)).json();
+  assert.equal(restored.view_preferences.theme, 'light');
+  assert.deepEqual(restored.preferences, adjusted);
+  assert.equal((await (await settings(new Request(url), second, 'free')).json()).revision, 0);
 });
 
 test('one CAS wins, the written revision keeps its durable trial request and an old save cannot overwrite it', async t => {

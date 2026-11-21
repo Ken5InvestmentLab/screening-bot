@@ -26,7 +26,7 @@ function memberAdapters(env: MemberEnv): Omit<MemberAdapters, 'identity'> | unde
     current,
     reference: createMemberReferenceReader(member),
     common: createNewAMemberProjectionReader(member, current),
-    preferences: (request, subject) => createMemberSettings(member.withSession('first-primary'), secret)(request, subject),
+    preferences: (request, subject, tier) => createMemberSettings(member.withSession('first-primary'), secret)(request, subject, tier),
     personal: (subject, source) => createMemberPersonalReader(member.withSession('first-primary'))(subject, source),
     asset: async request => {
       const pathname = new URL(request.url).pathname;

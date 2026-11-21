@@ -87,20 +87,19 @@ test('the release check can restrict both independently verified access tiers', 
   a.deepEqual(calls, []);
 });
 
-test('Free reaches shared history and aggregate analytics after explicit production opt-in', async () => {
+test('Free reaches shared history, aggregate analytics and own display settings after explicit production opt-in', async () => {
   const subject = '123456789012345678';
   const { s, calls } = setup({ subject, discord_authorized: false });
   const observations = [];
   const observe = (res, actor, role) => observations.push([res.status, actor, role]);
   const tiered = { ...env, CLOUD_MEMBER_AUDIENCE: 'tiered' };
   const call = (path, init) => routeWithRelease(req(path, init), tiered, deny(), s, async () => true, observe);
-  for (const path of ['/', '/weak_early_beta_latest.html', '/weak_early_beta_analytics.html']) {
+  for (const path of ['/', '/weak_early_beta_latest.html', '/weak_early_beta_analytics.html', '/weak_early_beta_settings.html']) {
     a.equal((await call(path)).status, 200);
   }
-  a.equal((await call('/weak_early_beta_settings.html')).status, 403);
   a.equal((await call('/new-a-assets/member-loader.js')).status, 200);
   a.equal((await call('/new-a-assets/reference-analytics.js')).status, 200);
-  a.equal((await call('/new-a-assets/member-settings.js')).status, 403);
+  a.equal((await call('/new-a-assets/member-settings.js')).status, 200);
   a.equal((await call('/api/cloud/new-a-view/history.json?page=2')).status, 200);
   const ref = '/api/cloud/new-a-view/reference.json?item=';
   const session = await call('/api/cloud/new-a-view/session');
@@ -114,16 +113,22 @@ test('Free reaches shared history and aggregate analytics after explicit product
     'analytics.return_priority', 'analytics.daily.invalid', 'analytics.overview.medium%0a']) {
     a.deepEqual(await (await call(ref + item, signed)).json(), { error: 'role_required' });
   }
-  for (const endpoint of ['dashboard.json', 'analytics.json', 'chart.json', 'personal.json', 'preferences']) {
+  for (const endpoint of ['dashboard.json', 'analytics.json', 'chart.json', 'personal.json']) {
     const res = await call('/api/cloud/new-a-view/' + endpoint, { headers: { 'x-cloud-member-access': 'premium' } });
     a.equal(res.status, 403);
     a.deepEqual(await res.json(), { error: 'role_required' });
   }
-  a.equal((await call('/api/cloud/new-a-view/preferences', { method: 'PUT' })).status, 403);
+  const settings = '/api/cloud/new-a-view/preferences';
+  for (const method of ['GET', 'PUT']) {
+    a.deepEqual(await (await call(settings, { method })).json(), { error: 'member_session_required' });
+    a.equal((await call(settings, { method, ...signed })).status, 200);
+    a.equal((await roleFacade(req(settings, { method, ...signed }), env, deny(), s)).status, 403);
+  }
   a.deepEqual(calls, [
-    ...Array.from({ length: 3 }, () => ['document', subject, 'free']),
-    ...Array.from({ length: 2 }, () => ['asset', subject, 'free']),
+    ...Array.from({ length: 4 }, () => ['document', subject, 'free']),
+    ...Array.from({ length: 3 }, () => ['asset', subject, 'free']),
     ...Array.from({ length: 3 }, () => ['aggregate', subject, 'free']),
+    ...Array.from({ length: 2 }, () => ['preferences', subject, 'free']),
   ]);
   a.ok(observations.every(([, actor, role]) => actor === subject && role === 'denied'));
   a.ok(observations.some(([status]) => status === 200));

@@ -205,6 +205,7 @@ _CLOUD_OWNER_REFERENCE_PRODUCT_PATHS = _CLOUD_OWNER_REFERENCE_ADDITIONS | {
     "tests/cloud_bundle_sync.test.cjs",
     "tests/new_a_dashboard_details.test.cjs",
     "tests/new_a_member_consistency.test.cjs",
+    "tests/new_a_member_stage_config.test.mjs",
     "tests/new_a_member_worker.test.cjs",
     "tests/new_a_role_presentation_candidate.test.cjs",
     "tests/test_new_a_member_publisher.py",
@@ -217,6 +218,7 @@ _CLOUD_OWNER_REFERENCE_PRODUCT_PATHS = _CLOUD_OWNER_REFERENCE_ADDITIONS | {
     "weak-early-beta-gate/scripts/new-a-ui-source/assets/owner-loader.js",
     "weak-early-beta-gate/scripts/new-a-ui-source/frame.html",
     "weak-early-beta-gate/scripts/prepare-new-a-member-projection.cjs",
+    "weak-early-beta-gate/scripts/prepare-new-a-member-stage.mjs",
     "weak-early-beta-gate/src/index.ts",
     "weak-early-beta-gate/src/new-a-cloud.ts",
     "weak-early-beta-gate/src/new-a-member-services.ts",
@@ -232,7 +234,7 @@ _CLOUD_OWNER_REFERENCE_AUTH_SHA256 = {
     "weak-early-beta-gate/src/index.ts": "feea298e2a0d58ccfdb771ee56ca2980e3cded6a728cc93243bbe570c1cbf8e4",
     "weak-early-beta-gate/src/new-a-cloud.ts": "a75dae1a95b9d1544bf60fb80a237a496d902ad1cf8c3be18102b3fe6defad96",
 }
-_CLOUD_OWNER_REFERENCE_PRODUCT_SHA256 = "ca332dac12888ff4b17d889b515a88f5400ac0cfdcd4e637781c740a2c737abc"
+_CLOUD_OWNER_REFERENCE_PRODUCT_SHA256 = "47a5ca746658c3e299642dc8ec4548fa0ab9ce165d350644b35dfa9179e5b284"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
     CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
     ROLE_ONLY_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA, FUNDAMENTAL_POPUP_REVIEW_SCHEMA, FUNDAMENTAL_IMPACT_REVIEW_SCHEMA,

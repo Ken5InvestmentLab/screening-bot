@@ -15,6 +15,7 @@ const assets = [
   'member-loader.js', 'member-presentation.js', 'member-settings.js',
   'new-a-finite-worker.generated.js', 'new-a-legacy-interactions.generated.js',
   'owner-loader.js', 'owner-notifications.js', 'presentation-adapter.generated.js',
+  'reference-analytics.js',
   'weak-early-beta-scenarios.js', 'weak-early-beta-theme-init.js',
   ...['cloud-logo', 'discord', 'coconala', 'x'].flatMap(brand =>
     ['dark', 'light'].map(theme => 'report-assets/' + brand + '-' + theme + '.png')),

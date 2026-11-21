@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -60,6 +61,29 @@ test('stage can explicitly verify the role-only audience on the same isolated bi
   assert.equal(config.d1_databases[1].database_id, fixtures.memberDatabaseId);
   assert.throws(() => createMemberStageConfig({ ...fixtures, audience: 'unsupported' }, canonical, outputDir),
     /supported member stage audience/);
+});
+
+test('role-only stage packages the verified analytics client from the canonical assets', () => {
+  const output = execFileSync(process.execPath, [
+    path.join(gate, 'scripts', 'prepare-new-a-member-stage.mjs'),
+    '--account-id', fixtures.accountId,
+    '--public-base-url', fixtures.publicBaseUrl,
+    '--owner-database-id', fixtures.ownerDatabaseId,
+    '--member-database-id', fixtures.memberDatabaseId,
+    '--owner-discord-id', fixtures.ownerDiscordId,
+    '--audience', 'role_only',
+  ], { encoding: 'utf8' });
+  const receipt = JSON.parse(output);
+  const directory = fs.realpathSync(path.dirname(receipt.configPath));
+  assert.equal(path.dirname(directory), fs.realpathSync(path.dirname(outputDir)));
+  assert.match(path.basename(directory), /^stage-[a-z0-9]{6}$/i);
+  try {
+    assert.equal(receipt.deployed, false);
+    const asset = ['public', 'new-a-assets', 'reference-analytics.js'];
+    assert.deepEqual(fs.readFileSync(path.join(directory, ...asset)), fs.readFileSync(path.join(gate, ...asset)));
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
 });
 
 test('missing, foreign or production resource values and role-pin drift fail closed', () => {

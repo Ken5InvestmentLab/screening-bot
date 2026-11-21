@@ -208,6 +208,7 @@ def _summary_details(root, snapshot):
             "symbols": sorted({event["symbol"] for event in candidates}),
             "snapshot_sha256": snapshot["payload_sha256"],
             "shared_order": _shared_trial_order_rule(),
+            "fixed_zero_cost": True,
         }
     return details
 
@@ -242,6 +243,8 @@ def _entry_field(entries, attached):
             limit = f"（{cap_text}÷{shares:,}株）以下"
         else:
             limit = f"{scaled_limit // 100:,}.{scaled_limit % 100:02d}".rstrip("0").rstrip(".") + "円以下"
+        # Older pending entries keep the exact wording they were staged with.
+        cash_rule = "残資金内" if entries.get("fixed_zero_cost") is True else "手数料込みで残資金内"
         daily_cap = entries["shared_order"]["profit_daily_fill_cap"]
         priority = (f"利益優先：優先順で1日最大{daily_cap}件" if daily_cap is not None
                     else "利益優先：候補の優先順で判定")
@@ -249,7 +252,7 @@ def _entry_field(entries, attached):
             "name": f"翌取引日の仮想保有開始候補（{entries['session']}）",
             "value": (f"{shown}\n"
                       f"注文額の条件：始値{limit}（{shares:,}株・1注文{cap_text}）\n"
-                      f"手数料込みで残資金内、同時保有枠（最大{max_positions:,}銘柄）に空きがあり、"
+                      f"{cash_rule}、同時保有枠（最大{max_positions:,}銘柄）に空きがあり、"
                       "同じ銘柄を仮想保有中でないこと\n"
                       "当日の有効な日足と正の出来高があり、高値と安値が異なること\n"
                       f"{priority}"),

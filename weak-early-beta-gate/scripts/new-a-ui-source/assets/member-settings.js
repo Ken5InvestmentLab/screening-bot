@@ -5,7 +5,6 @@
   { group:'preferences', key:'initial_cash_yen', label:'初期資金（円）', min:1, max:1e12, step:1 },
   { group:'preferences', key:'max_positions', label:'同時保有上限（銘柄）', min:1, max:1000, step:1 },
   { group:'preferences', key:'per_order_cap_yen', label:'1注文の購入上限（円）', min:1, max:1e12, step:1 },
-  { group:'preferences', key:'cost_percent', label:'売買手数料（片道％）', min:0, max:10, step:.01 },
   { group:'view_preferences', key:'theme', label:'テーマ', display:true, options:[
    ['dark','ダーク'], ['light','ライト'], ['system','端末に合わせる'],
   ] },

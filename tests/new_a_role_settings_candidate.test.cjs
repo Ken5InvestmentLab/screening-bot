@@ -10,7 +10,7 @@ const modelContext = {module:{exports:{}},structuredClone};
 vm.runInNewContext(source('member-settings.js'),modelContext);
 const { state,specs } = modelContext.module.exports;
 const preferences = {
- price_cap_yen:425.5,exit_endpoint:'a20_close',base_shares:200,cost_percent:1,year_scope:'2025',allocation:'stacked',
+ price_cap_yen:425.5,exit_endpoint:'a20_close',base_shares:200,cost_percent:0,year_scope:'2025',allocation:'stacked',
  initial_cash_yen:10000000,max_positions:20,per_order_cap_yen:500000,
 };
 const view_preferences = {trial_preset:'profit',theme:'dark',font_size:'standard',page_size:20};
@@ -19,17 +19,33 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
 
 test('only current inputs are editable and legacy account values survive cancel and save',() => {
  assert.deepEqual(Array.from(specs,item=>item.key),[
-  'initial_cash_yen','max_positions','per_order_cap_yen','cost_percent','theme','font_size','page_size',
+  'initial_cash_yen','max_positions','per_order_cap_yen','theme','font_size','page_size',
  ]);
  const model = state();
  model.load(saved);
  model.edit('preferences','initial_cash_yen',2000000);
  assert.deepEqual(model.cancel().preferences,preferences);
  assert.throws(()=>model.edit('preferences','price_cap_yen',1));
+ assert.throws(()=>model.edit('preferences','cost_percent',1));
  assert.throws(()=>model.edit('preferences','notifications',true));
  assert.throws(()=>model.edit('view_preferences','trial_preset','defensive'));
  model.edit('view_preferences','theme','light');
  assert.deepEqual(model.begin().preferences,preferences);
+});
+
+test('the finite controller ignores the fee in prior browser settings',async() => {
+ const context = {module:{exports:{}}};
+ vm.runInNewContext(source('finite-controller.js'),context);
+ const controller = context.module.exports.createController({
+  calculateOnLoad:false,
+  localPreferences:{...preferences,cost_percent:1},
+  transport:async()=>Response.json({schema_version:1,has_saved_preferences:false,
+   has_saved_finite_preferences:false,default_proposal_verified:false,revision:0,preferences}),
+ });
+ assert.equal(await controller.load(),true);
+ assert.equal(controller.state().applied.cost_percent,0);
+ assert.equal(controller.state().draft.cost_percent,0);
+ assert.equal(controller.state().applied.base_shares,preferences.base_shares);
 });
 
 test('save binds the original revision, locks edits and verifies its receipt',() => {
@@ -91,7 +107,7 @@ function settingsHarness(owner) {
    const sent=JSON.parse(init.body);
    assert.equal(sent.expected_revision,pref.revision);
    assert.equal(sent.save_binding,pref.save_binding);
-   assert.deepEqual(sent.preferences,owner?preferences:{...preferences,cost_percent:2});
+   assert.deepEqual(sent.preferences,owner?preferences:{...preferences,max_positions:15});
    assert.deepEqual(sent.view_preferences,owner?{...view_preferences,theme:'light'}
     :{...view_preferences,theme:'light',font_size:'large',page_size:50});
    pref={revision:pref.revision+1,save_binding:'c'.repeat(64),preferences:sent.preferences,view_preferences:sent.view_preferences};
@@ -138,6 +154,7 @@ for (const owner of [true,false]) {
   assert.equal(display.attrs['aria-selected'],'true');
   assert.equal(items(form).find(node=>node.id==='cloud-setting-pane-display').hidden,false);
   assert.equal(shown.includes('trial_preset'),false);
+  assert.equal(shown.includes('cost_percent'),false);
   const cancel=items(form).find(node=>node.textContent==='キャンセル');
   cancel.events.click();
   assert.equal(ui.dialog.open,false);
@@ -153,7 +170,7 @@ for (const owner of [true,false]) {
   const form=ui.content.children[0];
   items(form).find(node=>node.name==='theme').value='light';
   if (!owner) {
-   items(form).find(node=>node.name==='cost_percent').value='2';
+   items(form).find(node=>node.name==='max_positions').value='15';
    items(form).find(node=>node.name==='font_size').value='large';
    items(form).find(node=>node.name==='page_size').value='50';
   }
@@ -162,7 +179,8 @@ for (const owner of [true,false]) {
    assert.deepEqual(JSON.parse(JSON.stringify(ui.saved()?.state.viewPreferences)),{...view_preferences,theme:'light'});
    assert.equal(ui.saved()?.trialChanged,false);
   } else {
-   assert.equal(ui.saved()?.state.preferences.cost_percent,2);
+   assert.equal(ui.saved()?.state.preferences.cost_percent,0);
+   assert.equal(ui.saved()?.state.preferences.max_positions,15);
    assert.deepEqual(ui.saved()?.state.view_preferences,{...view_preferences,theme:'light',font_size:'large',page_size:50});
   }
   assert.deepEqual(ui.paths,owner?[['GET',ui.route],['PUT',ui.route]]:[['GET',ui.route],['PUT',ui.route],['GET',ui.route]]);

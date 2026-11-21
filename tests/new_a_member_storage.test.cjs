@@ -66,6 +66,28 @@ test('default and saved settings isolate two authorized accounts, including acro
   assert.equal(await (await settings(new Request(url, { method: 'HEAD' }), first)).text(), '');
 });
 
+test('saved and requested legacy trial fees are fixed at zero', async t => {
+  const { sqlite, settings } = makeDb(t);
+  const initial = await (await settings(new Request(url), first)).json();
+  const stored = await (await settings(save(payload(initial)), first)).json();
+  const prior = { ...stored.preferences, cost_percent: 0.35 };
+  sqlite.prepare('UPDATE new_a_member_settings SET trial_json=?').run(JSON.stringify(prior));
+  const current = await (await settings(new Request(url), first)).json();
+  assert.deepEqual(current, stored);
+  assert.deepEqual(JSON.parse(sqlite.prepare('SELECT trial_json FROM new_a_member_settings').get().trial_json), prior);
+
+  const previousClient = await settings(save({ ...payload(current), preferences: prior }), first);
+  assert.equal(previousClient.status, 200);
+  const accepted = await previousClient.json();
+  assert.equal(accepted.preferences.cost_percent, 0);
+  assert.equal(JSON.parse(sqlite.prepare('SELECT trial_json FROM new_a_member_settings').get().trial_json).cost_percent, 0);
+
+  const { cost_percent, ...noFeeInput } = accepted.preferences;
+  const next = await settings(save({ ...payload(accepted), preferences: noFeeInput }), first);
+  assert.equal(next.status, 200);
+  assert.deepEqual((await next.json()).preferences, accepted.preferences);
+});
+
 test('one CAS wins, the written revision keeps its durable trial request and an old save cannot overwrite it', async t => {
   const { sqlite, settings } = makeDb(t);
   const initial = await (await settings(new Request(url), first)).json();
@@ -106,6 +128,9 @@ test('personal metrics must match account, accepted settings revision, and exact
   sqlite.prepare('UPDATE new_a_member_results SET metrics_json=?').run(JSON.stringify({ ...metrics, owner_notes: 'private' }));
   assert.equal(await personal(first, source), null);
   sqlite.prepare('UPDATE new_a_member_results SET metrics_json=?').run(JSON.stringify(metrics));
+  sqlite.prepare('UPDATE new_a_member_settings SET trial_json=?')
+    .run(JSON.stringify({ ...saved.preferences, cost_percent: 0.25 }));
+  assert.equal(await personal(first, source), null);
   assert.equal((await settings(save(payload(saved, 'system')), first)).status, 200);
   assert.equal(await personal(first, source), null);
 });

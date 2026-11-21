@@ -277,7 +277,8 @@ class BatchedDiscord(unittest.TestCase):
         self.assertEqual(next_open["name"], "翌取引日の仮想保有開始候補（2026-06-03）")
         self.assertIn("2345・417A", next_open["value"])
         self.assertIn("注文額の条件：始値5,000円以下（100株・1注文50万円）", next_open["value"])
-        self.assertIn("手数料込みで残資金内、同時保有枠（最大10銘柄）に空き", next_open["value"])
+        self.assertIn("残資金内、同時保有枠（最大10銘柄）に空き", next_open["value"])
+        self.assertNotIn("手数料込み", next_open["value"])
         self.assertIn("同じ銘柄を仮想保有中でない", next_open["value"])
         self.assertIn("正の出来高があり、高値と安値が異なる", next_open["value"])
         self.assertIn("利益優先：優先順で1日最大3件", next_open["value"])
@@ -346,6 +347,24 @@ class BatchedDiscord(unittest.TestCase):
         self.assertNotIn("始値上限", field["value"])
         rows = list(csv.reader(io.StringIO(files["files[0]"][1].decode("utf-8-sig"))))[1:]
         self.assertEqual({row[2] for row in rows if row[0] == "買付候補（未約定）"}, set(candidates))
+
+    def test_prefee_change_pending_candidates_keep_the_staged_wording(self):
+        from weak_early_beta.new_a import notifications
+
+        self.prepare_next_session()
+        summary_details = notifications._summary_details
+
+        def previous_details(root, snapshot):
+            details = summary_details(root, snapshot)
+            del details["next_session_entries"]["fixed_zero_cost"]
+            return details
+
+        with patch.object(notifications, "_summary_details", side_effect=previous_details):
+            self.call(dry_run=True)
+        self.assertEqual(self.call()["external_sends"], 1)
+        field = self.posts[0][0]["embeds"][0]["fields"][-1]
+        self.assertEqual(field["name"], "翌取引日の仮想保有開始候補（2026-06-03）")
+        self.assertIn("手数料込みで残資金内", field["value"])
 
     def test_existing_uncertain_evening_batch_uses_exact_history_without_resending(self):
         from unittest.mock import Mock

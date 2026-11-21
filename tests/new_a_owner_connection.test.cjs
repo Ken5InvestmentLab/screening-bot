@@ -213,6 +213,7 @@ test('view and trial settings persist by account and trial-only clients keep the
  const accountA = await putSettings(f, trialA, 0, {view_preferences: firstView, save_binding: initial.save_binding});
  assert.equal(accountA.status, 200);
  const receiptA = await accountA.json();
+ assert.deepEqual(receiptA.preferences, {...trialA, cost_percent: 0});
  assert.deepEqual(receiptA.view_preferences, firstView);
  assert.notEqual(receiptA.save_binding, initial.save_binding);
 
@@ -226,9 +227,12 @@ test('view and trial settings persist by account and trial-only clients keep the
  const legacy = await putSettings(f, updatedTrialA, 1);
  assert.equal(legacy.status, 200);
  assert.equal(Object.hasOwn(await legacy.json(), 'view_preferences'), false);
+ const memberA = 'cloud_'+sha('cloud-member:'+OWNER);
+ f.sql.prepare('UPDATE new_a_finite_trial_preferences SET preferences_json=? WHERE member_id=?')
+  .run(JSON.stringify(updatedTrialA),memberA);
  const savedA = await readSettings(f);
  const savedB = await readSettings(f, OTHER, otherEnv);
- assert.deepEqual(savedA.preferences, updatedTrialA);
+ assert.deepEqual(savedA.preferences, {...updatedTrialA, cost_percent: 0});
  assert.deepEqual(savedA.view_preferences, firstView);
  assert.equal(savedA.revision, 2);
  assert.deepEqual(savedB.preferences, trialB);
@@ -261,7 +265,7 @@ test('trial and view CAS rejects a stale or failed settings save without changin
  assert.deepEqual(await failed.json(), {error: 'new_a_service_unavailable'});
  const saved = await readSettings(f);
  assert.equal(saved.revision, 1);
- assert.deepEqual(saved.preferences, winner.preferences);
+ assert.deepEqual(saved.preferences, {...winner.preferences, cost_percent: 0});
  assert.deepEqual(saved.view_preferences, winner.view_preferences);
 });
 

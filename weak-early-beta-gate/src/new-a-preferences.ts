@@ -10,11 +10,13 @@ export const DEFAULTS:TrialPreferences={price_cap_yen:1000,exit_endpoint:'d6_ope
 export const SHARED_TRIAL_DEFAULTS: TrialPreferences = { ...DEFAULTS, price_cap_yen: null, initial_cash_yen: 1_000_000, max_positions: 10 };
 export function validateTrial(value:unknown):TrialPreferences {
  if(!value||typeof value!=='object'||Array.isArray(value))throw Error('invalid_preferences');const p=value as TrialPreferences;
- if(Object.keys(p).length!==9||Object.keys(DEFAULTS).some(k=>!Object.hasOwn(p,k)))throw Error('preferences_fields');
+ if(Object.keys(p).some(k=>!Object.hasOwn(DEFAULTS,k))||Object.keys(DEFAULTS).some(k=>k!=='cost_percent'&&!Object.hasOwn(p,k)))throw Error('preferences_fields');
  for(const key of ['initial_cash_yen','per_order_cap_yen'] as const)if(!Number.isSafeInteger(p[key])||p[key]<=0||p[key]>1e12)throw Error(key);
  if(!Number.isSafeInteger(p.max_positions)||p.max_positions<1||p.max_positions>1000||!Number.isSafeInteger(p.base_shares)||p.base_shares<100||p.base_shares>1e6||p.base_shares%100)throw Error('allocation_fields');
  const decimal=(v:number,min:number,max:number)=>Number.isFinite(v)&&typeof v==='number'&&v>=min&&v<=max&&/^\d+(?:\.\d{1,2})?$/.test(String(v));
- if(!decimal(p.cost_percent,0,10)||p.price_cap_yen!==null&&!decimal(p.price_cap_yen,.01,1e9)||!['d5_close','d6_open','a20_close'].includes(p.exit_endpoint)||!['all','2023','2024','2025','2026'].includes(p.year_scope)||!['all','unique','stacked'].includes(p.allocation))throw Error('trial_fields');return {...p};
+ if(Object.hasOwn(p,'cost_percent')&&!decimal(p.cost_percent,0,10)||p.price_cap_yen!==null&&!decimal(p.price_cap_yen,.01,1e9)||!['d5_close','d6_open','a20_close'].includes(p.exit_endpoint)||!['all','2023','2024','2025','2026'].includes(p.year_scope)||!['all','unique','stacked'].includes(p.allocation))throw Error('trial_fields');
+ // Keep the original field for saved settings and previous clients.
+ return {...p,cost_percent:0};
 }
 export function validateView(value: unknown): ViewPreferences {
  if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).length !== 4) {

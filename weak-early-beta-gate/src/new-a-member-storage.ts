@@ -15,7 +15,8 @@ const saveSettingsSql = `INSERT INTO new_a_member_settings (scope, revision, tri
   RETURNING revision`;
 const readResultSql = `SELECT r.metrics_json
   FROM new_a_member_settings s JOIN new_a_member_results r ON r.scope = s.scope AND r.settings_revision = s.revision
-  WHERE s.scope = ? AND r.dataset_id = ? AND r.dataset_revision = ? AND r.as_of = ? AND r.source_version = ?`;
+  WHERE s.scope = ? AND r.dataset_id = ? AND r.dataset_revision = ? AND r.as_of = ? AND r.source_version = ?
+    AND json_extract(s.trial_json, '$.cost_percent') = 0`;
 
 function object(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);

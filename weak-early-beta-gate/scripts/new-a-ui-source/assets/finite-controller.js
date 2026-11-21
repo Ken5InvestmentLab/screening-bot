@@ -8,14 +8,14 @@
  const copy=v=>JSON.parse(JSON.stringify(v));
  const canonical=v=>JSON.stringify(Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])));
  function validate(p){
-  if(!p||Object.keys(p).length!==Object.keys(BASE).length||Object.keys(BASE).some(k=>!(k in p)))throw Error('設定の項目を確認してください。');
+  if(!p||Object.keys(p).some(k=>!Object.hasOwn(BASE,k))||Object.keys(BASE).some(k=>k!=='cost_percent'&&!Object.hasOwn(p,k)))throw Error('設定の項目を確認してください。');
   for(const k of ['initial_cash_yen','per_order_cap_yen'])if(!Number.isSafeInteger(p[k])||p[k]<=0||p[k]>1e12)throw Error('資金は1～1兆円の整数で入力してください。');
   if(!Number.isSafeInteger(p.max_positions)||p.max_positions<1||p.max_positions>1000)throw Error('保有上限は1～1,000銘柄です。');
   if(!Number.isSafeInteger(p.base_shares)||p.base_shares<100||p.base_shares>1e6||p.base_shares%100)throw Error('株数は100株単位で入力してください。');
   const decimal=(v,min,max)=>typeof v==='number'&&Number.isFinite(v)&&v>=min&&v<=max&&/^\d+(?:\.\d{1,2})?$/.test(String(v));
-  if(!decimal(p.cost_percent,0,10)||p.price_cap_yen!==null&&!decimal(p.price_cap_yen,.01,1e9))throw Error('株価上限・費用を確認してください。');
+  if(Object.hasOwn(p,'cost_percent')&&!decimal(p.cost_percent,0,10)||p.price_cap_yen!==null&&!decimal(p.price_cap_yen,.01,1e9))throw Error('試算条件を確認してください。');
   if(!['d5_close','d6_open','a20_close'].includes(p.exit_endpoint)||!['all','2023','2024','2025','2026'].includes(p.year_scope)||!['all','unique','stacked'].includes(p.allocation))throw Error('試算条件を確認してください。');
-  return copy(p);
+  return copy({...p,cost_percent:0});
  }
  const key=r=>`${r.symbol}|${r.candidate_date}|${r.episode_id}`;
  const validSaveBinding=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);

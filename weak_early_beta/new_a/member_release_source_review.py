@@ -330,6 +330,7 @@ _FREE_COMPLETED_ANALYTICS_BASELINE = "717eb480e19ad82ed9ca2ae41e6c866a7f418255"
 _FREE_COMPLETED_ANALYTICS_CALENDAR = "weak-early-beta-gate/src/new-a-market-calendar.ts"
 _FREE_COMPLETED_ANALYTICS_PRODUCT_PATHS = _MEMBER_DASHBOARD_PATHS | {
     _FREE_COMPLETED_ANALYTICS_CALENDAR,
+    "weak-early-beta-gate/AGENTS.md",
     "weak-early-beta-gate/src/new-a-role-facade.ts",
     "weak-early-beta-gate/src/new-a-member-services.ts",
     "weak-early-beta-gate/src/new-a-member-reference.ts",
@@ -346,7 +347,7 @@ _FREE_COMPLETED_ANALYTICS_PRODUCT_PATHS = _MEMBER_DASHBOARD_PATHS | {
     "tests/new_a_role_settings_candidate.test.cjs",
     "tests/new_a_analytics_presets.test.cjs",
 }
-_FREE_COMPLETED_ANALYTICS_PRODUCT_SHA256 = "98cde576c29fc24985eb75c62cf3386f53b86339b2bdae45023e1e758421979a"
+_FREE_COMPLETED_ANALYTICS_PRODUCT_SHA256 = "5334a016bbd3c5f63e56c923710ecf7b0c1403ce342d916525cc7218658a3ec6"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
     CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
     FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA, UNIFIED_MEMBER_UI_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA,

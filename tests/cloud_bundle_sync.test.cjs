@@ -12,10 +12,22 @@ function checkHelp(html,{stagedFree=false}={}){
  assert.match(popup,/aria-labelledby="cloud-help-title"/);
  assert.match(popup,/aria-label="ヘルプを閉じる"/);
  assert.match(popup,/表示は仮想運用の試算です。売買の推奨や将来の成果の保証は行いません。投資判断はご自身で行ってください。/);
- assert.equal((popup.match(/<p>/g)||[]).length,2);
  assert.match(popup,/<h3>ラベルの見方<\/h3>/);
- assert.deepEqual(Array.from(popup.matchAll(/<dt>([^<]+)<\/dt>/g), match=>match[1]),[
-  '監視開始・監視中','監視終了','買付候補','仮想保有開始・仮想保有終了','データ保留','試算対象',
+ const [labels,levels]=Array.from(popup.matchAll(/<dl class="cloud-help-labels">([\s\S]*?)<\/dl>/g), match=>match[1]);
+ assert.deepEqual(Array.from(labels.matchAll(/<dt>([^<]+)<\/dt>/g), match=>match[1]),[
+  '監視開始・監視中','監視終了','仮想保有開始候補（仮想買付候補）','仮想保有開始・仮想保有終了','データ保留','試算対象',
+ ]);
+ for (const explanation of [
+  'その前の20取引日の平均の<strong>1.3倍以上</strong>',
+  '<strong>2%超</strong>になると終了',
+  '<strong>20取引日後</strong>を迎えたときも終了',
+  '終値が支持線より<strong>3%以上</strong>',
+ ]) assert.ok(labels.includes(explanation), explanation);
+ assert.match(popup,/<h3>運用レベルの違い<\/h3>/);
+ assert.deepEqual(Array.from(levels.matchAll(/<dt>([^<]+)<\/dt><dd><strong>([^<]+)<\/strong>で終了。新規開始は<strong>([^<]+)<\/strong>/g), match=>match.slice(1)),[
+  ['守り','5取引日目の始値','1日3銘柄まで'],
+  ['中間','5取引日目の始値','1日の件数上限なし'],
+  ['利益優先','8取引日目の始値','1日3銘柄まで'],
  ]);
  assert.doesNotMatch(popup,/<a |<ol /);
  assert.match(html,/\.cloud-help-dialog\{width:min\(520px,calc\(100vw - 20px\)\)\}/);

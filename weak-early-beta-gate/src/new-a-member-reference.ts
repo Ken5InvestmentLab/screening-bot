@@ -1,4 +1,5 @@
 import type { ReadyPointer } from './new-a-member-services';
+import { plannedHoldingExit } from './new-a-market-calendar';
 
 type SessionDatabase = Pick<D1Database, 'withSession'>;
 type Part = { index: number; bytes: number; sha256: string };
@@ -21,6 +22,28 @@ const historyItem = /^history\.([1-9]\d{0,2})$/;
 const encoder = new TextEncoder();
 const permitted = new Set(['dashboard', 'analytics'].flatMap(page =>
   ['defensive', 'medium', 'return_priority'].map(preset => page + '.' + preset)));
+// Keep the published dashboard presets aligned with the finite simulation.
+const holdingSessions = new Map([
+  ['dashboard.defensive', 5],
+  ['dashboard.medium', 5],
+  ['dashboard.return_priority', 8],
+]);
+const holdingsTable = '<table class="scenario-table" data-finite-table="holdings">';
+const holdingDates = /(<td data-label="仮想買付日">)(\d{4}-\d{2}-\d{2})(<\/td><td data-label="仮想決済予定日">)未確認(?=<\/td><\/tr>)/g;
+
+function withHoldingExitDates(markup: string, item: string, asOf: string): string {
+  const sessions = holdingSessions.get(item);
+  if (sessions === undefined) return markup;
+  const start = markup.indexOf(holdingsTable);
+  if (start === -1 || markup.lastIndexOf(holdingsTable) !== start) return markup;
+  const end = markup.indexOf('</tbody></table>', start + holdingsTable.length);
+  if (end === -1) return markup;
+  const table = markup.slice(start, end).replace(holdingDates, (original, open, entry, nextCell) => {
+    const planned = plannedHoldingExit(entry, asOf, sessions);
+    return planned === null ? original : open + entry + nextCell + planned;
+  });
+  return markup.slice(0, start) + table + markup.slice(end);
+}
 
 export function isMemberReferenceItem(value: string): boolean {
   const page = historyItem.exec(value);
@@ -189,6 +212,6 @@ export function createMemberReferenceReader(db: SessionDatabase | undefined) {
     }));
     const markup = chunks.join('');
     await checkBytes(markup, variant, variantLimit);
-    return markup;
+    return withHoldingExitDates(markup, item, source.as_of);
   };
 }

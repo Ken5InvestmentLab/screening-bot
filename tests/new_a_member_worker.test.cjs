@@ -607,6 +607,26 @@ test('worker never counts Discord lookup failure or an observation revoked befor
   assert.equal(f.rows().length, 0);
 });
 
+test('planned settlement uses Tokyo cash-market sessions with the entry session counted first', () => {
+  const { plannedHoldingExit } = workerModules.load('new-a-market-calendar');
+  for (const [entry, sessions, expected] of [
+    ['2026-11-20', 5, '2026-11-27'], ['2026-11-20', 8, '2026-12-02'],
+    ['2026-12-29', 5, '2027-01-06'], ['2026-12-29', 8, '2027-01-12'],
+    ['2026-12-30', 8, '2027-01-13'],
+  ]) assert.equal(plannedHoldingExit(entry, entry, sessions), expected, entry);
+  for (const [entry, asOf, sessions] of [
+    ['2026-02-30', '2026-03-02', 5],
+    ['2026-11-21', '2026-11-24', 5],
+    ['2026-11-23', '2026-11-24', 5],
+    ['2026-11-20\n', '2026-11-20', 5],
+    ['2026-11-20', '2026-11-23', 5],
+    ['2026-11-20', '2026-11-19', 5],
+    ['2026-11-20', '2026-11-27', 5],
+    ['2027-12-30', '2027-12-30', 5],
+    ['2026-11-20', '2026-11-20', 0],
+  ]) assert.equal(plannedHoldingExit(entry, asOf, sessions), null);
+});
+
 test('reference views require tier-bound sessions and Free receives only aggregate analytics from verified chunks', async t => {
   const f = productionFixture(t);
   f.migrate();
@@ -635,6 +655,15 @@ test('reference views require tier-bound sessions and Free receives only aggrega
     + '<thead><tr><th>日付</th></tr></thead><tbody><tr><td>2026-11-19</td></tr></tbody></table></div></div>'
     + '<button id="new-a-daily-more" hidden>次の50営業日</button>';
   const analyticsMarkup = chartMarkup + '<details><summary>日次表</summary>' + dailyTable + '</details>' + dailyMarkup;
+  const holdingRow = (entry, exit) => '<tr><td data-label="仮想買付日">' + entry
+    + '</td><td data-label="仮想決済予定日">' + exit + '</td></tr>';
+  const knownRow = holdingRow('2026-11-18', '2026-11-26');
+  const invalidRow = holdingRow('2026-11-23', '未確認');
+  const pendingRow = holdingRow('2026-11-18', '未確認');
+  const holdingsMarker = '<table class="scenario-table" data-finite-table="holdings"><thead></thead><tbody>';
+  const holdingsTail = knownRow + invalidRow + '</tbody></table>';
+  const unrelatedTable = '<table class="scenario-table"><tbody>' + pendingRow + '</tbody></table>';
+  const dashboardMarkup = unrelatedTable + holdingsMarker + pendingRow + holdingsTail;
   const finiteModule = { exports: {} };
   const finitePath = path.resolve(__dirname, '../weak-early-beta-gate/scripts/new-a-ui-source/assets/finite-controller.js');
   runInNewContext(fs.readFileSync(finitePath, 'utf8'), { module: finiteModule });
@@ -656,6 +685,7 @@ test('reference views require tier-bound sessions and Free receives only aggrega
   const variants = keys.map((item, index) => {
     const markup = data.has(item) ? JSON.stringify(data.get(item))
       : item === 'history.1' ? '{"page":1,"rows":[{"symbol":"123A"}]}'
+      : item.startsWith('dashboard.') ? dashboardMarkup
       : item === 'analytics.return_priority' ? analyticsMarkup
       : item === 'analytics.medium' ? generated : '<section>表示 ' + item + '</section>';
     const json = JSON.stringify({ markup });
@@ -694,8 +724,16 @@ test('reference views require tier-bound sessions and Free receives only aggrega
   const ready = await fetchReference(route);
   assert.equal(ready.status, 200);
   assert.deepEqual(await ready.json(), {
-    as_of: day, generation, markup: '<section>表示 dashboard.return_priority</section>',
+    as_of: day, generation, markup: unrelatedTable + holdingsMarker + holdingRow('2026-11-18', '2026-11-30') + holdingsTail,
   });
+  for (const preset of ['defensive', 'medium']) {
+    const variant = await fetchReference(route.replace('return_priority', preset));
+    assert.equal(variant.status, 200);
+    assert.equal((await variant.json()).markup,
+      unrelatedTable + holdingsMarker + holdingRow('2026-11-18', '2026-11-25') + holdingsTail);
+  }
+  assert.equal(storage.prepare("SELECT json FROM private_projection_part WHERE identity=? AND kind='analytics' AND idx=2")
+    .get(identity).json, chunks[2]);
   assert.equal((await fetchReference('/api/cloud/new-a-view/reference.json?item=data.dashboard')).status, 400);
   assert.deepEqual(await (await fetchReference(dashboard)).json(), {
     as_of: day, generation, today: [], watching: [{ date: day, symbol: '5678', state: 'WATCHING' }],

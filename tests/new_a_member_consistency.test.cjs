@@ -5,15 +5,13 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const { webcrypto } = require('node:crypto');
 const ts = require('../weak-early-beta-gate/node_modules/typescript');
+const { modules } = require('./helpers/cloud-worker-modules.cjs');
 
 const gate = path.resolve(__dirname, '../weak-early-beta-gate');
 const transpile = filename => ts.transpileModule(fs.readFileSync(path.join(gate, 'src', filename), 'utf8'), {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
 }).outputText;
-const referenceModule = { exports: {} };
-vm.runInNewContext(transpile('new-a-member-reference.ts'), {
-  module: referenceModule, exports: referenceModule.exports, TextEncoder,
-});
+const referenceModule = { exports: modules().load('new-a-member-reference') };
 const { analyticsReferenceMarkup } = require(path.join(gate, 'scripts/new-a-ui-source/reference-analytics.cjs'));
 const projectionModule = { exports: {} };
 vm.runInNewContext(transpile('new-a-member-projection.ts'), {

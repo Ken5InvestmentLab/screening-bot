@@ -6,6 +6,14 @@ const memberStyles = `
 body[data-cloud-mode=member] [data-member-premium-nav][hidden]{display:none!important}
 body[data-cloud-mode=member] .member-purchase{display:inline-flex;align-items:center;min-height:44px;padding:8px 14px;border:1px solid var(--blue);border-radius:9px;color:var(--blue);font-weight:700;text-decoration:none}
 body[data-cloud-mode=member] .member-purchase:hover{background:color-mix(in srgb,var(--blue) 12%,var(--panel-solid))}
+.member-locked-preview{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px;margin-bottom:20px}
+.member-locked-preview .member-locked-card{margin:0;padding:16px;min-width:0}
+.member-locked-card h2{font-size:1.1em;margin:0}
+.member-locked-mask{display:flex;align-items:center;gap:10px;margin-top:12px}
+.member-locked-mask span{display:block;height:18px;border-radius:4px;background:conic-gradient(var(--line) 25%,color-mix(in srgb,var(--muted) 46%,var(--panel-solid)) 0 50%,var(--line) 0 75%,color-mix(in srgb,var(--muted) 46%,var(--panel-solid)) 0) 0 0 / 12px 12px}
+.member-locked-mask span:first-child{width:48px;flex:none}
+.member-locked-mask span:last-child{width:min(11rem,60%)}
+.member-locked-card details p{margin:0 0 8px}
 body[data-cloud-mode=member] form label{display:block;margin:14px 0}
 body[data-cloud-mode=member] form select,body[data-cloud-mode=member] form input{max-width:100%;min-height:44px}
 `;

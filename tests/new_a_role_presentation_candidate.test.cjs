@@ -283,12 +283,32 @@ test('history index lookup supports legacy code/name, date range and sort while 
   a.equal(ui.referenceHistoryIndex(JSON.stringify(invalid),asOf,1),null);
  }
 });
-test('free presentation shows server-provided closed history and one existing purchase action',()=>{
- const html=ui.view({mode:'home',access:'free',asOf:'2026-11-19',presets,selected:'medium',rows:[{date:'2026-11-18',symbol:'1234',state:'HOLD_ENDED'},{date:'2026-11-18',symbol:'4321',state:'EXPIRED'}],chartRows:[],personal:metrics,dashboard:{today:[{symbol:'TODAY_ONLY'}],watching:[{symbol:'WATCH_ONLY'}]}});
- for(const value of ['<h1>検出履歴</h1>','member-free-history','仮想保有終了銘柄','1234','仮想保有終了','href="/purchase"'])a.ok(html.includes(value),value);
- a.doesNotMatch(html,/4321|TODAY_ONLY|WATCH_ONLY|member-preset|日次資金推移|対象日の動き|現在の監視|ダッシュボード/);
- a.doesNotMatch(html,/today-summary|today-kpis|運用レベル/);
- a.equal((html.match(/href="\/purchase"/g)||[]).length,1);
+test('free presentation retains closed history and offers data-free Premium previews',()=>{
+ const rows=[
+  {date:'2026-11-18',symbol:'1234',state:'HOLD_ENDED'},
+  {date:'2026-11-18',symbol:'4321',state:'EXPIRED'},
+  {date:'2026-11-19',symbol:'999Z',state:'HOLD_STARTED',companyName:'PRIVATE_NAME'},
+ ];
+ const privateRow={symbol:'567Z',companyName:'PRIVATE_NAME',price:987654};
+ const dashboard={today:[privateRow],watching:[privateRow],holding:[privateRow]};
+ const shell={...premiumHome,access:'free',rows,personal:metrics};
+ const html=ui.view({...shell,dashboard});
+ a.equal(html,ui.view({...shell,dashboard:undefined}));
+ for(const value of ['<h1>検出履歴</h1>','member-free-history','仮想保有終了銘柄','1234','仮想保有終了'])a.ok(html.includes(value),value);
+ a.doesNotMatch(html,/4321|999Z|567Z|PRIVATE_NAME|987654|member-preset|日次資金推移|現在の監視|ダッシュボード/);
+ a.doesNotMatch(html,/today-summary|today-kpis|運用レベル|data-symbol|data-member-fundamental/);
+
+ const cards=Array.from(html.matchAll(/<section class="panel member-locked-card"><h2>([^<]+)<\/h2>([\s\S]*?)<\/section>/g));
+ a.deepEqual(cards.map(card=>card[1]),['対象日の動き','監視中','仮想保有中']);
+ for(const [,name,body] of cards){
+  a.match(body,/<div class="member-locked-mask" aria-hidden="true"><span><\/span><span><\/span><\/div>/);
+  a.ok(body.includes('<details class="cloud-table-details"><summary aria-label="' + name + 'の詳細を見る">詳細を見る</summary>'));
+  a.match(body,/Premium会員限定です。<\/p><a class="member-purchase" href="\/purchase">Premiumアクセス権を購入する<\/a><\/details>$/);
+ }
+ a.equal((html.match(/href="\/purchase"/g)||[]).length,cards.length);
+ a.doesNotMatch(ui.view(premiumHome),/member-locked-preview|member-locked-mask/);
+ a.match(ui.freeHome(),/member-locked-preview/);
+ a.doesNotMatch(ui.freeHome(),/member-free-history/);
  a.match(ui.view({mode:'settings',access:'free'}),/Premium会員限定.*href="\/purchase"/);
  a.match(ui.view({mode:'home',access:'free',rows:[]}),/このページに仮想保有終了銘柄はありません。/);
  const analytics=ui.view({...premiumHome,mode:'analytics',access:'free',reference:true,personal:metrics});

@@ -344,14 +344,21 @@ function premiumHome({asOf, selected, rows, chartRows, dashboard, historyPage, r
     + currentWatch(dashboard.watching) + '</section>'
     + historyPanel(rows, historyPage, referenceHistoryRows, selected, deferHistory);
 }
+function lockedStockPreview() {
+  const groups = ['対象日の動き', '監視中', '仮想保有中'];
+  return '<section class="member-locked-preview" aria-label="Premium会員向けプレビュー">'
+    + groups.map(label => '<section class="panel member-locked-card"><h2>' + label + '</h2>'
+      + '<div class="member-locked-mask" aria-hidden="true"><span></span><span></span></div>'
+      + '<details class="cloud-table-details"><summary aria-label="' + label + 'の詳細を見る">詳細を見る</summary>'
+      + '<p class="note">銘柄コード・銘柄名と詳細はPremium会員限定です。</p>' + purchase + '</details></section>').join('')
+    + '</section>';
+}
 function freeHome(rows = null) {
   const closed = rows?.filter(row => row.state === 'HOLD_ENDED');
-  return '<div class="page-heading"><h1>検出履歴</h1></div>'
+  return '<div class="page-heading"><h1>検出履歴</h1></div>' + lockedStockPreview()
     + (closed === undefined ? '' : '<section class="panel" id="member-free-history" aria-label="仮想保有終了銘柄">'
       + '<p class="note">仮想保有が終了した銘柄を表示しています。</p>'
-      + (closed.length ? history(closed) : '<p class="note">このページに仮想保有終了銘柄はありません。</p>') + '</section>')
-    + '<section class="panel member-locked"><p>すべての検出履歴を確認するにはPremiumアクセス権が必要です。</p>'
-    + purchase + '</section>';
+      + (closed.length ? history(closed) : '<p class="note">このページに仮想保有終了銘柄はありません。</p>') + '</section>');
 }
 function view({mode,access,asOf,presets,selected,rows,chartRows,personal,dashboard,historyPage,reference,referenceHistoryRows,deferHistory}){
  if(access==='free'){

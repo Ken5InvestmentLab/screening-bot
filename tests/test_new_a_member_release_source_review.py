@@ -451,3 +451,37 @@ class PresentationSuccessorReviewTest(unittest.TestCase):
             changed = self.commit("Changed members' role-only audience")
             with self.assertRaisesRegex(ValueError, "approved Worker configuration"):
                 review.review_member_release_source(self.repo, baseline, changed)
+
+    def test_entry_notice_and_fixed_trial_fee_are_distinct_exact_successors(self):
+        self.config["vars"]["CLOUD_MEMBER_AUDIENCE"] = "role_only"
+        self.write(review.CONFIG, json.dumps(self.config).encode())
+        notice_paths = review._ENTRY_NOTICE_PRODUCT_PATHS | review._CLOUD_OWNER_REFERENCE_REVIEW_PATHS
+        combined_paths = review._FIXED_TRIAL_FEE_PRODUCT_PATHS | review._CLOUD_OWNER_REFERENCE_REVIEW_PATHS
+        for path in sorted(combined_paths):
+            self.write(path, b"predecessor " + path.encode())
+        baseline = self.commit("Accepted shared Cloud defaults")
+
+        for path in sorted(notice_paths):
+            self.write(path, b"entry notice " + path.encode())
+        notice = self.commit("Reviewed entry notice")
+        notice_digest = review._product_digest(self.repo, notice, review._ENTRY_NOTICE_PRODUCT_PATHS)
+
+        for path in sorted(combined_paths):
+            self.write(path, b"combined release " + path.encode())
+        combined = self.commit("Reviewed combined fixed trial fee")
+        combined_digest = review._product_digest(self.repo, combined, review._FIXED_TRIAL_FEE_PRODUCT_PATHS)
+
+        with (patch.object(review, "_ENTRY_NOTICE_BASELINE", baseline),
+              patch.object(review, "_ENTRY_NOTICE_PRODUCT_SHA256", notice_digest),
+              patch.object(review, "_FIXED_TRIAL_FEE_PRODUCT_SHA256", combined_digest)):
+            self.assertEqual(review.review_member_release_source(self.repo, baseline, notice)["schema"],
+                             review.ENTRY_NOTICE_REVIEW_SCHEMA)
+            result = review.review_member_release_source(self.repo, baseline, combined)
+            self.assertEqual(result["schema"], review.FIXED_TRIAL_FEE_REVIEW_SCHEMA)
+            self.assertEqual(result["member_audience"], "role_only")
+            self.assertTrue(result["owner_only_gate_preserved"])
+
+            self.write("weak_early_beta/new_a/release_maintenance.py", b"unreviewed rollback handling")
+            changed = self.commit("Unreviewed rollback behavior")
+            with self.assertRaisesRegex(ValueError, "Fixed Cloud trial fee successor differs from the reviewed bytes"):
+                review.review_member_release_source(self.repo, baseline, changed)

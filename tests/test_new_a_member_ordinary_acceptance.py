@@ -12,12 +12,13 @@ from tests import test_new_a_continuing_transition as fixtures
 from weak_early_beta.new_a import continuing_acceptance as ca
 from weak_early_beta.new_a import continuing_transition as transition
 from weak_early_beta.new_a import member_ordinary_acceptance as member
+from weak_early_beta.new_a import release_maintenance
 from weak_early_beta.new_a.files import atomic_write, digest, file_sha, private_root, read
 from weak_early_beta.new_a.member_release_source_review import (
     CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_UI_REVIEW_SCHEMA, COMPLETED_TIMING_REVIEW_SCHEMA,
     ENTRY, FUNDAMENTAL_IMPACT_REVIEW_SCHEMA,
     FUNDAMENTAL_POPUP_REVIEW_SCHEMA,
-    FUNDAMENTAL_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA, MEMBER_BINDING, PRESENTATION_REVIEW_SCHEMA,
+    FUNDAMENTAL_REVIEW_SCHEMA, INITIAL_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA, MEMBER_BINDING, PRESENTATION_REVIEW_SCHEMA,
     ROLE_ONLY_REVIEW_SCHEMA,
 )
 
@@ -422,6 +423,66 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
             member._check_successor_policy(source_review, previous, dict(deployment, policy_sha256='f' * 64))
         with self.assertRaisesRegex(ValueError, 'pinned enabled predecessor'):
             observe(self.ci, self.deployment, dict(effective_off, policy=dict(row, revision=3)))
+
+    def test_restored_predecessor_requires_linked_receipts_and_fresh_exact_policy(self):
+        # Use one archived approval; successor registry history is covered separately.
+        self.enterContext(patch.dict(member.MEMBER_SUCCESSORS, {INITIAL_REVIEW_SCHEMA: FUNDAMENTAL_POPUP_REVIEW_SCHEMA}))
+        prior, old_audit = self.prepare_successor(FUNDAMENTAL_POPUP_REVIEW_SCHEMA)
+        archived = old_audit.read_bytes()
+        deployment = read(old_audit)["deployment"]
+        original_id = deployment["deployment_id"]
+        restored_id = "00000000-0000-4000-9000-000000000190"
+        pair = {
+            **{key: prior[key] for key in ("source_commit", "activation_sha256", *member.RELEASE_KEYS)},
+            "schema": "NEW_A_HOST_OBSERVED_RELEASE_PAIR_V1", "repository": str(self.operating),
+            "git": {"repository": str(self.operating), "branch": "research/weak-early-beta", "clean": True,
+                    "local_head": self.old_source, "remote_head": self.old_source},
+            "acceptance_sha256": self.plan["prior_acceptance"]["sha256"], "deployment_id": original_id,
+            "target": self.target, "provider_sha256": "7" * 64,
+        }
+        failed_source = "d" * 40
+        readers = self.readers()
+        as_of = self.now - datetime.timedelta(seconds=35)
+        with patch.object(ca, "now", return_value=as_of):
+            boundary = dict(pair_reader=lambda _: {**pair, "observed_at": ca.now().isoformat()},
+                            idle_reader=lambda _: True)
+            held = release_maintenance.begin_release(
+                self.operating, failed_source, not_after=(as_of + datetime.timedelta(minutes=10)).isoformat(),
+                owner_message=self.plan["owner_message"], primary_reader=readers["primary_reader"],
+                owner_authority=readers["authority"], **boundary,
+                decision_reader=lambda _, intent: {"schema": "NEW_A_HOST_RELEASE_MAINTENANCE_REVIEW_V1",
+                    "operation_sha256": digest(intent), "authorized": True, "platform_signature_claimed": False},
+            )
+            operation = held["operation_sha256"]
+            release_maintenance.admit_release(self.operating, operation, **boundary)
+            pair["deployment_id"] = restored_id
+            release_maintenance.finish_release(
+                self.operating, operation, **boundary,
+                terminal_reader=lambda identifier, restored: {"schema": "NEW_A_HOST_RELEASE_TERMINAL_V1",
+                    "operation_sha256": identifier, "outcome": "old-restored", "synthetic": False,
+                    "platform_signature_claimed": False, "observed_pair_sha256": digest(restored),
+                    "raw_receipt_sha256": "8" * 64},
+            )
+        receipt = private_root(self.operating) / "release-maintenance" / operation / "released.json"
+        original_policy = self.plan["predecessor_member_policy"].copy()
+        self.plan["predecessor_member_policy"]["deployment_id"] = restored_id
+        with self.assertRaisesRegex(ValueError, "exact primary incumbent"):
+            member.prepare(self.operating, self.repo, self.plan, **readers)
+        self.plan["prior_release_restoration"] = {"operation_sha256": operation, "released_sha256": file_sha(receipt)}
+        altered = {**self.plan, "predecessor_member_policy": original_policy}
+        with self.assertRaisesRegex(ValueError, "exact primary incumbent"):
+            member.prepare(self.operating, self.repo, altered, **readers)
+        stale = {**self.plan, "predecessor_member_policy": {**self.plan["predecessor_member_policy"],
+            "observed_at": (as_of - datetime.timedelta(seconds=1)).isoformat()}}
+        with self.assertRaisesRegex(ValueError, "successor deployment or incumbent observation differs"):
+            member.prepare(self.operating, self.repo, stale, **readers)
+        self.role_review.update(member._review(self.plan, self.old, self.source_review,
+            {key: self.deployment[key] for key in member.DEPLOYMENT_KEYS}, self.policy["policy"], None))
+        result = self.apply(self.issue())
+        self.assertEqual(old_audit.read_bytes(), archived)
+        self.assertEqual(transition.ordinary_runtime_release(self.operating), prior)
+        receipt.unlink()
+        self.assertEqual(transition.ordinary_runtime_release(self.repo)["activation_sha256"], result["after_sha256"])
 
     def test_fundamental_impact_successor_preserves_the_accepted_popup_and_access_policy(self):
         for schema in (PRESENTATION_REVIEW_SCHEMA, COMPLETED_TIMING_REVIEW_SCHEMA, FUNDAMENTAL_REVIEW_SCHEMA,

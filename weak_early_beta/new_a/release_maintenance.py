@@ -10,6 +10,8 @@ import os
 import re
 from contextlib import contextmanager
 from copy import deepcopy
+from hashlib import sha256
+import json
 from pathlib import Path
 
 from . import continuing_acceptance as ca
@@ -302,6 +304,66 @@ def _resolve_terminal(plan, operation, pair, admitted, terminal_reader):
     else:
         raise ValueError("release_terminal_unconfirmed")
     return status, receipt["raw_receipt_sha256"]
+
+
+def verify_restored_release(evidence):
+    """Verify a closed rollback's original and restored pair receipts offline."""
+    ca.require(isinstance(evidence, dict) and set(evidence) == {"reference", "receipts"},
+               "release_restoration_evidence_invalid")
+    reference, receipts = evidence["reference"], evidence["receipts"]
+    ca.require(isinstance(reference, dict) and set(reference) == {"operation_sha256", "released_sha256"}
+               and all(_matches(_SHA, value) for value in reference.values())
+               and isinstance(receipts, dict) and set(receipts) == {"intent", "admitted", "terminal", "released"}
+               and all(isinstance(value, str) and 0 < len(value.encode("utf-8")) <= 16_384
+                       for value in receipts.values()), "release_restoration_evidence_invalid")
+    operation = reference["operation_sha256"]
+    plan, admitted, terminal, released = (json.loads(receipts[key]) for key in
+                                         ("intent", "admitted", "terminal", "released"))
+    ca.require(all(isinstance(value, dict) for value in (plan, admitted, terminal, released))
+               and sha256(receipts["released"].encode()).hexdigest() == reference["released_sha256"]
+               and digest(plan) == operation and plan.get("schema") == "NEW_A_RELEASE_MAINTENANCE_INTENT_V1"
+               and plan.get("scope") == _SCOPE and _matches(_COMMIT, plan.get("candidate_source"))
+               and admitted.get("schema") == "NEW_A_RELEASE_MAINTENANCE_ADMISSION_V1"
+               and admitted.get("operation_sha256") == operation
+               and admitted.get("candidate_source") == plan["candidate_source"]
+               and admitted.get("not_after") == plan.get("not_after")
+               and ca.timestamp(admitted["admitted_at"]) < ca.timestamp(plan["not_after"])
+               and _matches(_SHA, admitted.get("provider_sha256"))
+               and terminal.get("schema") == "NEW_A_RELEASE_MAINTENANCE_TERMINAL_V1"
+               and terminal.get("operation_sha256") == operation and terminal.get("outcome") == "old-restored"
+               and all(_matches(_SHA, terminal.get(key)) for key in
+                       ("terminal_proof_sha256", "provider_before_sha256", "provider_after_sha256"))
+               and released == {"schema": "NEW_A_RELEASE_MAINTENANCE_RELEASED_V1", "operation_sha256": operation,
+                                "outcome": "old-restored", "starts": 0,
+                                "terminal_sha256": sha256(receipts["terminal"].encode()).hexdigest()},
+               "release_restoration_receipts_differ")
+    old, restored = plan.get("old"), terminal.get("pair")
+    ca.require(isinstance(old, dict) and isinstance(restored, dict) and set(old) == set(restored) == set(_PAIR)
+               and _matches(_COMMIT, old.get("source_commit")) and plan["candidate_source"] != old["source_commit"]
+               and _matches(_VERSION, old.get("version_id"))
+               and all(_matches(_VERSION, pair.get("deployment_id")) for pair in (old, restored))
+               and old["deployment_id"] != restored["deployment_id"]
+               and all(old[key] == restored[key] for key in _PAIR if key != "deployment_id"),
+               "release_restoration_pairs_differ")
+    return old, restored, ca.timestamp(admitted["admitted_at"])
+
+
+def read_restored_release(repo, reference):
+    """Read only the canonical operation named by the maintainer's exact reference."""
+    ca.require(isinstance(reference, dict) and set(reference) == {"operation_sha256", "released_sha256"},
+               "release_restoration_reference_invalid")
+    repo = Path(repo).resolve()
+    root, plan, _ = _plan(repo, reference["operation_sha256"])
+    receipts = {}
+    for key in ("intent", "admitted", "terminal", "released"):
+        path = _file(root, key + ".json")
+        ca.require(path.is_file() and 0 < path.stat().st_size <= 16_384,
+                   "release_restoration_receipt_unavailable")
+        receipts[key] = path.read_bytes().decode("utf-8")
+    ca.require(json.loads(receipts["intent"]) == plan, "release_restoration_intent_changed")
+    evidence = {"reference": deepcopy(reference), "receipts": receipts}
+    verify_restored_release(evidence)
+    return evidence
 
 
 def finish_release(repo, operation, *, pair_reader, idle_reader, terminal_reader=None):

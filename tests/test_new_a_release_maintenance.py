@@ -163,6 +163,17 @@ class ReleaseMaintenanceTest(unittest.TestCase):
             self.assertTrue(all(path.exists() for path in self.locks))
             self.assertEqual(self.finish(op, reader=self.terminal("old-restored"))["outcome"], "old-restored")
         self.assertFalse(any(path.exists() for path in self.locks))
+        root = private_root(self.repo) / "release-maintenance" / op
+        reference = {"operation_sha256": op, "released_sha256": file_sha(root / "released.json")}
+        evidence = guard.read_restored_release(self.repo, reference)
+        old, restored, _ = guard.verify_restored_release(evidence)
+        self.assertEqual((old["deployment_id"], restored["deployment_id"]), (OLD_DEPLOYMENT, NEW_DEPLOYMENT))
+        with self.assertRaisesRegex(ValueError, "restoration_receipts_differ"):
+            guard.read_restored_release(self.repo, {**reference, "released_sha256": "a" * 64})
+        terminal = root / "terminal.json"
+        atomic_write(terminal, {**read(terminal), "outcome": "candidate-selected"})
+        with self.assertRaisesRegex(ValueError, "restoration_receipts_differ"):
+            guard.read_restored_release(self.repo, reference)
 
     def test_mixed_new_runtime_with_old_acceptance_cannot_release(self):
         op = self.begin()["operation_sha256"]

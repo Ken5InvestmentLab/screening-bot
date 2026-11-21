@@ -29,6 +29,7 @@ UNIFIED_MEMBER_UI_REVIEW_SCHEMA = "NEW_A_MEMBER_UNIFIED_UI_SUCCESSOR_SOURCE_REVI
 LOADING_AND_ZERO_REVIEW_SCHEMA = "NEW_A_MEMBER_LOADING_AND_ZERO_SUCCESSOR_SOURCE_REVIEW_V1"
 SHARED_DEFAULTS_REVIEW_SCHEMA = "NEW_A_MEMBER_SHARED_DEFAULTS_SUCCESSOR_SOURCE_REVIEW_V1"
 ENTRY_NOTICE_REVIEW_SCHEMA = "NEW_A_MEMBER_ENTRY_NOTICE_SUCCESSOR_SOURCE_REVIEW_V1"
+FIXED_TRIAL_FEE_REVIEW_SCHEMA = "NEW_A_MEMBER_FIXED_TRIAL_FEE_SUCCESSOR_SOURCE_REVIEW_V1"
 _PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumのアクセス権を購入する</a>'.encode()
 _NEW_PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumアクセス権を購入する</a>'.encode()
 _SUCCESSOR_REVIEW_PATHS = frozenset({
@@ -301,10 +302,27 @@ _ENTRY_NOTICE_PRODUCT_PATHS = frozenset({
     "weak_early_beta/new_a/notifications.py",
 })
 _ENTRY_NOTICE_PRODUCT_SHA256 = "83013b29f8bb050eed03cae127be2f6ba31b22af4ae963019efbe88575fb17a8"
+_FIXED_TRIAL_FEE_PRODUCT_PATHS = _ENTRY_NOTICE_PRODUCT_PATHS | {
+    "tests/cloud_bundle_sync.test.cjs",
+    "tests/new_a_member_storage.test.cjs",
+    "tests/new_a_owner_connection.test.cjs",
+    "tests/new_a_role_settings_candidate.test.cjs",
+    "tests/test_new_a_member_ordinary_acceptance.py",
+    "tests/test_new_a_member_release_source_review.py",
+    "tests/test_new_a_release_maintenance.py",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/finite-controller.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/member-settings.js",
+    "weak-early-beta-gate/src/new-a-member-storage.ts",
+    "weak-early-beta-gate/scripts/new-a-ui-source/guide-body.html",
+    "weak-early-beta-gate/src/new-a-preferences.ts",
+    "weak_early_beta/new_a/member_ordinary_acceptance.py",
+    "weak_early_beta/new_a/release_maintenance.py",
+}
+_FIXED_TRIAL_FEE_PRODUCT_SHA256 = "8abcbd6154c76dcd8d34fb683a1aec67d8aa0fcb2bb24105bfde8dd6c2a0d443"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
     CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
     FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA, UNIFIED_MEMBER_UI_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA,
-    SHARED_DEFAULTS_REVIEW_SCHEMA, ENTRY_NOTICE_REVIEW_SCHEMA,
+    SHARED_DEFAULTS_REVIEW_SCHEMA, ENTRY_NOTICE_REVIEW_SCHEMA, FIXED_TRIAL_FEE_REVIEW_SCHEMA,
     ROLE_ONLY_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA, FUNDAMENTAL_POPUP_REVIEW_SCHEMA, FUNDAMENTAL_IMPACT_REVIEW_SCHEMA,
 })
 MEMBER_BINDING = {
@@ -400,11 +418,16 @@ def _check_role_only_successor(repo, candidate, paths):
 def _member_successor(repo, baseline, candidate):
     if baseline == _ENTRY_NOTICE_BASELINE:
         paths = _successor_paths(repo, baseline, candidate)
-        if paths != _ENTRY_NOTICE_PRODUCT_PATHS | _CLOUD_OWNER_REFERENCE_REVIEW_PATHS:
-            raise ValueError("Cloud entry notice successor differs from the reviewed scope")
-        if _product_digest(repo, candidate, _ENTRY_NOTICE_PRODUCT_PATHS) != _ENTRY_NOTICE_PRODUCT_SHA256:
-            raise ValueError("Cloud entry notice successor differs from the reviewed bytes")
-        schema = ENTRY_NOTICE_REVIEW_SCHEMA
+        if paths == _ENTRY_NOTICE_PRODUCT_PATHS | _CLOUD_OWNER_REFERENCE_REVIEW_PATHS:
+            if _product_digest(repo, candidate, _ENTRY_NOTICE_PRODUCT_PATHS) != _ENTRY_NOTICE_PRODUCT_SHA256:
+                raise ValueError("Cloud entry notice successor differs from the reviewed bytes")
+            schema = ENTRY_NOTICE_REVIEW_SCHEMA
+        elif paths == _FIXED_TRIAL_FEE_PRODUCT_PATHS | _CLOUD_OWNER_REFERENCE_REVIEW_PATHS:
+            if _product_digest(repo, candidate, _FIXED_TRIAL_FEE_PRODUCT_PATHS) != _FIXED_TRIAL_FEE_PRODUCT_SHA256:
+                raise ValueError("Fixed Cloud trial fee successor differs from the reviewed bytes")
+            schema = FIXED_TRIAL_FEE_REVIEW_SCHEMA
+        else:
+            raise ValueError("Cloud entry notice or fixed trial fee successor differs from the reviewed scope")
     elif baseline == _SHARED_DEFAULTS_BASELINE:
         paths = _successor_paths(repo, baseline, candidate)
         if paths != _SHARED_DEFAULTS_PRODUCT_PATHS | _CLOUD_OWNER_REFERENCE_REVIEW_PATHS:

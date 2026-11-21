@@ -179,7 +179,7 @@ def _target_session_retry_policy(args, date, tickers, restrictions, retained):
     excluded = sorted(symbol for symbol, rules in restriction_intervals(restrictions).items()
                       if symbol in universe and any(rule["start"] <= date
                          and (not rule.get("end") or date < rule["end"]) for rule in rules))
-    return {"session": date, "excludedSymbols": excluded}
+    return {"version": 1, "session": date, "excludedSymbols": excluded}
 
 
 def acquire_and_validate(args):

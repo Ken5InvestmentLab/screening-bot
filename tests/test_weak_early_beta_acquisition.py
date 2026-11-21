@@ -26,10 +26,16 @@ class AcquisitionTests(unittest.TestCase):
         bars.loc["2026-10-29", ["Open", "High", "Low", "Close", "Volume"]] = float("nan")
         return bars
 
+    def mixed_session(self):
+        tickers = ["1234.T", "2345.T"]
+        return pd.DataFrame({"ticker": tickers}), pd.concat(
+            {"1234.T": self.missing_session(), "2345.T": self.response()}, axis=1,
+        )
+
     def test_target_session_retries_only_missing_eligible_ticker_and_replays_identically(self):
         target = self.context["date"]
         context = {**self.context, "tickers": ["1234.T", "2345.T", "3456.T"],
-                   "targetSessionRetry": {"session": target, "excludedSymbols": ["3456"]}}
+                   "targetSessionRetry": {"version": 1, "session": target, "excludedSymbols": ["3456"]}}
         universe = pd.DataFrame({"ticker": context["tickers"]})
         batch = pd.concat({"1234.T": self.missing_session(), "2345.T": self.response(),
                            "3456.T": self.missing_session()}, axis=1)
@@ -62,6 +68,7 @@ class AcquisitionTests(unittest.TestCase):
             self.assertEqual(before, {p.name: p.read_bytes() for p in directory.iterdir()})
 
     def test_unverified_target_retry_preserves_the_original_missing_session(self):
+        universe, batch = self.mixed_session()
         for variant in ("still_missing", "revised_history", "conflicting_split", "invalid_bar", "no_trades", "duplicate_session",
                         "transient_failure"):
             with self.subTest(variant=variant):
@@ -78,22 +85,72 @@ class AcquisitionTests(unittest.TestCase):
                     single.loc["2026-10-29", "Volume"] = 0
                 elif variant == "duplicate_session":
                     single = pd.concat((single, single.tail(1)))
-                with patch("yfinance.download", return_value=self.missing_session()), patch("yfinance.Ticker") as ticker:
+                with patch("yfinance.download", return_value=batch), patch("yfinance.Ticker") as ticker:
                     ticker.return_value.history.return_value = single
                     if variant == "transient_failure":
                         ticker.return_value.history.side_effect = TimeoutError("provider request timed out")
-                    result = fetch_daily(pd.DataFrame({"ticker": ["1234.T"]}), "5y",
-                                         required_session=self.context["date"])
+                    result = fetch_daily(universe, "5y", required_session=self.context["date"])
                     ticker.assert_called_once_with("1234.T")
-                self.assertEqual(result["actual_close"].tolist(), [101.])
-                self.assertEqual(result["date"].dt.strftime("%Y-%m-%d").tolist(), ["2026-10-28"])
+                incomplete = result.loc[result["symbol"] == "1234"]
+                self.assertEqual(incomplete["actual_close"].tolist(), [101.])
+                self.assertEqual(incomplete["date"].dt.strftime("%Y-%m-%d").tolist(), ["2026-10-28"])
 
-    def test_target_session_does_not_hide_permanent_provider_failures(self):
-        with patch("yfinance.download", return_value=self.missing_session()), patch("yfinance.Ticker") as ticker:
-            ticker.return_value.history.side_effect = RuntimeError("HTTP status 403")
-            with self.assertRaisesRegex(CorporateActionError, "HTTP status 403"):
-                fetch_daily(pd.DataFrame({"ticker": ["1234.T"]}), "5y", required_session=self.context["date"])
-            ticker.assert_called_once_with("1234.T")
+    def test_optional_provider_failure_retains_original_bar_through_replay(self):
+        universe, batch = self.mixed_session()
+        date = self.context["date"]
+        context = {**self.context, "tickers": universe["ticker"].tolist(),
+                   "targetSessionRetry": {"version": 1, "session": date, "excludedSymbols": []}}
+        for message in ("HTTP status 403", "SSLError: certificate verify failed"):
+            with self.subTest(message=message), tempfile.TemporaryDirectory() as temporary:
+                archive = AcquisitionArchive(Path(temporary) / "acquisition", context)
+                with patch("yfinance.download", return_value=batch), patch("yfinance.Ticker") as ticker:
+                    ticker.return_value.history.side_effect = RuntimeError(message)
+                    expected = fetch_daily(universe, "5y", archive=archive, required_session=date)
+                    ticker.assert_called_once_with("1234.T")
+                self.assertEqual(expected.loc[expected["date"].eq(date), "symbol"].tolist(), ["2345"])
+                replay = AcquisitionArchive(archive.directory, context, replay=True)
+                with patch("yfinance.download", side_effect=AssertionError("no batch network")), \
+                     patch("yfinance.Ticker", side_effect=AssertionError("no ticker network")):
+                    actual = fetch_daily(universe, "5y", archive=replay, required_session=date)
+                    pd.testing.assert_frame_equal(expected, actual)
+                    next(archive.directory.glob("00002-*.json")).unlink()
+                    broken = AcquisitionArchive(archive.directory, context, replay=True)
+                    with self.assertRaisesRegex(RetainedResponseError, "Missing retained response"):
+                        fetch_daily(universe, "5y", archive=broken, required_session=date)
+
+    def test_optional_retry_ignores_untrusted_provider_rows_and_propagates_unexpected_failures(self):
+        from yfinance import shared
+
+        universe, batch = self.mixed_session()
+
+        def returns_price_with_certificate_error(**kwargs):
+            shared._ERRORS["1234.T"] = "certificate verify failed"
+            return self.response()
+
+        with patch.object(shared, "_ERRORS", {}), patch("yfinance.download", return_value=batch), \
+             patch("yfinance.Ticker") as ticker:
+            ticker.return_value.history.side_effect = returns_price_with_certificate_error
+            result = fetch_daily(universe, "5y", required_session=self.context["date"])
+            self.assertEqual(result.loc[result["date"].eq(self.context["date"]), "symbol"].tolist(), ["2345"])
+            ticker.return_value.history.side_effect = RuntimeError("unexpected response encoder problem")
+            with self.assertRaisesRegex(RuntimeError, "unexpected response encoder problem"):
+                fetch_daily(universe, "5y", required_session=self.context["date"])
+
+    def test_stale_and_incomplete_target_session_batches_skip_optional_retry(self):
+        tickers = [f"{i}.T" for i in range(2000, 2020)]
+        universe = pd.DataFrame({"ticker": tickers})
+        for first_missing, second_missing in ((10, 10), (2, 9)):
+            with self.subTest(first_missing=first_missing, second_missing=second_missing):
+                batches = [
+                    pd.concat({ticker: self.missing_session() if i < missing else self.response()
+                               for i, ticker in enumerate(tickers[offset:offset + 10])}, axis=1)
+                    for offset, missing in [(0, first_missing), (10, second_missing)]
+                ]
+                with patch("yfinance.download", side_effect=batches), patch("yfinance.Ticker") as ticker:
+                    result = fetch_daily(universe, "5y", batch=10, required_session=self.context["date"])
+                    ticker.assert_not_called()
+                self.assertEqual(len(result[result["date"].eq(self.context["date"])]),
+                                 len(tickers) - first_missing - second_missing)
 
     def test_target_session_policy_keeps_old_archives_and_skips_known_restrictions(self):
         date = self.context["date"]
@@ -105,7 +162,7 @@ class AcquisitionTests(unittest.TestCase):
         tickers = ["1234.T", "2345.T", "3456.T"]
         live = SimpleNamespace(refresh_live=True)
         replay_args = SimpleNamespace(refresh_live=False)
-        expected = {"session": date, "excludedSymbols": ["1234"]}
+        expected = {"version": 1, "session": date, "excludedSymbols": ["1234"]}
         self.assertEqual(_target_session_retry_policy(live, date, tickers, restrictions, None), expected)
         self.assertIsNone(_target_session_retry_policy(replay_args, date, tickers, restrictions, None))
         self.assertIsNone(_target_session_retry_policy(SimpleNamespace(refresh_live=True, new_a_isolated=True),
@@ -156,7 +213,7 @@ class AcquisitionTests(unittest.TestCase):
             self.assertFalse(replay_call.kwargs["archive"].network_fallback_allowed)
             self.assertEqual((directory / "manifest.json").read_bytes(), manifest)
             context = json.loads(manifest)["context"]
-            self.assertEqual(context["targetSessionRetry"], {"session": date, "excludedSymbols": ["1234"]})
+            self.assertEqual(context["targetSessionRetry"], {"version": 1, "session": date, "excludedSymbols": ["1234"]})
             self.assertFalse(Path(args.daily_corpus).exists())
 
     def test_validation_failure_retains_exact_response_and_replays_without_download(self):

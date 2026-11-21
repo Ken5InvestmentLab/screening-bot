@@ -22,6 +22,10 @@ class RetainedResponseError(RuntimeError):
     pass
 
 
+class RetainedProviderError(RetainedResponseError):
+    """A verified archived provider exception rather than an archive mismatch."""
+
+
 def _atomic(path: Path, content: bytes) -> None:
     descriptor, name = tempfile.mkstemp(prefix="." + path.name, suffix=".tmp", dir=path.parent)
     try:
@@ -84,7 +88,7 @@ class AcquisitionArchive:
             if saved.get("error"):
                 if saved.get("transient") is True:
                     raise ConnectionError("Retained provider error: " + saved["error"])
-                raise RetainedResponseError("Retained provider error: " + saved["error"])
+                raise RetainedProviderError("Retained provider error: " + saved["error"])
             if not packet.exists() or _hash(packet) != saved.get("sha256"):
                 raise RetainedResponseError("Retained response SHA-256 mismatch; network fallback is disabled")
             with packet.open("rb") as stream:

@@ -15,6 +15,7 @@ from typing import Any, TYPE_CHECKING
 import numpy as np
 import pandas as pd
 
+from .acquisition import RetainedProviderError, RetainedResponseError
 from .network import permanent_network_error, transient_network_error
 
 if TYPE_CHECKING:
@@ -923,13 +924,36 @@ def _retry_ticker(yf: Any, ticker: str, period: str, *, archive: AcquisitionArch
 
 
 def _valid_target_row(row: pd.DataFrame) -> bool:
-    if len(row) != 1:
+    if len(row) != 1 or set(DAILY_FIELDS).difference(row.columns):
         return False
     values = row[list(DAILY_FIELDS)].apply(pd.to_numeric, errors="coerce")
     return (np.isfinite(values.to_numpy(dtype=float)).all()
             and values[list(OHLC)].gt(0).all().all()
             and values[["volume", "stock_splits"]].ge(0).all().all()
             and not _inconsistent_ohlc(values).any())
+
+
+def _target_retry_candidates(
+    data: pd.DataFrame | None, part: list[str], target: pd.Timestamp, exclusions: frozenset[str],
+) -> set[str]:
+    if data is None or data.empty:
+        return set()
+    target_rows = data.loc[_dates(data.index) == target]
+    if len(target_rows) != 1:
+        return set()
+    eligible = {ticker for ticker in part if ticker.removesuffix(".T") not in exclusions}
+    present = set()
+    trading = False
+    for ticker in eligible:
+        row = _ticker_source(target_rows, ticker, single=len(part) == 1)
+        if _valid_target_row(row):
+            present.add(ticker)
+            trading |= float(row["volume"].iloc[0]) > 0
+    missing = eligible - present
+    # This lookup fills small gaps after the batch starts delivering the target session.
+    if trading and len(missing) <= max(1, len(eligible) // 10):
+        return missing
+    return set()
 
 
 def _prior_ticker_history(source: pd.DataFrame, dates: pd.DatetimeIndex, target: pd.Timestamp) -> pd.DataFrame:
@@ -950,14 +974,14 @@ def _retry_target_session(
     try:
         single = _ticker_history(yf, ticker, period, archive, session=target)
     except Exception as exc:
-        if permanent_network_error(exc):
-            raise CorporateActionError(f"Yahoo target session request failed for {ticker}: {exc}") from exc
-        if not transient_network_error(exc):
+        if isinstance(exc, RetainedResponseError) and not isinstance(exc, RetainedProviderError):
             raise
-        return None
+        if permanent_network_error(exc) or transient_network_error(exc):
+            return None
+        raise
     provider_error = _provider_errors(yf).get(ticker.upper())
-    if provider_error and permanent_network_error(provider_error):
-        raise CorporateActionError(f"Yahoo target session request failed for {ticker}: {provider_error}")
+    if provider_error and (permanent_network_error(provider_error) or transient_network_error(provider_error)):
+        return None
     if _source_problem(single) is not None:
         return None
     single_dates = _dates(single.index)
@@ -1038,12 +1062,15 @@ def fetch_daily(
             raise CorporateActionError(
                 f"Yahoo batch daily transport request failed after 3 attempts: {batch_error}"
             ) from batch_error
+        retry_candidates = (
+            _target_retry_candidates(data, part, target, session_retry_exclusions) if target is not None else set()
+        )
         for ticker in part:
             source = _ticker_source(data, ticker, single=len(part) == 1)
             if _source_problem(source) is not None:
                 source = _retry_ticker(yf, ticker, period, archive=archive)
             dates = _dates(source.index)
-            if target is not None and ticker.removesuffix(".T") not in session_retry_exclusions:
+            if target is not None and ticker in retry_candidates:
                 recovered = _retry_target_session(yf, ticker, period, archive, source, dates, target)
                 if recovered is not None:
                     source = recovered

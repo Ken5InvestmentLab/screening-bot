@@ -467,7 +467,7 @@ async function main(args) {
 
 module.exports = {
   prepareNewAMemberProjection, attachFundamentals, digest, historyPageSize, openVerifiedBundle, presets,
-  readActiveEvidence, readBounded, safeHistory,
+  readActiveEvidence, readBounded, safeHistory, dashboardRows, sharedAnalytics, sharedChart,
 };
 if (require.main === module) {
   main(process.argv.slice(2)).catch(error => {

@@ -10,7 +10,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from weak_early_beta.new_a import member_publication
-from weak_early_beta.new_a.member_reference_publication import SCHEMA as REFERENCE_SCHEMA, VARIANTS, READY_INDEX
+from weak_early_beta.new_a.member_reference_publication import DATA_VARIANTS, SCHEMA as REFERENCE_SCHEMA, VARIANTS, READY_INDEX
 from weak_early_beta.new_a.files import atomic_write, file_sha, private_root, read
 from weak_early_beta.new_a.member_publisher import import_member_projection, read_member_marker
 from weak_early_beta.new_a.operational_admission import read_active_metadata
@@ -417,7 +417,8 @@ class MemberPublisherTest(unittest.TestCase):
             if entry == "prepare-new-a-reference-view.cjs":
                 atomic_write(output / "reference-view.json", {
                     "source": source(row["revision"]),
-                    "variants": {item: "<section>reference</section>" for item in VARIANTS},
+                    "variants": {**{item: "<section>reference</section>" for item in VARIANTS},
+                                 **{item: "[{},{},{}]" if item == "data.analytics" else "[]" for item in DATA_VARIANTS}},
                 })
             else:
                 projection(

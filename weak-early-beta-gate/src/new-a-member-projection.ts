@@ -99,7 +99,7 @@ function validateFundamental(report: unknown, lookup: FundamentalSelector): void
       && field.label === fundamentalFields[index] && reportText(field.text, 8192)));
 }
 
-function validateRows(kind: ViewKind, rows: unknown[], through: string, withReports: boolean): void {
+export function validateRows(kind: ViewKind, rows: unknown[], through: string, withReports: boolean): void {
   if (kind === 'analytics') requireValid(rows.length === 3);
   let previous: string | undefined;
   const seen = new Set<string>();

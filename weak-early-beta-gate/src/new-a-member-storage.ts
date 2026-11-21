@@ -1,4 +1,4 @@
-import { DEFAULTS, validateTrial, validateView, type TrialPreferences, type ViewPreferences } from './new-a-preferences';
+import { SHARED_TRIAL_DEFAULTS, validateTrial, validateView, type TrialPreferences, type ViewPreferences } from './new-a-preferences';
 import { digest, type NewADatabase } from './new-a-private';
 import type { MemberAdapters, ReadyPointer } from './new-a-member-services';
 
@@ -35,7 +35,7 @@ function response(request: Request, status: number, body: unknown): Response {
 
 async function readSettings(db: NewADatabase, scope: string): Promise<Settings> {
   const row = await db.prepare(readSettingsSql).bind(scope).first<SettingsRow>();
-  if (!row) return { revision: 0, preferences: DEFAULTS, view_preferences: defaultView };
+  if (!row) return { revision: 0, preferences: SHARED_TRIAL_DEFAULTS, view_preferences: defaultView };
   if (!Number.isSafeInteger(row.revision) || row.revision < 1) throw new Error('invalid_member_revision');
   return {
     revision: row.revision,

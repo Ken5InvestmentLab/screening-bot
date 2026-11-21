@@ -7,10 +7,10 @@ const path = require('node:path');
 const { parseArgs } = require('node:util');
 const { runInNewContext } = require('node:vm');
 const { validateManifest } = require('../src/new-a-private.ts');
-const { DEFAULTS, OPEN_EXIT_POLICY } = require('../src/new-a-preferences.ts');
+const { SHARED_TRIAL_DEFAULTS, OPEN_EXIT_POLICY } = require('../src/new-a-preferences.ts');
 const {
-  attachFundamentals, digest, historyPageSize, openVerifiedBundle, presets, readActiveEvidence, readBounded,
-  safeHistory,
+  attachFundamentals, dashboardRows, digest, historyPageSize, openVerifiedBundle, presets, readActiveEvidence,
+  readBounded, safeHistory, sharedAnalytics, sharedChart,
 } = require('./prepare-new-a-member-projection.cjs');
 const { identityHold } = require('./new-a-ui-source/presentation-adapter.cjs');
 function browserExport(name) {
@@ -25,7 +25,7 @@ const finitePresentation = browserExport('finite-controller.js');
 
 const proofLimit = 1024 * 1024;
 const historyIndexLimit = 512 * 1024;
-const preferences = Object.freeze({ ...DEFAULTS });
+const preferences = Object.freeze({ ...SHARED_TRIAL_DEFAULTS });
 const watchSection = '<section class="panel" aria-labelledby="new-a-watch-heading">';
 
 function dashboardAdapter(history) {
@@ -107,7 +107,13 @@ async function prepareNewAReferenceView({ bundle, readyProof, readyProofSha256 }
     const render = { ...data, preferences, result, portfolio, adapter, preset, manifest, latestYear };
     variants['dashboard.' + preset] = dashboardReferenceMarkup(render);
     variants['analytics.' + preset] = analyticsReferenceMarkup(render, finitePresentation);
+    variants['data.chart.' + preset] = JSON.stringify(sharedChart(result, source.as_of));
+    if (preset === 'return_priority') {
+      variants['data.dashboard'] = JSON.stringify(dashboardRows(
+        data.current, portfolio?.result, episodes, new Set(data.calendar), source.as_of));
+    }
   }
+  variants['data.analytics'] = JSON.stringify(presets.map(([preset]) => sharedAnalytics(preset, models[preset], source.as_of)));
   const pages = referenceHistoryPages({
     history, episodes, presentations: data.presentations, models, pageSize: historyPageSize,
   }, finitePresentation);

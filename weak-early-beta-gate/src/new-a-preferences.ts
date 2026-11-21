@@ -7,6 +7,7 @@ export interface ViewPreferences {
  page_size: 20 | 50 | 100;
 }
 export const DEFAULTS:TrialPreferences={price_cap_yen:1000,exit_endpoint:'d6_open',base_shares:100,cost_percent:0,year_scope:'all',allocation:'all',initial_cash_yen:10000000,max_positions:20,per_order_cap_yen:500000};
+export const SHARED_TRIAL_DEFAULTS: TrialPreferences = { ...DEFAULTS, price_cap_yen: null, initial_cash_yen: 1_000_000, max_positions: 10 };
 export function validateTrial(value:unknown):TrialPreferences {
  if(!value||typeof value!=='object'||Array.isArray(value))throw Error('invalid_preferences');const p=value as TrialPreferences;
  if(Object.keys(p).length!==9||Object.keys(DEFAULTS).some(k=>!Object.hasOwn(p,k)))throw Error('preferences_fields');

@@ -5,7 +5,10 @@ type Part = { index: number; bytes: number; sha256: string };
 type Variant = { item: string; bytes: number; sha256: string; parts: Part[] };
 type Index = { schema: string; source: ReadyPointer; variants: Variant[] };
 
-const schema = 'NEW_A_MEMBER_REFERENCE_V1';
+const schema = 'NEW_A_MEMBER_REFERENCE_V2';
+const dataItems = new Set(['data.dashboard', 'data.analytics', ...[
+  'defensive', 'medium', 'return_priority',
+].map(preset => 'data.chart.' + preset)]);
 const hash = /^[a-f0-9]{64}$/;
 const maxMarker = 64 * 1024;
 const maxVariant = 512 * 1024;
@@ -80,7 +83,7 @@ async function checkBytes(value: string, descriptor: Pick<Part, 'bytes' | 'sha25
 
 export function createMemberReferenceReader(db: SessionDatabase | undefined) {
   return async (source: ReadyPointer, item: string): Promise<string | null> => {
-    if (!db || !isMemberReferenceItem(item)) return null;
+    if (!db || (!isMemberReferenceItem(item) && !dataItems.has(item))) return null;
     const boundIdentity = identity(source) + '\n' + schema;
     const session = db.withSession('first-primary');
     const selected = await session.prepare(`
@@ -93,13 +96,14 @@ export function createMemberReferenceReader(db: SessionDatabase | undefined) {
     valid(hash.test(selected.digest) && selected.ready === JSON.stringify({ digest: selected.digest }));
     valid(await sha256(encoder.encode(selected.json)) === selected.digest);
     const manifest = JSON.parse(selected.json) as Index;
+    const fixedItems = [...permitted, ...dataItems];
     valid(manifest.schema === schema && identity(manifest.source) === identity(source)
-      && Array.isArray(manifest.variants) && manifest.variants.length >= permitted.size
-      && manifest.variants.length <= permitted.size + maxHistoryPages + 1);
+      && Array.isArray(manifest.variants) && manifest.variants.length >= fixedItems.length
+      && manifest.variants.length <= fixedItems.length + maxHistoryPages + 1);
     const keys = new Set(manifest.variants.map(value => value.item));
-    valid(keys.size === manifest.variants.length && [...permitted].every(key => keys.has(key))
-      && [...keys].every(isMemberReferenceItem));
-    const historyPages = keys.size - permitted.size - Number(keys.has(historyIndex));
+    valid(keys.size === manifest.variants.length && fixedItems.every(key => keys.has(key))
+      && [...keys].every(key => isMemberReferenceItem(key) || dataItems.has(key)));
+    const historyPages = keys.size - fixedItems.length - Number(keys.has(historyIndex));
     for (let page = 1; page <= historyPages; page++) valid(keys.has('history.' + page));
     const variant = manifest.variants.find(value => value.item === item);
     const variantLimit = item === historyIndex ? maxHistoryIndex : maxVariant;

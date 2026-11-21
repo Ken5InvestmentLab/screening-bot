@@ -1,5 +1,6 @@
 import type { MemberTier, RoleIdentity, RoleServices } from './new-a-role-facade';
 import { memberReferenceMarkup, parseMemberReferenceRequest } from './new-a-member-reference';
+import { validateRows } from './new-a-member-projection';
 import { memberFrame } from './new-a-member-frame.generated';
 
 export type ReadyPointer = {
@@ -44,7 +45,7 @@ function fundamentalSelector(url: URL) {
 async function signGeneration(secret: string, subject: string, tier: MemberTier, source: ReadyPointer): Promise<string> {
   const key = await crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   // The member can compare responses without learning private source identifiers.
-  const content = JSON.stringify(['new-a-member-generation-v2', subject, tier, source.dataset_id, source.revision, source.as_of, source.source_version]);
+  const content = JSON.stringify(['new-a-member-generation-v3', subject, tier, source.dataset_id, source.revision, source.as_of, source.source_version]);
   const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(content));
   return Array.from(new Uint8Array(signature), value => value.toString(16).padStart(2, '0')).join('');
 }
@@ -105,24 +106,27 @@ export function memberServices(d: MemberAdapters, generationSecret: string | und
       }
       const historyKind = tier === 'free' ? 'completed-history' : 'history';
       const kind = history ? historyKind : fundamental ? 'fundamental' : dashboard ? 'dashboard' : chart ? 'chart' : 'analytics';
-      const part = item
-        ? await d.common(source, kind, index, item.selection)
-        : await d.common(source, kind, index);
+      const dataItem = dashboard ? 'data.dashboard' : chart ? 'data.chart.' + preset : kind === 'analytics' ? 'data.analytics' : null;
+      const projected = dataItem ? await d.reference?.(source, dataItem) : null;
+      const part = projected == null ? await d.common(source, kind, index, item?.selection) : null;
       if (!same(source, await d.current())) return json({ error: 'source_changed' }, 409);
-      if (!part || !same(source, part.source)) return json({ error: 'source_unavailable' }, 503);
-      if (history && Number(raw) > part.history_pages) return json({ error: 'page_not_found' }, 404);
-      if (history) {
-        const historyRows = part.rows as Record<string, unknown>[];
+      if (projected == null && (!part || !same(source, part.source))) return json({ error: 'source_unavailable' }, 503);
+      const rows: unknown = projected == null ? part?.rows : JSON.parse(projected);
+      if (!Array.isArray(rows)) return json({ error: 'source_unavailable' }, 503);
+      if (projected != null) validateRows(kind, rows, source.as_of, false);
+      if (history && part) {
+        if (Number(raw) > part.history_pages) return json({ error: 'page_not_found' }, 404);
+        const historyRows = rows as Record<string, unknown>[];
         // Existing retained parts also contain terminal monitoring rows. Expose only settled holdings to Free.
         const visible = tier === 'free' ? historyRows.filter(row => row.state === 'HOLD_ENDED') : historyRows;
-        const rows = visible.map(({ date, symbol, state, fundamental_sha256 }) => ({
+        const publicRows = visible.map(({ date, symbol, state, fundamental_sha256 }) => ({
           date, symbol, state,
           ...(tier === 'premium' && typeof fundamental_sha256 === 'string' ? { has_fundamental: true } : {}),
         }));
-        return json({ ...capture, page: Number(raw), pages: part.history_pages, rows });
+        return json({ ...capture, page: Number(raw), pages: part.history_pages, rows: publicRows });
       }
       if (fundamental) {
-        const report = part.rows[0] as Record<string, unknown> | undefined;
+        const report = rows[0] as Record<string, unknown> | undefined;
         if (!report || !item || report.date !== item.selection.date || report.symbol !== item.selection.symbol) {
           return json({ error: 'fundamental_unavailable' }, 404);
         }
@@ -131,7 +135,7 @@ export function memberServices(d: MemberAdapters, generationSecret: string | und
       }
       if (dashboard) {
         const today = [], watching = [];
-        for (const item of part.rows) {
+        for (const item of rows) {
           if (!item || typeof item !== 'object') return json({ error: 'source_unavailable' }, 503);
           const { date, symbol, state, lane } = item as Record<string, unknown>;
           if (typeof date !== 'string' || typeof symbol !== 'string' || typeof state !== 'string') {
@@ -143,8 +147,8 @@ export function memberServices(d: MemberAdapters, generationSecret: string | und
         }
         return json({ ...capture, today, watching });
       }
-      if (chart) return json({ ...capture, preset, rows: part.rows });
-      return json({ ...capture, presets: part.rows });
+      if (chart) return json({ ...capture, preset, rows });
+      return json({ ...capture, presets: rows });
     },
   };
 }

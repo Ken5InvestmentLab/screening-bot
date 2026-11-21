@@ -10,7 +10,7 @@ from .member_publisher import (
 )
 
 
-SCHEMA = "NEW_A_MEMBER_REFERENCE_V1"
+SCHEMA = "NEW_A_MEMBER_REFERENCE_V2"
 READY_INDEX = 10_000
 MAX_VARIANT_BYTES = 512 * 1024
 MAX_INDEX_BYTES = 1024 * 1024
@@ -21,6 +21,9 @@ VARIANTS = {
     f"{page}.{preset}"
     for page in ("dashboard", "analytics")
     for preset in ("defensive", "medium", "return_priority")
+}
+DATA_VARIANTS = {"data.dashboard", "data.analytics"} | {
+    "data.chart." + preset for preset in ("defensive", "medium", "return_priority")
 }
 
 
@@ -42,8 +45,9 @@ def validated_display(value, source):
     require(set(value) == {"source", "variants"} and value["source"] == source
             and isinstance(value["variants"], dict), "shared reference display source differs")
     items = set(value["variants"])
-    history_pages = len(items - VARIANTS - {HISTORY_INDEX})
-    expected = VARIANTS | {f"history.{page}" for page in range(1, history_pages + 1)} | (items & {HISTORY_INDEX})
+    fixed = VARIANTS | DATA_VARIANTS
+    history_pages = len(items - fixed - {HISTORY_INDEX})
+    expected = fixed | {f"history.{page}" for page in range(1, history_pages + 1)} | (items & {HISTORY_INDEX})
     require(history_pages <= 200 and items == expected, "shared reference display inventory differs")
     parts = []
     variants = []
@@ -60,6 +64,11 @@ def validated_display(value, source):
                     and isinstance(history["rows"], list) and len(history["rows"]) <= 100
                     and (bool(history["rows"]) or history_pages == history["page"] == 1),
                     "reference history and page inventory differ")
+        elif item in DATA_VARIANTS:
+            rows = json.loads(markup)
+            limit = 3 if item == "data.analytics" else 1000 if item == "data.dashboard" else 3000
+            require(isinstance(rows, list) and len(rows) <= limit and (item != "data.analytics" or len(rows) == 3),
+                    "invalid shared reference data rows")
         else:
             require(markup.startswith("<"), "invalid reference display markup")
         descriptor = describe(markup)

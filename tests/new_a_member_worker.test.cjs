@@ -612,11 +612,21 @@ test('the reference view requires the Premium session and verified same-generati
   f.setPolicy('enabled');
   const storage = f.memberDb.db;
   const source = JSON.parse(storage.prepare('SELECT identity FROM private_projection_ready').get().identity);
-  const schema = 'NEW_A_MEMBER_REFERENCE_V1';
+  const schema = 'NEW_A_MEMBER_REFERENCE_V2';
   const identity = JSON.stringify(source) + '\n' + schema;
   const keys = ['dashboard', 'analytics'].flatMap(name =>
     ['defensive', 'medium', 'return_priority'].map(preset => name + '.' + preset));
   keys.push('history.1');
+  const summary = ['defensive', 'medium', 'return_priority'].map(preset =>
+    ({ preset, from: day, through: day, resolved: false, metrics: null }));
+  const dashboardRows = [{ date: day, symbol: '5678', state: 'WATCHING', lane: 'watching' }];
+  const chartRows = [{ date: day, equity_yen: 2000001, holding_count: 0 }];
+  const data = new Map([
+    ['data.dashboard', dashboardRows],
+    ['data.analytics', summary],
+    ...summary.map(({ preset }) => ['data.chart.' + preset, chartRows]),
+  ]);
+  keys.push(...data.keys());
   const dailyMarkup = '<template id="new-a-reference-daily-values">{"daily":[["2026-11-19",90,10,100,1,false]]}</template>';
   const chartMarkup = '<div class="cloud-chart" id="new-a-daily-chart"><svg><path d="M1 1"></path></svg></div>';
   const dailyTable = '<div id="new-a-daily-table"><div class="table-wrap"><table class="scenario-table" data-finite-table="daily">'
@@ -625,7 +635,8 @@ test('the reference view requires the Premium session and verified same-generati
   const analyticsMarkup = chartMarkup + '<details><summary>日次表</summary>' + dailyTable + '</details>' + dailyMarkup;
   const chunks = [];
   const variants = keys.map((item, index) => {
-    const markup = item === 'history.1' ? '{"page":1,"rows":[{"symbol":"123A"}]}'
+    const markup = data.has(item) ? JSON.stringify(data.get(item))
+      : item === 'history.1' ? '{"page":1,"rows":[{"symbol":"123A"}]}'
       : item === 'analytics.return_priority' ? analyticsMarkup : '<section>表示 ' + item + '</section>';
     const json = JSON.stringify({ markup });
     chunks.push(json);
@@ -637,6 +648,14 @@ test('the reference view requires the Premium session and verified same-generati
   storage.prepare('INSERT INTO private_projection_manifest VALUES (?,?,?)').run(identity, hash, manifest);
   const add = storage.prepare("INSERT INTO private_projection_part VALUES (?,'analytics',?,?)");
   for (const [index, json] of chunks.entries()) add.run(identity, index, json);
+  const legacySchema = 'NEW_A_MEMBER_REFERENCE_V1';
+  const legacyIdentity = JSON.stringify(source) + '\n' + legacySchema;
+  const legacyManifest = JSON.stringify({ schema: legacySchema, source,
+    variants: variants.filter(variant => !data.has(variant.item)) });
+  const legacyDigest = digest(legacyManifest);
+  storage.prepare('INSERT INTO private_projection_manifest VALUES (?,?,?)').run(legacyIdentity, legacyDigest, legacyManifest);
+  for (const [index, json] of chunks.entries()) add.run(legacyIdentity, index, json);
+  add.run(legacyIdentity, 10_000, JSON.stringify({ digest: legacyDigest }));
   const route = '/api/cloud/new-a-view/reference.json?item=dashboard.return_priority';
   const session = await f.call(sessionPath, allowed);
   const tag = session.headers.get('x-cloud-member-session');
@@ -657,6 +676,20 @@ test('the reference view requires the Premium session and verified same-generati
   assert.deepEqual(await ready.json(), {
     as_of: day, generation, markup: '<section>表示 dashboard.return_priority</section>',
   });
+  assert.equal((await fetchReference('/api/cloud/new-a-view/reference.json?item=data.dashboard')).status, 400);
+  assert.deepEqual(await (await fetchReference(dashboard)).json(), {
+    as_of: day, generation, today: [], watching: [{ date: day, symbol: '5678', state: 'WATCHING' }],
+  });
+  assert.deepEqual(await (await fetchReference('/api/cloud/new-a-view/analytics.json')).json(), {
+    as_of: day, generation, presets: summary,
+  });
+  assert.deepEqual(await (await fetchReference('/api/cloud/new-a-view/chart.json?preset=return_priority')).json(), {
+    as_of: day, generation, preset: 'return_priority', rows: chartRows,
+  });
+  const oldGeneration = createHmac('sha256', f.env.SESSION_SECRET).update(JSON.stringify([
+    'new-a-member-generation-v2', allowed, 'premium', source.dataset_id, source.revision, source.as_of, source.source_version,
+  ])).digest('hex');
+  assert.equal((await fetchReference(route, allowed, tag, oldGeneration)).status, 409);
   const overviewRoute = '/api/cloud/new-a-view/reference.json?item=analytics.overview.return_priority';
   const dailyRoute = '/api/cloud/new-a-view/reference.json?item=analytics.daily.return_priority';
   const compact = await fetchReference(overviewRoute);

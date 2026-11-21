@@ -131,14 +131,15 @@ class MemberTransport(PrivateTransportFixture):
  def test_member_reads_select_fixed_bridge_mode_and_assert_primary(self):
   self.write_config()
   db=self.member()
-  primary=[{'success':True,'results':[{'member':1}],'meta':{'served_by_primary':True}}]
+  identity='合成\nNEW_A_MEMBER_REFERENCE_V1'
+  primary=[{'success':True,'results':[{'member':identity}],'meta':{'served_by_primary':True}}]
   def fake(args,**options):
    self.assertEqual(args[-1],'CLOUD_MEMBER_DB')
-   self.assertEqual(Path(args[-2]).read_text('utf8'),'SELECT 1 AS member;')
+   self.assertEqual(Path(args[-2]).read_bytes(),f"SELECT '{identity}' AS member;".encode('utf8'))
    self.assertEqual(options['env']['CLOUDFLARE_API_BASE_URL'],'https://api.cloudflare.com/client/v4')
    return self.fake(json.dumps(primary))
   with patch('weak_early_beta.new_a.publisher.subprocess.run',side_effect=fake):
-   self.assertEqual(db.query('SELECT 1 AS member'),[{'member':1}])
+   self.assertEqual(db.query('SELECT ? AS member',(identity,)),[{'member':identity}])
   with patch('weak_early_beta.new_a.publisher.subprocess.run',return_value=self.fake(response([]))) as run:
    with self.assertRaisesRegex(RemoteD1Error,'primary_read_unconfirmed'):db.query('SELECT 1')
    run.assert_called_once()
@@ -146,15 +147,16 @@ class MemberTransport(PrivateTransportFixture):
  def test_member_import_passes_exact_top_level_config_and_private_file(self):
   config=self.write_config()
   db=self.member()
+  identity='合成\nNEW_A_MEMBER_REFERENCE_V1'
   def fake(args,**options):
    self.assertEqual(args[2:7],['d1','execute','CLOUD_MEMBER_DB','--remote','--file'])
    self.assertEqual(args[8:],['--yes','--json','--config',str(config),'--env='])
-   self.assertEqual(Path(args[7]).read_text('utf8'),'UPDATE t SET v=1;')
+   self.assertEqual(Path(args[7]).read_bytes(),f"UPDATE t SET v='{identity}';".encode('utf8'))
    self.assertEqual(options['env']['CLOUDFLARE_API_BASE_URL'],'https://api.cloudflare.com/client/v4')
    return self.fake(json.dumps([{'success':True,'results':[{'Total queries executed':1,'Rows read':1,'Rows written':1}],
       'meta':{'rows_read':1,'rows_written':1},'finalBookmark':'SYNTHETIC'}]))
   with patch('weak_early_beta.new_a.publisher.subprocess.run',side_effect=fake):
-   self.assertEqual(db.query('UPDATE t SET v=1'),[])
+   self.assertEqual(db.query('UPDATE t SET v=?',(identity,)),[])
   self.assertEqual(list(self.root.glob('*.sql')),[])
  def test_member_target_drift_and_unrecognized_binding_stop_before_subprocess(self):
   self.write_config()

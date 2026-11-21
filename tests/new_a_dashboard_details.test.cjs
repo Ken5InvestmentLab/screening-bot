@@ -83,6 +83,22 @@ test('owner popup uses the verified impact category without treating caution pro
   assert.match(adapter.fundamentalMarkup(unknown), /class="discord-embed"/);
 });
 
+test('owner popup renders verified analysis, disclosures and sources as safe titled links', () => {
+  const fields = [
+    { label: 'ファンダ分析', text: '[補足資料](https://ir.example/report)' },
+    { label: '開示リンク', text: '・[通期決算 [補足]](https://ir.example/results?a=1&b=2)' },
+    { label: '出典', text: '・[公式IR <資料一覧>](https://source.example/)' },
+    { label: 'Sources', text: '[偽の資料](javascript:alert%281%29)\n[認証付き](https://user:pw@source.example/)' },
+  ];
+  const reportRow = { ...row, fundamental: { ...row.fundamental, fields } };
+  const html = adapter.fundamentalMarkup(reportRow);
+  assert.equal((html.match(/<a href=/g) ?? []).length, 3);
+  assert.match(html, /<dt>ファンダ分析<\/dt><dd>・<a href="https:\/\/ir\.example\/report" target="_blank" rel="noopener noreferrer">補足資料<\/a>/);
+  assert.match(html, /href="https:\/\/ir\.example\/results\?a=1&amp;b=2"[^>]*>通期決算 \[補足\]<\/a>/);
+  assert.match(html, /href="https:\/\/source\.example\/"[^>]*>公式IR &lt;資料一覧&gt;<\/a>/);
+  assert.doesNotMatch(html, /href="(?:javascript:|https:\/\/user:)/);
+});
+
 test('the dynamically rendered owner history button opens a modal and restores its focus after dismissal', () => {
   class Dialog extends EventTarget {
     open = false;

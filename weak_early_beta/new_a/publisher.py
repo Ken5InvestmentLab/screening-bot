@@ -207,7 +207,7 @@ class WranglerD1:
    member_arguments=['--config',str(config),'--env=']
    options['env']={**os.environ,'CLOUDFLARE_API_BASE_URL':_CLOUDFLARE_API}
   # 値を引数/履歴へ入れずprivate fileから渡し、stdout/stderrはチャット/CIへ出さない。
-  with tempfile.NamedTemporaryFile(mode='w',encoding='utf8',suffix='.sql',dir=self.directory,delete=False) as f:f.write(sql);name=f.name
+  with tempfile.NamedTemporaryFile(mode='w',encoding='utf8',newline='\n',suffix='.sql',dir=self.directory,delete=False) as f:f.write(sql);name=f.name
   try:
    if read_only:
     bridge=Path(__file__).with_name('wrangler-query.cjs')

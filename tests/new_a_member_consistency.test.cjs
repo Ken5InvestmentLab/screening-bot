@@ -96,7 +96,7 @@ test('pointer changes during reads and missing signing configuration never retur
 const assets = path.join(gate, 'scripts/new-a-ui-source/assets');
 const loader = fs.readFileSync(path.join(assets, 'member-loader.js'), 'utf8');
 const settings = fs.readFileSync(path.join(assets, 'member-settings.js'), 'utf8');
-const presenter = { module: { exports:{} }, TextEncoder };
+const presenter = { require: require('node:module').createRequire(path.join(assets, 'member-presentation.js')), module: { exports:{} }, TextEncoder };
 vm.runInNewContext(fs.readFileSync(path.join(assets, 'member-presentation.js'), 'utf8'), presenter);
 const {
   fundamentalItem, fundamentalMarkup, fundamentalSelector, referencePayload, referenceHistory,

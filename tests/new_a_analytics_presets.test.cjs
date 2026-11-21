@@ -20,6 +20,67 @@ function workerFixture(){
 }
 function controllerFactory(){const ctx={module:{exports:{}}};vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(source,'assets/finite-controller.js'),'utf8'),ctx);return ctx.module.exports;}
 
+test('owner Analytics removes CSV and keeps the full chart and daily table paging',()=>{
+ const client=controllerFactory(), simulation=workerFixture().simulate('profit');
+ simulation.result.daily=Array.from({length:51},(_,offset)=>({
+  ...simulation.result.daily[0], date:new Date(Date.UTC(2026,0,offset+1)).toISOString().slice(0,10),
+ }));
+ let panelRemoved=false, click;
+ const nodes={
+  'cloud-analytics-content':{
+   setAttribute(){},
+   querySelector(selector){
+    assert.equal(selector,'section[aria-labelledby="analytics-export"]');
+    assert.match(this.innerHTML,/aria-labelledby="analytics-export"/);
+    return {remove(){panelRemoved=true;}};
+   },
+  },
+  'new-a-daily-chart':{},'new-a-daily-table':{},'new-a-daily-more':{},
+ };
+ const context={
+  AFinite:{...client,createController({onChange}){
+   return {load(){onChange({phase:'ready',revision:1,accepted:simulation});}};
+  }},
+  AFiniteLegacy:{applyAccountDisplay(){}},
+  document:{body:{dataset:{page:'analytics'}},getElementById:id=>nodes[id],querySelector:()=>null,
+   addEventListener(type,handler){if(type==='click')click=handler;}},
+ };
+ vm.runInNewContext(fs.readFileSync(path.join(source,'assets/finite-dom.js'),'utf8'),context);
+ assert.equal(panelRemoved,true);
+ assert.match(nodes['new-a-daily-chart'].innerHTML,/2026-02-20/);
+ assert.doesNotMatch(nodes['new-a-daily-table'].innerHTML,/2026-02-20/);
+ assert.equal(nodes['new-a-daily-more'].hidden,false);
+ click({target:{closest:()=>({id:'new-a-daily-more'})}});
+ assert.match(nodes['new-a-daily-table'].innerHTML,/2026-02-20/);
+ assert.equal(nodes['new-a-daily-more'].hidden,true);
+});
+
+test('Premium Analytics removes persisted CSV and pages daily values without export controls',()=>{
+ const daily=Array.from({length:51},(_,offset)=>[
+  new Date(Date.UTC(2026,0,offset+1)).toISOString().slice(0,10),90,10,100,1,false,
+ ]);
+ let panelRemoved=false, templateRemoved=false, click;
+ const element=()=>({dataset:{},children:[],append(child){this.children.push(child);}});
+ const tableBody={rows:daily.slice(0,50),append(fragment){this.rows.push(...fragment.children);}};
+ const nodes={
+  '#new-a-reference-daily-values':{content:{textContent:JSON.stringify({daily,summary:[['合計',100]]})},
+   remove(){templateRemoved=true;}},
+  '#new-a-daily-table table':{tBodies:[tableBody],tHead:{rows:[{cells:daily[0].map(()=>({textContent:'見出し'}))}]}},
+  '#new-a-daily-more':{hidden:false,addEventListener(type,handler){if(type==='click')click=handler;}},
+  'section[aria-labelledby="analytics-export"]':{remove(){panelRemoved=true;}},
+ };
+ const context={document:{createDocumentFragment:element,createElement:element}};
+ vm.runInNewContext(fs.readFileSync(path.join(source,'assets/reference-analytics.js'),'utf8'),context);
+ context.NewAReferenceAnalytics.mount({querySelector:selector=>nodes[selector]});
+ assert.equal(panelRemoved,true);
+ assert.equal(templateRemoved,true);
+ assert.equal(tableBody.rows.length,50);
+ click();
+ assert.equal(tableBody.rows.length,51);
+ assert.equal(tableBody.rows[50].children[0].textContent,'2026-02-20');
+ assert.equal(nodes['#new-a-daily-more'].hidden,true);
+});
+
 test('preset day counts include purchase day and skip the holiday; model remains grandfathered',()=>{
  const runtime=dataset.createDatasetRuntime(input(),{get:quote}),model=runtime.simulate(prefs,{exitPolicy:policy});
  assert.equal(model.trades[0].exit_date,'2026-11-24');

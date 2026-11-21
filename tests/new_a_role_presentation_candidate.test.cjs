@@ -1,7 +1,7 @@
 const {test}=require('node:test'),a=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const {webcrypto}=require('node:crypto');
 const src=path.join(__dirname,'../weak-early-beta-gate/scripts/new-a-ui-source/assets');
-const context={module:{exports:{}},TextEncoder,URL};vm.runInNewContext(fs.readFileSync(path.join(src,'member-presentation.js'),'utf8'),context);const ui=context.module.exports;
+const context={module:{exports:{}},TextEncoder,URL,require:require('node:module').createRequire(path.join(src,'member-presentation.js'))};vm.runInNewContext(fs.readFileSync(path.join(src,'member-presentation.js'),'utf8'),context);const ui=context.module.exports;
 const metrics={net_profit:1200,max_drawdown_pct:-3.25,win_rate_pct:60,trade_count:5};const presets=['defensive','medium','return_priority'].map(preset=>({preset,from:'2026-01-01',through:'2026-11-19',resolved:true,metrics}));
 const premiumHome = {
  mode:'home',access:'premium',asOf:'2026-11-19',presets,selected:'medium',
@@ -343,7 +343,9 @@ test('the member popup uses the old report palette only for a leading verified i
 test('verified disclosure and Sources fields render only safe titled HTTPS links',()=>{
  const expected={asOf:'2026-11-19',date:'2026-11-18',symbol:'234A',generation:'a'.repeat(64)};
  const fields=['材料インパクト','事業概要','足元材料','ファンダ要点','注意点','開示リンク','Sources']
-  .map(label=>({label,text:'[本文の参照](https://body.example/)'}));
+  .map(label=>({label,text:'確認済みの本文'}));
+ fields[1].text='[事業概要内の文字列](https://body.example/)';
+ fields[3].text='判断の根拠\n・[決算解説 [資料]](https://fundamental.example/report)';
  fields[5].text='・[2026-11-18 決算資料 \\[別紙\\](15:00)](https://disclosure.example/file?a=1&b=2)\n'
   +'[危険](javascript:alert%281%29)\n[HTTP](http://insecure.example/)\n[無題](https://invalid [url])';
  fields[6].text='・[公式IR・開示一覧 <IR>](https://source.example/)\n'
@@ -351,10 +353,11 @@ test('verified disclosure and Sources fields render only safe titled HTTPS links
   +'https://unlabeled.example/\n<a href="https://markup.example/">未確認</a>';
  const html=ui.fundamentalMarkup({as_of:expected.asOf,date:expected.date,symbol:expected.symbol,
   generation:expected.generation,company_name:null,analysis_cutoff:'2026-11-18T16:15:00+09:00',fields},expected);
- a.equal((html.match(/<a href=/g)||[]).length,2);
+ a.equal((html.match(/<a href=/g)||[]).length,3);
  a.match(html,/・<a href="https:\/\/disclosure\.example\/file\?a=1&amp;b=2" target="_blank" rel="noopener noreferrer">2026-11-18 決算資料 \[別紙\]\(15:00\)<\/a>/);
  a.match(html,/・<a href="https:\/\/source\.example\/" target="_blank" rel="noopener noreferrer">公式IR・開示一覧 &lt;IR&gt;<\/a>/);
- a.match(html,/\[本文の参照\]\(https:\/\/body\.example\/\)/);
+ a.match(html,/<dt>ファンダ要点<\/dt><dd>判断の根拠<br>・<a href="https:\/\/fundamental\.example\/report" [^>]+>決算解説 \[資料\]<\/a>/);
+ a.match(html,/\[事業概要内の文字列\]\(https:\/\/body\.example\/\)/);
  a.doesNotMatch(html,/href="(?:javascript|http:|https:\/\/(?:invalid|user:|bare\.example|unlabeled\.example|body\.example))/);
  a.match(html,/&lt;a href=&quot;https:\/\/markup\.example\/&quot;&gt;/);
 });

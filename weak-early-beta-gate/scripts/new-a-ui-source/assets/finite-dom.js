@@ -188,6 +188,7 @@
   drawn=simulation;
   if(isAnalytics){
    content.innerHTML=app.render(simulation);
+   content.querySelector('section[aria-labelledby="analytics-export"]')?.remove();
    byId('new-a-daily-chart').innerHTML=equityChart(simulation.result.daily,simulation.result.resolved);
    const recentChart=byId('new-a-latest-year-chart');
    if(recentChart&&simulation.latest_year)recentChart.innerHTML=equityChart(simulation.latest_year.daily,simulation.latest_year.resolved);
@@ -235,20 +236,10 @@
 
  globalThis.AFiniteApplySavedSettings=()=>{if(latest)update(latest);};
  document.addEventListener('click',event=>{
-  const id=event.target.closest('button')?.id, snapshot=latest;
-  if(!id||!snapshot)return;
-  if(id==='new-a-daily-more'&&snapshot.accepted){
-   dailyLimit+=50;drawDaily(snapshot.accepted.result);return;
-  }
-  const kind={'new-a-export-summary':'summary','new-a-export-trades':'trades','new-a-export-daily':'daily'}[id];
-  if(!kind||busy(snapshot)||!snapshot.accepted)return;
-  const data=snapshot.accepted;
-  const matching=kind==='trades'?new Set(data.result.watches.filter(w=>!['PRICE_CAP','SIGNAL_PRICE_UNVERIFIED'].includes(w.selection_reason)).map(app.key)):null;
-  const text=app.exportsFor(data,kind,matching);
-  const url=URL.createObjectURL(new Blob([text],{type:'text/csv;charset=utf-8'}));
-  const link=document.createElement('a');
-  link.href=url;link.download='Cloud2_A_'+kind+'.csv';link.click();
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  const simulation=latest?.accepted;
+  if(event.target.closest('button')?.id!=='new-a-daily-more'||!simulation)return;
+  dailyLimit+=50;
+  drawDaily(simulation.result);
  });
  const tbody=document.querySelector('#detection-table tbody');
  if(tbody)new MutationObserver(hydrateVisible).observe(tbody,{subtree:true,attributes:true,attributeFilter:['hidden']});

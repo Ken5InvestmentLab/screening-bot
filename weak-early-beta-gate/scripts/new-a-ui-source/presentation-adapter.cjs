@@ -1,4 +1,5 @@
 // Data boundary for the preserved Cloud UI. Never imports old report data.
+const fundamentalText = require('./fundamental-text.cjs');
 const html=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const day=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&!Number.isNaN(Date.parse(value+'T00:00:00Z'))&&new Date(value+'T00:00:00Z').toISOString().slice(0,10)===value;
 const finite=value=>typeof value==='number'&&Number.isFinite(value);
@@ -69,7 +70,7 @@ function fundamentalMarkup(row){
  const analysis=row.fundamental;
  if(analysis?.auditStatus!=='pass'||analysis.symbol!==row.symbol||analysis.signalDate!==row.signalDate||analysis.analysisCutoff!==row.analysisCutoff||!Number.isFinite(Date.parse(analysis.analysisCutoff))||analysis.identity!==row.signalDate+'|'+row.symbol||!Array.isArray(analysis.fields)||!analysis.fields.length)return '';
  const title=html(row.companyName)+'('+html(row.symbol)+')';
- const details=analysis.fields.map(field=>'<dt>'+html(field.label)+'</dt><dd>'+html(field.text).replace(/\r\n?|\n/g,'<br>')+'</dd>').join('');
+ const details=analysis.fields.map(field=>'<dt>'+html(field.label)+'</dt><dd>'+fundamentalText(field)+'</dd>').join('');
  return '<button class="fundamental-toggle cloud-stock-action" type="button" data-owner-fundamental aria-haspopup="dialog" aria-expanded="false">ファンダ</button>'
   +'<dialog class="fundamental-detail" aria-label="ファンダ分析の詳細"><button class="fundamental-close" type="button" aria-label="ファンダ分析を閉じる" autofocus>×</button>'
   +'<div class="discord-message"><article class="discord-embed'+fundamentalImpactClass(analysis.fields)+'"><h4>'+title+'</h4><p>検出日 '+html(row.signalDate)+'</p>'

@@ -1,5 +1,6 @@
 /* Display the exact dashboard projections returned by the Worker. */
 (function(g){'use strict';
+const fundamentalText = require('../fundamental-text.cjs');
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const number=v=>typeof v==='number'&&Number.isFinite(v)?v.toLocaleString('ja-JP',{maximumFractionDigits:2}):'未確定';
 const names={defensive:'守り',medium:'中間',return_priority:'利益優先'};
@@ -134,21 +135,6 @@ function matchingHistory(index, { symbol, from, through, order }) {
   if (order === 'oldest') matches.sort((left,right) => index.rows[left][0].localeCompare(index.rows[right][0]));
   if (order === 'symbol') matches.sort((left,right) => index.rows[left][1].localeCompare(index.rows[right][1]));
   return matches;
-}
-function fundamentalText({label,text}) {
-  const references = label === '開示リンク' || label === 'Sources';
-  return text.split(/\r\n?|\n/u).map(line => {
-    if (!references) return esc(line);
-    // The verified formatter emits one titled Markdown link per bullet.
-    const link = /^[ \t]*(?:・[ \t]*)?\[((?:\\[\[\]]|[^\\[\]]|\\(?![\[\]]))+)\]\((https:\/\/[^\s()<>\\\x00-\x1f\x7f]+)\)[ \t]*$/u.exec(line);
-    if (!link) return esc(line);
-    const title = link[1].replace(/\\([\[\]])/gu,'$1').trim();
-    if (!title || /^(?:https?:\/\/|www\.)/iu.test(title)) return esc(line);
-    let address;
-    try { address = new URL(link[2]); } catch { return esc(line); }
-    if (address.protocol !== 'https:' || !address.hostname || address.username || address.password) return esc(line);
-    return '・<a href="' + esc(address.href) + '" target="_blank" rel="noopener noreferrer">' + esc(title) + '</a>';
-  }).join('<br>');
 }
 function fundamentalImpactClass(fields) {
   const impact = fields.find(field => field?.label === '材料インパクト')?.text;

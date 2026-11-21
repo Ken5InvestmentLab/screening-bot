@@ -15,10 +15,6 @@ import { NEW_A_HOLDING_CRON, NEW_A_MORNING_CRON, runNewAOwnerNoticeQueue } from 
 export { CloudRoleAuthority } from "./cloud-role-authority";
 
 const MODE_PAGE_RE = /^\/weak_early_beta_(?:analytics|silence|dive|shadow|fusion|balance|guide)\.html$/;
-const OWNER_REFERENCE_DOCUMENTS = new Set([
-  '/', '/report', '/index.html', '/weak_early_beta_latest.html',
-  '/weak_early_beta_analytics.html', '/weak_early_beta_settings.html',
-]);
 const BETA_SCRIPT_RE = /^\/weak-early-beta-(?:interactions|theme-init|scenarios|push|service-worker)\.js$/;
 const BUNDLE_RE = /^\/weak_early_beta_data_(full|free)_(latest|analytics|silence|dive|shadow|fusion|balance|guide)_([a-f0-9]{16})_(\d{4})\.json$/;
 type SharedRequest = Parameters<typeof sharedGate.fetch>[0];
@@ -64,8 +60,8 @@ export default {
     // Existing ownerOnlyGate has already run. Reuse the existing fresh-role identity.
     // Preserve existing push-only script updates after the unchanged owner gate.
     if (isCompatibilityAsset(pathname)) return compatibilityCodeResponse(request, env);
-    const sharedOwnerView = env.CLOUD_MEMBER_VIEW_ENABLED === 'true'
-      && !OWNER_REFERENCE_DOCUMENTS.has(pathname) && isSharedOwnerPage(pathname);
+    const memberPagesConfigured = env.CLOUD_MEMBER_VIEW_ENABLED === 'true' || env.CLOUD_MEMBER_AUDIENCE === 'role_only';
+    const sharedOwnerView = memberPagesConfigured && isSharedOwnerPage(pathname);
     if (isNewAPath(pathname) || sharedOwnerView) {
       if (env.CLOUD_OWNER_ONLY_ENABLED?.trim().toLowerCase() !== "true") return protectedReply(request, 503, {error:"owner_mode_required"});
       const earlyRefusal = newAEarlyRefusal(request); if (earlyRefusal) return earlyRefusal;

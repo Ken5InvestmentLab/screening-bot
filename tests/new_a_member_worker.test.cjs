@@ -316,17 +316,16 @@ test('normal origin preserves the existing owner response and requires a matchin
   assert.equal((await f.call(history)).status, 401);
 });
 
-test('the shared URLs keep the verified owner calculation and the member raw-data boundary', async t => {
+test('the shared URLs use the Premium display for the owner and keep the raw-data boundary', async t => {
   const f = productionFixture(t);
   f.migrate();
   f.setPolicy('off');
   const ownerDoc = await f.call(documentPath, owner);
   assert.equal(ownerDoc.status, 200);
-  assert.equal(ownerDoc.headers.get('cache-control'), 'private, no-store, max-age=0');
+  assert.equal(ownerDoc.headers.get('cache-control'), 'private, no-store');
   const html = await ownerDoc.text();
-  assert.match(html, /owner-loader\.js/);
-  assert.match(html, /new-a-operating-level/);
-  assert.doesNotMatch(html, /new-a-owner-access-check|new-a-history-jump/);
+  assert.match(html, /data-cloud-mode="member"/);
+  assert.doesNotMatch(html, /owner-loader\.js|new-a-owner-access-check|new-a-history-jump/);
   assert.equal((await f.call('/new-a-assets/member-loader.js', owner)).status, 200);
   assert.equal((await f.call(sessionPath, owner)).status, 204);
   assert.equal((await f.call(history, owner)).status, 200);
@@ -336,20 +335,40 @@ test('the shared URLs keep the verified owner calculation and the member raw-dat
   assert.equal((await f.call('/api/cloud/new-a-finite/input/manifest.json', allowed)).status, 403);
 
   f.setPolicy('enabled');
-  const memberDoc = await (await f.call(documentPath, allowed)).text();
-  assert.match(memberDoc, /data-cloud-mode="member"/);
-  assert.doesNotMatch(memberDoc, /owner-loader\.js|new-a-owner-access-check|検出履歴へ/);
-  for (const route of ['/weak_early_beta_analytics.html', '/weak_early_beta_settings.html']) {
-    const [actual, other] = await Promise.all([f.call(route, owner), f.call(route, allowed)]);
-    assert.equal(actual.status, 200);
-    assert.equal(other.status, 200);
-    assert.match(await actual.text(), /owner-loader\.js/);
-    assert.match(await other.text(), /member-loader\.js/);
+  for (const route of ['/', '/report', '/index.html', documentPath,
+    '/weak_early_beta_analytics.html', '/weak_early_beta_settings.html']) {
+    const [ownerPage, memberPage] = await Promise.all([f.call(route, owner), f.call(route, allowed)]);
+    assert.equal(ownerPage.status, 200, route);
+    assert.equal(memberPage.status, 200, route);
+    const memberHtml = await memberPage.text();
+    assert.match(memberHtml, /member-loader\.js/);
+    assert.doesNotMatch(memberHtml, /owner-loader\.js|new-a-owner-access-check|検出履歴へ/);
+    assert.equal(await ownerPage.text(), memberHtml, route);
   }
-  const oldPage = await f.call('/weak_early_beta_analytics_free.html', owner);
-  assert.equal(oldPage.status, 302);
-  assert.equal(oldPage.headers.get('location'), '/weak_early_beta_analytics.html');
-  assert.equal((await f.call('/research-a', owner)).headers.get('location'), documentPath);
+  for (const route of [dashboard, history, '/api/cloud/new-a-view/analytics.json']) {
+    const [ownerData, memberData] = await Promise.all([f.call(route, owner), f.call(route, allowed)]);
+    assert.equal(ownerData.status, 200, route);
+    assert.equal(memberData.status, 200, route);
+    // Generation signatures are scoped to each logged-in account.
+    const { generation: ownerGeneration, ...ownerProjection } = await ownerData.json();
+    const { generation: memberGeneration, ...memberProjection } = await memberData.json();
+    if (ownerGeneration !== undefined || memberGeneration !== undefined)
+      assert.notEqual(ownerGeneration, memberGeneration, route);
+    assert.deepEqual(ownerProjection, memberProjection, route);
+  }
+  for (const [route, destination] of [
+    ['/research-a', documentPath],
+    ['/weak_early_beta_latest_free.html', documentPath],
+    ['/weak_early_beta_guide.html', documentPath],
+    ['/weak_early_beta_analytics_free.html', '/weak_early_beta_analytics.html'],
+  ]) {
+    const redirected = await f.call(route, owner);
+    assert.equal(redirected.status, 302, route);
+    assert.equal(redirected.headers.get('location'), destination);
+  }
+  const disabled = await f.call(documentPath, owner, { ...f.env, CLOUD_MEMBER_VIEW_ENABLED: 'false' });
+  assert.equal(disabled.status, 403);
+  assert.doesNotMatch(await disabled.text(), /owner-loader\.js/);
   assert.equal((await f.call('/research-a', allowed)).status, 403);
 
   f.revoke(owner);

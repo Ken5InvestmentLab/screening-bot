@@ -25,6 +25,7 @@ CLOUD_UI_REVIEW_SCHEMA = "NEW_A_MEMBER_CLOUD_UI_SUCCESSOR_SOURCE_REVIEW_V1"
 CLOUD_UI_POLISH_REVIEW_SCHEMA = "NEW_A_MEMBER_CLOUD_UI_POLISH_SUCCESSOR_SOURCE_REVIEW_V1"
 CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA = "NEW_A_MEMBER_CLOUD_OWNER_REFERENCE_SUCCESSOR_SOURCE_REVIEW_V1"
 FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_INLINE_LINKS_SUCCESSOR_SOURCE_REVIEW_V1"
+UNIFIED_MEMBER_UI_REVIEW_SCHEMA = "NEW_A_MEMBER_UNIFIED_UI_SUCCESSOR_SOURCE_REVIEW_V1"
 _PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumのアクセス権を購入する</a>'.encode()
 _NEW_PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumアクセス権を購入する</a>'.encode()
 _SUCCESSOR_REVIEW_PATHS = frozenset({
@@ -252,9 +253,13 @@ _FUNDAMENTAL_INLINE_LINKS_PRODUCT_PATHS = _FUNDAMENTAL_INLINE_LINKS_ADDITIONS | 
     "weak_early_beta/new_a/publisher.py",
 }
 _FUNDAMENTAL_INLINE_LINKS_PRODUCT_SHA256 = "19dfb11e8f65675fefa6292204b44d7e8f63aab6042bed01d71dcdafcfb45045"
+_UNIFIED_MEMBER_UI_BASELINE = "fca0cde2c46411e82a5f0d12064be19396c43432"
+_UNIFIED_MEMBER_UI_PRODUCT_PATHS = frozenset({ENTRY, "tests/new_a_member_worker.test.cjs", "weak-early-beta-gate/AGENTS.md"})
+_UNIFIED_MEMBER_UI_PRODUCT_SHA256 = "8b644e26f6109a99dc6334065fe054b3313aa6a24857b370825ed8bf2f773cfa"
+_UNIFIED_MEMBER_UI_ENTRY_SHA256 = "20b368723cae0de43ce19e4fda894c1e19a037e5d0537aaa520205ff42808d5f"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
     CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
-    FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA,
+    FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA, UNIFIED_MEMBER_UI_REVIEW_SCHEMA,
     ROLE_ONLY_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA, FUNDAMENTAL_POPUP_REVIEW_SCHEMA, FUNDAMENTAL_IMPACT_REVIEW_SCHEMA,
 })
 MEMBER_BINDING = {
@@ -348,7 +353,14 @@ def _check_role_only_successor(repo, candidate, paths):
 
 
 def _member_successor(repo, baseline, candidate):
-    if baseline == _FUNDAMENTAL_INLINE_LINKS_BASELINE:
+    if baseline == _UNIFIED_MEMBER_UI_BASELINE:
+        paths = _successor_paths(repo, baseline, candidate)
+        if paths != _UNIFIED_MEMBER_UI_PRODUCT_PATHS | _CLOUD_OWNER_REFERENCE_REVIEW_PATHS:
+            raise ValueError("Unified member UI successor differs from the reviewed scope")
+        if _product_digest(repo, candidate, _UNIFIED_MEMBER_UI_PRODUCT_PATHS) != _UNIFIED_MEMBER_UI_PRODUCT_SHA256:
+            raise ValueError("Unified member UI successor differs from the reviewed bytes")
+        schema = UNIFIED_MEMBER_UI_REVIEW_SCHEMA
+    elif baseline == _FUNDAMENTAL_INLINE_LINKS_BASELINE:
         paths = _successor_paths(repo, baseline, candidate, allowed_additions=_FUNDAMENTAL_INLINE_LINKS_ADDITIONS)
         if paths != _FUNDAMENTAL_INLINE_LINKS_PRODUCT_PATHS | _CLOUD_OWNER_REFERENCE_REVIEW_PATHS:
             raise ValueError("Fundamental link successor differs from the reviewed product and test scope")
@@ -453,7 +465,9 @@ def review_member_release_source(repo, baseline, candidate):
             baseline == _CLOUD_OWNER_REFERENCE_BASELINE
             and {name: hashlib.sha256(after[name]).hexdigest() for name in changed} == _CLOUD_OWNER_REFERENCE_AUTH_SHA256
         )
-        if changed and not (exact_shared_owner_entry or exact_owner_reference_auth):
+        exact_unified_member_ui_entry = (baseline == _UNIFIED_MEMBER_UI_BASELINE and changed == [ENTRY]
+                                         and hashlib.sha256(after[ENTRY]).hexdigest() == _UNIFIED_MEMBER_UI_ENTRY_SHA256)
+        if changed and not (exact_shared_owner_entry or exact_owner_reference_auth or exact_unified_member_ui_entry):
             raise ValueError("Member successor changes existing Discord or owner authorization source")
         expected_config = baseline_config_bytes
         if baseline == _ROLE_ONLY_BASELINE:
@@ -464,7 +478,7 @@ def review_member_release_source(repo, baseline, candidate):
             raise ValueError("Member successor changes the approved Worker configuration or member D1")
         if (baseline in {_JOURNAL_BASELINE, _FUNDAMENTAL_POPUP_BASELINE, _FUNDAMENTAL_IMPACT_BASELINE,
                          _CLOUD_UI_BASELINE, _CLOUD_UI_POLISH_BASELINE, _CLOUD_OWNER_REFERENCE_BASELINE,
-                         _FUNDAMENTAL_INLINE_LINKS_BASELINE}
+                         _FUNDAMENTAL_INLINE_LINKS_BASELINE, _UNIFIED_MEMBER_UI_BASELINE}
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "role_only"):
             raise ValueError("Version-bound member successor requires the existing role-only audience")
         return _member_successor(repo, baseline, candidate)

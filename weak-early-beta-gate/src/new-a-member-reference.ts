@@ -33,6 +33,38 @@ const dailyTable = '<table class="scenario-table" data-finite-table="daily">';
 const dailyBodyStart = '</thead><tbody>';
 const dailyBodyEnd = '</tbody></table></div></div><button id="new-a-daily-more"';
 const dailyTemplate = '<template id="new-a-reference-daily-values">';
+const equityChart = /<div class="cloud-chart" id="new-a-daily-chart"><svg class="scenario-chart cloud-equity-chart"[^>]*>[\s\S]*?<\/svg>/;
+const equityDates = /<text x="132" y="284" class="axis-label">(\d{4}-\d{2}-\d{2})<\/text><text x="826" y="284" text-anchor="end" class="axis-label">(\d{4}-\d{2}-\d{2})<\/text>(?=<\/svg>)/;
+const tradingDay = /^\d{4}-\d{2}-\d{2}$/;
+
+function withEquityDates(overview: string, dailyJson: string): string {
+  return overview.replace(equityChart, chart => {
+    const endpoints = equityDates.exec(chart);
+    if (!endpoints) return chart;
+    let daily;
+    try {
+      ({ daily } = JSON.parse(dailyJson));
+    } catch {
+      return chart;
+    }
+    if (!Array.isArray(daily)) return chart;
+    // The saved SVG spaces only the finite equity points. Use those same trading days.
+    const dates = daily.filter(row => Array.isArray(row) && Number.isFinite(row[3])).map(row => row[0]);
+    if (dates[0] !== endpoints[1] || dates.at(-1) !== endpoints[2]
+      || !dates.every((day, index) => typeof day === 'string' && tradingDay.test(day)
+        && (index === 0 || day > dates[index - 1]))) return chart;
+    const last = dates.length - 1;
+    const positions = new Set([0, 1, 2, 3, 4].map(quarter => Math.round(last * quarter / 4)));
+    const labels = Array.from(positions, index => {
+      const x = (132 + index / Math.max(1, last) * 694).toFixed(2);
+      return '<line x1="' + x + '" x2="' + x + '" y1="242" y2="248" stroke="var(--line)"/>'
+        + '<text x="' + x + '" y="284" text-anchor="middle" class="axis-label" data-equity-date'
+        + ' style="font-size:calc(clamp(16px,calc(34px - 1.4vw),27px) * var(--text-scale))">'
+        + dates[index] + '</text>';
+    }).join('');
+    return chart.replace(equityDates, labels);
+  });
+}
 
 export function parseMemberReferenceRequest(item: string): { item: string; view: ReferenceView } | null {
   const part = analyticsPart.exec(item);
@@ -52,7 +84,8 @@ export function memberReferenceMarkup(markup: string, view: ReferenceView): stri
   const hasDaily = end !== -1 && template >= end + dailyBodyEnd.length && markup.endsWith('</template>');
   if (!hasDaily) return view === 'overview' ? markup : null;
   if (view === 'daily') return markup.slice(template);
-  return markup.slice(0, start + dailyBodyStart.length) + markup.slice(end, template);
+  const overview = markup.slice(0, start + dailyBodyStart.length) + markup.slice(end, template);
+  return withEquityDates(overview, markup.slice(template + dailyTemplate.length, -'</template>'.length));
 }
 
 function identity(source: ReadyPointer) {

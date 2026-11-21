@@ -14,6 +14,7 @@ const referenceModule = { exports: {} };
 vm.runInNewContext(transpile('new-a-member-reference.ts'), {
   module: referenceModule, exports: referenceModule.exports, TextEncoder,
 });
+const { analyticsReferenceMarkup } = require(path.join(gate, 'scripts/new-a-ui-source/reference-analytics.cjs'));
 const projectionModule = { exports: {} };
 vm.runInNewContext(transpile('new-a-member-projection.ts'), {
   module: projectionModule, exports: projectionModule.exports, TextEncoder,
@@ -38,6 +39,36 @@ const { memberServices } = servicesModule.exports;
 const subject = '123456789012345678';
 const day = '2026-11-19';
 const origin = 'https://example.invalid/api/cloud/new-a-view/';
+
+test('analytics overview labels the plotted trading days at quarters without loading the daily table', () => {
+  const { memberReferenceMarkup } = referenceModule.exports;
+  const days = ['2023-01-04', '2023-12-29', '2024-01-04', '2024-12-30', '2025-12-30', '2026-11-19'];
+  const finite = {
+    number: String, esc: String, TRIAL_PRESETS: {},
+    render: () => '<div class="cloud-chart" id="new-a-daily-chart"></div><div id="new-a-daily-table"></div>'
+      + '<button id="new-a-daily-more"></button><section class="panel" aria-labelledby="analytics-export">',
+    table: () => '<div class="table-wrap"><table class="scenario-table" data-finite-table="daily">'
+      + '<thead></thead><tbody><tr><td>Saved row</td></tr></tbody></table></div>',
+  };
+  const markupFor = selected => analyticsReferenceMarkup({ result: {
+    resolved: true, metrics: {},
+    daily: selected.map((date, index) => ({ date, equity_diagnostic: date === days[2] ? null : 100 + index })),
+  } }, finite);
+  const labels = markup => Array.from(markup.matchAll(/<text x="([^"]+)"[^>]* data-equity-date[^>]*>([^<]+)<\/text>/g),
+    match => [match[1], match[2]]);
+  const full = markupFor(days);
+  const overview = memberReferenceMarkup(full, 'overview');
+  assert.deepEqual(labels(overview), [
+    ['132.00', days[0]], ['305.50', days[1]], ['479.00', days[3]], ['652.50', days[4]], ['826.00', days[5]],
+  ]);
+  assert.equal(overview.match(/<path class="equity-line"[^>]+>/)[0], full.match(/<path class="equity-line"[^>]+>/)[0]);
+  assert.doesNotMatch(overview, /new-a-reference-daily-values|Saved row/);
+  assert.match(memberReferenceMarkup(full, 'daily'), /^<template id="new-a-reference-daily-values">/);
+  assert.deepEqual(labels(memberReferenceMarkup(markupFor(days.slice(0, 1)), 'overview')), [['132.00', days[0]]]);
+  assert.deepEqual(labels(memberReferenceMarkup(markupFor(days.slice(0, 2)), 'overview')),
+    [['132.00', days[0]], ['826.00', days[1]]]);
+});
+
 function servicesFixture() {
   const source = {
     status: 'READY',

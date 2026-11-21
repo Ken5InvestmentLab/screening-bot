@@ -333,6 +333,8 @@ _FREE_COMPLETED_ANALYTICS_PRODUCT_PATHS = _MEMBER_DASHBOARD_PATHS | {
     "weak-early-beta-gate/AGENTS.md",
     "weak-early-beta-gate/src/new-a-role-facade.ts",
     "weak-early-beta-gate/src/new-a-member-services.ts",
+    "weak-early-beta-gate/src/new-a-member-storage.ts",
+    "weak-early-beta-gate/src/new-a-role-integration.ts",
     "weak-early-beta-gate/src/new-a-member-reference.ts",
     "weak-early-beta-gate/scripts/new-a-ui-source/assets/reference-analytics.js",
     "weak-early-beta-gate/scripts/new-a-ui-source/assets/member-settings.js",
@@ -342,12 +344,13 @@ _FREE_COMPLETED_ANALYTICS_PRODUCT_PATHS = _MEMBER_DASHBOARD_PATHS | {
     "tests/cloud_bundle_sync.test.cjs",
     "tests/cloud_release_config.test.cjs",
     "tests/new_a_member_consistency.test.cjs",
+    "tests/new_a_member_storage.test.cjs",
     "tests/new_a_member_worker.test.cjs",
     "tests/new_a_role_facade_candidate.test.cjs",
     "tests/new_a_role_settings_candidate.test.cjs",
     "tests/new_a_analytics_presets.test.cjs",
 }
-_FREE_COMPLETED_ANALYTICS_PRODUCT_SHA256 = "b89b9693f2f8f5592a92d04565caa2f57ddbc75fe6b3d70b5790268ce1191335"
+_FREE_COMPLETED_ANALYTICS_PRODUCT_SHA256 = "0d7bb3d19dcc41f06d0f2c0dff9797607f8690cad188a9cbac706c3096ef7d74"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
     CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
     FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA, UNIFIED_MEMBER_UI_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA,

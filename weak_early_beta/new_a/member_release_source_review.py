@@ -27,6 +27,7 @@ CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA = "NEW_A_MEMBER_CLOUD_OWNER_REFERENCE_SUCCES
 FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_INLINE_LINKS_SUCCESSOR_SOURCE_REVIEW_V1"
 UNIFIED_MEMBER_UI_REVIEW_SCHEMA = "NEW_A_MEMBER_UNIFIED_UI_SUCCESSOR_SOURCE_REVIEW_V1"
 LOADING_AND_ZERO_REVIEW_SCHEMA = "NEW_A_MEMBER_LOADING_AND_ZERO_SUCCESSOR_SOURCE_REVIEW_V1"
+SHARED_DEFAULTS_REVIEW_SCHEMA = "NEW_A_MEMBER_SHARED_DEFAULTS_SUCCESSOR_SOURCE_REVIEW_V1"
 _PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumのアクセス権を購入する</a>'.encode()
 _NEW_PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumアクセス権を購入する</a>'.encode()
 _SUCCESSOR_REVIEW_PATHS = frozenset({
@@ -272,9 +273,31 @@ _LOADING_AND_ZERO_PRODUCT_PATHS = frozenset({
     "weak-early-beta-gate/src/new-a-member-services.ts",
 })
 _LOADING_AND_ZERO_PRODUCT_SHA256 = "0a8c28e426a5f20324ae7daf8de4e6ab8757569c0aa54139dffae2076fd9ef42"
+_SHARED_DEFAULTS_BASELINE = "7c05fb73f3169822746fbc39a27e987393d4927e"
+_SHARED_DEFAULTS_PRODUCT_PATHS = frozenset({
+    "tests/cloud_bundle_sync.test.cjs",
+    "tests/new_a_member_consistency.test.cjs",
+    "tests/new_a_member_worker.test.cjs",
+    "tests/new_a_role_settings_candidate.test.cjs",
+    "tests/test_new_a_member_publisher.py",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/member-loader.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/member-settings.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/frame.html",
+    "weak-early-beta-gate/scripts/new-a-ui-source/guide-body.html",
+    "weak-early-beta-gate/scripts/prepare-new-a-member-projection.cjs",
+    "weak-early-beta-gate/scripts/prepare-new-a-reference-view.cjs",
+    "weak-early-beta-gate/src/new-a-member-projection.ts",
+    "weak-early-beta-gate/src/new-a-member-reference.ts",
+    "weak-early-beta-gate/src/new-a-member-services.ts",
+    "weak-early-beta-gate/src/new-a-member-storage.ts",
+    "weak-early-beta-gate/src/new-a-preferences.ts",
+    "weak_early_beta/new_a/member_reference_publication.py",
+})
+_SHARED_DEFAULTS_PRODUCT_SHA256 = "56a2afd61748ca780cb8e52342cb0250df862cb564b22e2cee8715117f18e603"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
     CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
     FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA, UNIFIED_MEMBER_UI_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA,
+    SHARED_DEFAULTS_REVIEW_SCHEMA,
     ROLE_ONLY_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA, FUNDAMENTAL_POPUP_REVIEW_SCHEMA, FUNDAMENTAL_IMPACT_REVIEW_SCHEMA,
 })
 MEMBER_BINDING = {
@@ -368,7 +391,14 @@ def _check_role_only_successor(repo, candidate, paths):
 
 
 def _member_successor(repo, baseline, candidate):
-    if baseline == _LOADING_AND_ZERO_BASELINE:
+    if baseline == _SHARED_DEFAULTS_BASELINE:
+        paths = _successor_paths(repo, baseline, candidate)
+        if paths != _SHARED_DEFAULTS_PRODUCT_PATHS | _CLOUD_OWNER_REFERENCE_REVIEW_PATHS:
+            raise ValueError("Shared Cloud defaults successor differs from the reviewed scope")
+        if _product_digest(repo, candidate, _SHARED_DEFAULTS_PRODUCT_PATHS) != _SHARED_DEFAULTS_PRODUCT_SHA256:
+            raise ValueError("Shared Cloud defaults successor differs from the reviewed bytes")
+        schema = SHARED_DEFAULTS_REVIEW_SCHEMA
+    elif baseline == _LOADING_AND_ZERO_BASELINE:
         paths = _successor_paths(repo, baseline, candidate)
         if paths != _LOADING_AND_ZERO_PRODUCT_PATHS | _CLOUD_OWNER_REFERENCE_REVIEW_PATHS:
             raise ValueError("Cloud loading and zero-line successor differs from the reviewed scope")
@@ -500,7 +530,8 @@ def review_member_release_source(repo, baseline, candidate):
             raise ValueError("Member successor changes the approved Worker configuration or member D1")
         if (baseline in {_JOURNAL_BASELINE, _FUNDAMENTAL_POPUP_BASELINE, _FUNDAMENTAL_IMPACT_BASELINE,
                          _CLOUD_UI_BASELINE, _CLOUD_UI_POLISH_BASELINE, _CLOUD_OWNER_REFERENCE_BASELINE,
-                         _FUNDAMENTAL_INLINE_LINKS_BASELINE, _UNIFIED_MEMBER_UI_BASELINE, _LOADING_AND_ZERO_BASELINE}
+                         _FUNDAMENTAL_INLINE_LINKS_BASELINE, _UNIFIED_MEMBER_UI_BASELINE, _LOADING_AND_ZERO_BASELINE,
+                         _SHARED_DEFAULTS_BASELINE}
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "role_only"):
             raise ValueError("Version-bound member successor requires the existing role-only audience")
         return _member_successor(repo, baseline, candidate)

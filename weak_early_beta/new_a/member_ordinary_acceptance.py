@@ -56,6 +56,9 @@ DECISION = "CONTINUING_DAILY_WITH_DORMANT_DESIGNATED_MEMBER_VIEW"
 ORDINARY_DECISION = "CONTINUING_DAILY_WITH_NONOWNER_UNMEASURED"
 ROUTE = "/api/cloud/new-a-view/history.json"
 MAX_OBSERVATION_AGE = datetime.timedelta(minutes=15)
+# This is the number of consecutive restorations since the last accepted
+# application, not a limit on the ordinary acceptance history.
+MAX_CONSECUTIVE_RESTORATIONS = 8
 SHA = re.compile(r"[a-f0-9]{64}")
 VERSION = re.compile(r"[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}")
 RELEASE_KEYS = ("version_id", "build_input_sha256", "policy_sha256", "ci_run_id", "tag")
@@ -136,15 +139,43 @@ def _header(operating_repo, candidate_repo, plan):
     return repo, baseline, old, source_review, predecessor_deployment
 
 
+def _restoration_sequence(value):
+    if isinstance(value, list):
+        ca.require(2 <= len(value) <= MAX_CONSECUTIVE_RESTORATIONS, "restoration chain length differs")
+        return value
+    return [value]
+
+
+def _read_restoration(repo, reference):
+    records = [read_restored_release(repo, item) for item in _restoration_sequence(reference)]
+    return records if isinstance(reference, list) else records[0]
+
+
+def _restoration_reference(restoration):
+    refs = [item["reference"] for item in _restoration_sequence(restoration)]
+    return refs if isinstance(restoration, list) else refs[0]
+
+
 def _restored_predecessor(restoration, baseline, prior_acceptance, old_deployment):
     if restoration is None:
         return None
-    old, restored, admitted_at = verify_restored_release(restoration)
-    ca.require(old_deployment is not None
-               and all(old[key] == old_deployment[key] for key in ("source_commit", "target", "deployment_id", *RELEASE_KEYS))
-               and old["activation_sha256"] == baseline["activation_sha256"]
-               and old["acceptance_sha256"] == prior_acceptance["sha256"],
-               "restoration does not match the archived ordinary predecessor")
+    restored, admitted_at = None, None
+    deployment_ids = set()
+    for proof in _restoration_sequence(restoration):
+        old, next_pair, next_admitted = verify_restored_release(proof)
+        if restored is None:
+            ca.require(old_deployment is not None
+                       and all(old[key] == old_deployment[key] for key in
+                               ("source_commit", "target", "deployment_id", *RELEASE_KEYS))
+                       and old["activation_sha256"] == baseline["activation_sha256"]
+                       and old["acceptance_sha256"] == prior_acceptance["sha256"],
+                       "restoration does not match the archived ordinary predecessor")
+            deployment_ids.add(old["deployment_id"])
+        else:
+            ca.require(old == restored and admitted_at < next_admitted, "consecutive restoration pairs differ")
+        ca.require(next_pair["deployment_id"] not in deployment_ids, "restoration deployment was repeated")
+        deployment_ids.add(next_pair["deployment_id"])
+        restored, admitted_at = next_pair, next_admitted
     return restored["deployment_id"], admitted_at
 
 
@@ -278,7 +309,7 @@ def _prepare(operating_repo, candidate_repo, plan, *, primary_reader, ordinary_d
              role_decision_reader, measurement_reader, raw_reader, authority, room_transfer_reader=None,
              ci_reader, deployment_reader, member_policy_reader):
     repo, baseline, old, source_review, predecessor_deployment = _header(operating_repo, candidate_repo, plan)
-    restoration = (read_restored_release(operating_repo, plan["prior_release_restoration"])
+    restoration = (_read_restoration(operating_repo, plan["prior_release_restoration"])
                    if "prior_release_restoration" in plan else None)
     restored = _restored_predecessor(restoration, baseline, plan["prior_acceptance"], predecessor_deployment)
     owner = ca.primary_message(plan["owner_message"], primary_reader, authority)
@@ -308,7 +339,7 @@ def _prepare(operating_repo, candidate_repo, plan, *, primary_reader, ordinary_d
     ca.require(all(review.get(key, object()) == value for key, value in expected.items()),
                "member role review does not bind the exact predecessor, deployment and OFF policy")
     ca.require(_header(operating_repo, repo, plan)[1] == baseline
-               and (restoration is None or read_restored_release(operating_repo, restoration["reference"]) == restoration),
+               and (restoration is None or _read_restoration(operating_repo, _restoration_reference(restoration)) == restoration),
                "operating ordinary predecessor changed during observation")
     return owner, ordinary_review, measurements, dict(review=review, source_review=source_review,
         predecessor=baseline, ci=ci, deployment=deployment, member_policy=policy, http_observations=raw,
@@ -399,7 +430,7 @@ def verify_application(repo, record, grant, current_path, folder, completed, cla
         "expected_activation_sha256": grant["expected_activation_sha256"],
         "management_not_after": review["management_not_after"],
         "predecessor_member_policy": incumbent,
-        **({"prior_release_restoration": restoration["reference"]} if restoration is not None else {}),
+        **({"prior_release_restoration": _restoration_reference(restoration)} if restoration is not None else {}),
     }, old, source_review, pins, row, room)
     ca.require(all(review.get(key, object()) == value for key, value in expected.items())
                and applied_at <= ca.timestamp(review["management_not_after"])
@@ -514,7 +545,9 @@ def apply(operating_repo, candidate_repo, plan, issued, *, preflight, arbitratio
         completed = dict(schema=APPLICATION_SCHEMA, **claim, acceptance=issued["acceptance"],
                          previous_acceptance=plan["prior_acceptance"], source_commit=record["source_commit"],
                          applied_at=ca.now().isoformat(), same_operation_replay=False)
-        verify_application(repo, record, grant, pending, folder, completed, claim, set())
+        # The pending application is the first link during post-write
+        # validation. Reserve that exact link before replacing activation.
+        verify_application(repo, record, grant, pending, folder, completed, claim, {issued["acceptance"]["sha256"]})
         ca.require(within_grant() and ca.validate_record(repo, issued["acceptance"]) == record
                    and config.read_bytes() == config_bytes and file_sha(activation) == expected_sha
                    and transition.ordinary_runtime_release(previous_repo) == audit["predecessor"]
@@ -529,7 +562,7 @@ def apply(operating_repo, candidate_repo, plan, issued, *, preflight, arbitratio
             handover = (predecessor_deployment, audit["predecessor_member_policy"])
             restoration = audit.get("prior_release_restoration")
             if restoration is not None:
-                ca.require(read_restored_release(previous_repo, restoration["reference"]) == restoration,
+                ca.require(_read_restoration(previous_repo, _restoration_reference(restoration)) == restoration,
                            "restored ordinary predecessor changed before apply")
                 restored = _restored_predecessor(restoration, audit["predecessor"], plan["prior_acceptance"],
                                                  predecessor_deployment)

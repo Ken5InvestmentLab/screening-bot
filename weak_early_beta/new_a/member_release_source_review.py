@@ -319,6 +319,11 @@ _FIXED_TRIAL_FEE_PRODUCT_PATHS = _ENTRY_NOTICE_PRODUCT_PATHS | {
     "weak_early_beta/new_a/release_maintenance.py",
 }
 _FIXED_TRIAL_FEE_PRODUCT_SHA256 = "8abcbd6154c76dcd8d34fb683a1aec67d8aa0fcb2bb24105bfde8dd6c2a0d443"
+_FIXED_TRIAL_FEE_AUDIT_REPAIR_PATHS = _FIXED_TRIAL_FEE_PRODUCT_PATHS | {
+    "tests/test_new_a_continuing_acceptance.py",
+    "weak_early_beta/new_a/continuing_acceptance.py",
+}
+_FIXED_TRIAL_FEE_AUDIT_REPAIR_SHA256 = "3670ea456b0a53c4a9c5d2c9f76844ae4d9d4427e9cba411371ec02dad4bea93"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
     CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
     FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA, UNIFIED_MEMBER_UI_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA,
@@ -425,6 +430,10 @@ def _member_successor(repo, baseline, candidate):
         elif paths == _FIXED_TRIAL_FEE_PRODUCT_PATHS | _CLOUD_OWNER_REFERENCE_REVIEW_PATHS:
             if _product_digest(repo, candidate, _FIXED_TRIAL_FEE_PRODUCT_PATHS) != _FIXED_TRIAL_FEE_PRODUCT_SHA256:
                 raise ValueError("Fixed Cloud trial fee successor differs from the reviewed bytes")
+            schema = FIXED_TRIAL_FEE_REVIEW_SCHEMA
+        elif paths == _FIXED_TRIAL_FEE_AUDIT_REPAIR_PATHS | _CLOUD_OWNER_REFERENCE_REVIEW_PATHS:
+            if _product_digest(repo, candidate, _FIXED_TRIAL_FEE_AUDIT_REPAIR_PATHS) != _FIXED_TRIAL_FEE_AUDIT_REPAIR_SHA256:
+                raise ValueError("Fixed Cloud trial fee acceptance audit repair differs from the reviewed bytes")
             schema = FIXED_TRIAL_FEE_REVIEW_SCHEMA
         else:
             raise ValueError("Cloud entry notice or fixed trial fee successor differs from the reviewed scope")

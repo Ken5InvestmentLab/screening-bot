@@ -266,4 +266,39 @@ class ContinuingAcceptance(unittest.TestCase):
   previous,before,issued=self.upgrade_candidate();ca.apply(self.repo,issued,preflight=self.ready,previous_acceptance=previous);oldpath,_=ca.load_reference(self.repo,previous,'records');ca.immutable(ca.root(self.repo)/'revocations'/(oldpath.stem+'.json'),dict(synthetic=True))
   with self.assertRaisesRegex(ValueError,'revoked'):validate_activation(read(self.activation),self.repo)
 
+ def test_valid_long_audit_checks_root_and_reserves_next_acceptance_before_apply(self):
+  first_source=self.source
+  first=self.issue()
+  self.apply(first)
+  previous=first['acceptance']
+
+  def issue_next(step):
+   self.source=f'{step:040x}'
+   self.plan.update(source_commit=self.source,expected_activation_sha256=file_sha(self.activation))
+   for measurement in self.measurements.values():
+    measurement['source_commit']=self.source
+   self.plan['measurements']={kind:dict(id=kind,sha256=digest(value)) for kind,value in self.measurements.items()}
+   self.review=self.review_for(self.binding,'CONTINUING_DAILY_WITH_NONOWNER_UNMEASURED')
+   return self.issue()
+
+  for step in range(1,17):
+   issued=issue_next(step)
+   ca.apply(self.repo,issued,preflight=self.ready,previous_acceptance=previous)
+   previous=issued['acceptance']
+  active=read(self.activation)['owner_acceptance']
+  with patch.object(ca,'MAX_ACCEPTANCE_AUDIT_DEPTH',17):
+   self.assertEqual(ca.validate_evidence(active,self.repo)['source_commit'],self.source)
+   self.assertRaisesRegex(ValueError,'audit chain cycle',ca.validate_evidence,active,self.repo,
+                          _seen={previous['sha256']})
+   before=self.activation.read_bytes()
+   pending=issue_next(17)
+   self.assertRaisesRegex(ValueError,'audit chain depth limit',ca.apply,self.repo,pending,
+                          preflight=self.ready,previous_acceptance=previous)
+   self.assertEqual(self.activation.read_bytes(),before)
+  self.source=f'{16:040x}'
+  revoke=self.revocation_binding()
+  ca.revoke(self.repo,first['acceptance'],revoke,primary_reader=lambda _:self.primary,
+            decision_reader=lambda _:{**self.review,'source_commit':first_source},authority=self.authority)
+  self.assertRaisesRegex(ValueError,'revoked',ca.validate_evidence,active,self.repo)
+
 if __name__=='__main__':unittest.main()

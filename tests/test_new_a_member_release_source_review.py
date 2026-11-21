@@ -452,12 +452,13 @@ class PresentationSuccessorReviewTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "approved Worker configuration"):
                 review.review_member_release_source(self.repo, baseline, changed)
 
-    def test_entry_notice_and_fixed_trial_fee_are_distinct_exact_successors(self):
+    def test_entry_notice_fixed_trial_fee_and_audit_repair_are_distinct_exact_successors(self):
         self.config["vars"]["CLOUD_MEMBER_AUDIENCE"] = "role_only"
         self.write(review.CONFIG, json.dumps(self.config).encode())
         notice_paths = review._ENTRY_NOTICE_PRODUCT_PATHS | review._CLOUD_OWNER_REFERENCE_REVIEW_PATHS
         combined_paths = review._FIXED_TRIAL_FEE_PRODUCT_PATHS | review._CLOUD_OWNER_REFERENCE_REVIEW_PATHS
-        for path in sorted(combined_paths):
+        repair_paths = review._FIXED_TRIAL_FEE_AUDIT_REPAIR_PATHS | review._CLOUD_OWNER_REFERENCE_REVIEW_PATHS
+        for path in sorted(repair_paths):
             self.write(path, b"predecessor " + path.encode())
         baseline = self.commit("Accepted shared Cloud defaults")
 
@@ -471,9 +472,15 @@ class PresentationSuccessorReviewTest(unittest.TestCase):
         combined = self.commit("Reviewed combined fixed trial fee")
         combined_digest = review._product_digest(self.repo, combined, review._FIXED_TRIAL_FEE_PRODUCT_PATHS)
 
+        for path in sorted(repair_paths - combined_paths):
+            self.write(path, b"acceptance audit repair " + path.encode())
+        repair = self.commit("Reviewed acceptance audit repair")
+        repair_digest = review._product_digest(self.repo, repair, review._FIXED_TRIAL_FEE_AUDIT_REPAIR_PATHS)
+
         with (patch.object(review, "_ENTRY_NOTICE_BASELINE", baseline),
               patch.object(review, "_ENTRY_NOTICE_PRODUCT_SHA256", notice_digest),
-              patch.object(review, "_FIXED_TRIAL_FEE_PRODUCT_SHA256", combined_digest)):
+              patch.object(review, "_FIXED_TRIAL_FEE_PRODUCT_SHA256", combined_digest),
+              patch.object(review, "_FIXED_TRIAL_FEE_AUDIT_REPAIR_SHA256", repair_digest)):
             self.assertEqual(review.review_member_release_source(self.repo, baseline, notice)["schema"],
                              review.ENTRY_NOTICE_REVIEW_SCHEMA)
             result = review.review_member_release_source(self.repo, baseline, combined)
@@ -481,6 +488,17 @@ class PresentationSuccessorReviewTest(unittest.TestCase):
             self.assertEqual(result["member_audience"], "role_only")
             self.assertTrue(result["owner_only_gate_preserved"])
 
+            repaired = review.review_member_release_source(self.repo, baseline, repair)
+            self.assertEqual(repaired["schema"], review.FIXED_TRIAL_FEE_REVIEW_SCHEMA)
+            self.assertEqual(repaired["member_audience"], "role_only")
+            self.assertTrue(repaired["owner_only_gate_preserved"])
+
+            self.write("weak_early_beta/new_a/continuing_acceptance.py", b"unreviewed acceptance audit")
+            changed = self.commit("Unreviewed acceptance audit")
+            with self.assertRaisesRegex(ValueError, "acceptance audit repair differs from the reviewed bytes"):
+                review.review_member_release_source(self.repo, baseline, changed)
+
+            self.git("reset", "--hard", combined)
             self.write("weak_early_beta/new_a/release_maintenance.py", b"unreviewed rollback handling")
             changed = self.commit("Unreviewed rollback behavior")
             with self.assertRaisesRegex(ValueError, "Fixed Cloud trial fee successor differs from the reviewed bytes"):

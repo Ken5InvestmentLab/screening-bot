@@ -431,7 +431,8 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
         archived = old_audit.read_bytes()
         deployment = read(old_audit)["deployment"]
         original_id = deployment["deployment_id"]
-        restored_id = "00000000-0000-4000-9000-000000000190"
+        first_restored_id = "00000000-0000-4000-9000-000000000190"
+        restored_id = "00000000-0000-4000-9000-000000000191"
         pair = {
             **{key: prior[key] for key in ("source_commit", "activation_sha256", *member.RELEASE_KEYS)},
             "schema": "NEW_A_HOST_OBSERVED_RELEASE_PAIR_V1", "repository": str(self.operating),
@@ -440,40 +441,52 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
             "acceptance_sha256": self.plan["prior_acceptance"]["sha256"], "deployment_id": original_id,
             "target": self.target, "provider_sha256": "7" * 64,
         }
-        failed_source = "d" * 40
         readers = self.readers()
         as_of = self.now - datetime.timedelta(seconds=35)
-        with patch.object(ca, "now", return_value=as_of):
-            boundary = dict(pair_reader=lambda _: {**pair, "observed_at": ca.now().isoformat()},
-                            idle_reader=lambda _: True)
-            held = release_maintenance.begin_release(
-                self.operating, failed_source, not_after=(as_of + datetime.timedelta(minutes=10)).isoformat(),
-                owner_message=self.plan["owner_message"], primary_reader=readers["primary_reader"],
-                owner_authority=readers["authority"], **boundary,
-                decision_reader=lambda _, intent: {"schema": "NEW_A_HOST_RELEASE_MAINTENANCE_REVIEW_V1",
-                    "operation_sha256": digest(intent), "authorized": True, "platform_signature_claimed": False},
-            )
-            operation = held["operation_sha256"]
-            release_maintenance.admit_release(self.operating, operation, **boundary)
-            pair["deployment_id"] = restored_id
-            release_maintenance.finish_release(
-                self.operating, operation, **boundary,
-                terminal_reader=lambda identifier, restored: {"schema": "NEW_A_HOST_RELEASE_TERMINAL_V1",
-                    "operation_sha256": identifier, "outcome": "old-restored", "synthetic": False,
-                    "platform_signature_claimed": False, "observed_pair_sha256": digest(restored),
-                    "raw_receipt_sha256": "8" * 64},
-            )
-        receipt = private_root(self.operating) / "release-maintenance" / operation / "released.json"
+
+        def restore(failed_source, next_id, observed_at):
+            with patch.object(ca, "now", return_value=observed_at):
+                boundary = dict(pair_reader=lambda _: {**pair, "observed_at": ca.now().isoformat()},
+                                idle_reader=lambda _: True)
+                held = release_maintenance.begin_release(
+                    self.operating, failed_source, not_after=(observed_at + datetime.timedelta(minutes=10)).isoformat(),
+                    owner_message=self.plan["owner_message"], primary_reader=readers["primary_reader"],
+                    owner_authority=readers["authority"], **boundary,
+                    decision_reader=lambda _, intent: {"schema": "NEW_A_HOST_RELEASE_MAINTENANCE_REVIEW_V1",
+                        "operation_sha256": digest(intent), "authorized": True, "platform_signature_claimed": False},
+                )
+                operation = held["operation_sha256"]
+                release_maintenance.admit_release(self.operating, operation, **boundary)
+                pair["deployment_id"] = next_id
+                release_maintenance.finish_release(
+                    self.operating, operation, **boundary,
+                    terminal_reader=lambda identifier, restored: {"schema": "NEW_A_HOST_RELEASE_TERMINAL_V1",
+                        "operation_sha256": identifier, "outcome": "old-restored", "synthetic": False,
+                        "platform_signature_claimed": False, "observed_pair_sha256": digest(restored),
+                        "raw_receipt_sha256": "8" * 64},
+                )
+            receipt = private_root(self.operating) / "release-maintenance" / operation / "released.json"
+            return receipt, {"operation_sha256": operation, "released_sha256": file_sha(receipt)}
+
+        first_receipt, first_ref = restore("d" * 40, first_restored_id, as_of)
+        second_at = as_of + datetime.timedelta(seconds=2)
+        second_receipt, second_ref = restore("e" * 40, restored_id, second_at)
         original_policy = self.plan["predecessor_member_policy"].copy()
         self.plan["predecessor_member_policy"]["deployment_id"] = restored_id
         with self.assertRaisesRegex(ValueError, "exact primary incumbent"):
             member.prepare(self.operating, self.repo, self.plan, **readers)
-        self.plan["prior_release_restoration"] = {"operation_sha256": operation, "released_sha256": file_sha(receipt)}
+        self.plan["prior_release_restoration"] = [first_ref, second_ref]
+        for invalid, message in ((second_ref, "archived ordinary predecessor"),
+                                 ([second_ref, first_ref], "archived ordinary predecessor"),
+                                 ([first_ref, first_ref], "consecutive restoration pairs"),
+                                 ([first_ref] * 9, "restoration chain length")):
+            with self.subTest(invalid=invalid), self.assertRaisesRegex(ValueError, message):
+                member.prepare(self.operating, self.repo, {**self.plan, "prior_release_restoration": invalid}, **readers)
         altered = {**self.plan, "predecessor_member_policy": original_policy}
         with self.assertRaisesRegex(ValueError, "exact primary incumbent"):
             member.prepare(self.operating, self.repo, altered, **readers)
         stale = {**self.plan, "predecessor_member_policy": {**self.plan["predecessor_member_policy"],
-            "observed_at": (as_of - datetime.timedelta(seconds=1)).isoformat()}}
+            "observed_at": (second_at - datetime.timedelta(seconds=1)).isoformat()}}
         with self.assertRaisesRegex(ValueError, "successor deployment or incumbent observation differs"):
             member.prepare(self.operating, self.repo, stale, **readers)
         self.role_review.update(member._review(self.plan, self.old, self.source_review,
@@ -481,7 +494,8 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
         result = self.apply(self.issue())
         self.assertEqual(old_audit.read_bytes(), archived)
         self.assertEqual(transition.ordinary_runtime_release(self.operating), prior)
-        receipt.unlink()
+        first_receipt.unlink()
+        second_receipt.unlink()
         self.assertEqual(transition.ordinary_runtime_release(self.repo)["activation_sha256"], result["after_sha256"])
 
     def test_fundamental_impact_successor_preserves_the_accepted_popup_and_access_policy(self):

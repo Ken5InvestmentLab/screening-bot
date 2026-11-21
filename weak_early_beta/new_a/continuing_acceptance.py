@@ -19,6 +19,10 @@ STABLE_DECISION = 'CONTINUE_UNTIL_REVOKED_OR_BOUND_EXECUTION_CHANGED'
 STABLE_REVIEW = 'CONTINUING_DAILY_WITH_STABLE_EXECUTION_IDENTITY_NONOWNER_UNMEASURED'
 TRANSITION_APPLICATION_SCHEMA = 'NEW_A_CONTINUING_TRANSITION_APPLICATION_V1'
 MEMBER_ORDINARY_APPLICATION_SCHEMA = 'NEW_A_MEMBER_ORDINARY_APPLICATION_V1'
+# A member application adds two recursive frames per historical link. Keep
+# the local verifier comfortably below Python's default stack limit while
+# revalidating every retained acceptance and revocation through the root.
+MAX_ACCEPTANCE_AUDIT_DEPTH = 128
 SCOPE = 'EXISTING_NEW_A_PERSONAL_PC_DAILY_V1'
 SERVICE = 'tentei-kyokuchi-cloud'
 AUTH_FILES = frozenset(['report-gate/src/index.ts', *[
@@ -217,8 +221,10 @@ def validate_evidence(evidence, repo, *, _activation_path=None, _historical_sour
     require(all(evidence.get(k) is True for k in ['actual_owner_allowed', 'anonymous_denied', 'private_direct_paths_denied', 'existing_auth_unchanged']), 'other owner acceptance incomplete')
     require(evidence.get('nonowner_denied') is False and evidence.get('authenticated_nonowner_observed') is False, 'unmeasured nonowner must remain false')
     _seen=set() if _seen is None else set(_seen)
-    require(evidence['continuing_acceptance']['sha256'] not in _seen and len(_seen)<16, 'acceptance audit chain cycle or depth')
-    _seen.add(evidence['continuing_acceptance']['sha256'])
+    acceptance_sha = evidence['continuing_acceptance']['sha256']
+    require(acceptance_sha not in _seen, 'acceptance audit chain cycle')
+    require(len(_seen) < MAX_ACCEPTANCE_AUDIT_DEPTH, 'acceptance audit chain depth limit exceeded')
+    _seen.add(acceptance_sha)
     record = validate_record(repo, evidence['continuing_acceptance'], _historical_source=_historical_source,
                              _historical_git_sources=_historical_git_sources,
                              dependency_reader=dependency_reader, worker_reader=worker_reader)
@@ -307,7 +313,8 @@ def apply(repo, issued, *, preflight, previous_acceptance=None, arbitration_owne
         else:
             require(current.get('active') is True and current.get('external_actions_approved') is True and current.get('owner_acceptance',{}).get('continuing_acceptance')==previous_acceptance, 'active source upgrade baseline differs')
             _,old=load_reference(repo,previous_acceptance,'records')
-            validate_evidence(current['owner_acceptance'],repo,_historical_source=old['source_commit'])
+            validate_evidence(current['owner_acceptance'], repo, _historical_source=old['source_commit'],
+                              _seen={issued['acceptance']['sha256']})
             require(old['source_commit']!=record['source_commit'] and old['target']==record['target'] and old['auth_source_hashes']==record['auth_source_hashes'] and all(old['owner_message'][k]==record['owner_message'][k] for k in ['author_id','room_id']), 'source upgrade broadens continuing acceptance')
         evidence = dict(actual_owner_allowed=True, anonymous_denied=True, private_direct_paths_denied=True, existing_auth_unchanged=True, nonowner_denied=False, authenticated_nonowner_observed=False, auth_source_hashes=record['auth_source_hashes'], continuing_acceptance=issued['acceptance'], application_id=grant_path.stem)
         value = {**current, 'active': True, 'external_actions_approved': True, 'owner_acceptance': evidence}

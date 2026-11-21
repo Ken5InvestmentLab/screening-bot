@@ -11,7 +11,10 @@ function checkHelp(html,{stagedFree=false}={}){
  const popup=html.match(/<dialog id="cloud-help-dialog"[\s\S]*?<\/dialog>/)[0];
  assert.match(popup,/aria-labelledby="cloud-help-title"/);
  assert.match(popup,/aria-label="ヘルプを閉じる"/);
- assert.match(popup,/<p class="cloud-help-disclaimer">表示は仮想運用の試算です。売買の推奨や将来の成果の保証は行いません。投資判断はご自身で行ってください。<\/p>/);
+ assert.match(popup,/<section class="cloud-help-section cloud-help-disclaimer" aria-labelledby="cloud-help-disclaimer-title">\s*<h3 id="cloud-help-disclaimer-title">免責事項<\/h3>/);
+ assert.match(popup,/売買手数料と税金を考慮していません/);
+ assert.match(popup,/株価や開示情報には誤りや遅れが生じる場合があります/);
+ assert.match(popup,/過去の成績は将来の成果を保証しません/);
  assert.match(popup,/<section class="cloud-help-section" aria-labelledby="cloud-help-labels-title">\s*<h3 id="cloud-help-labels-title">ラベルの見方<\/h3>/);
  const [labels,levels]=Array.from(popup.matchAll(/<dl class="cloud-help-labels">([\s\S]*?)<\/dl>/g), match=>match[1]);
  assert.deepEqual(Array.from(labels.matchAll(/<dt>([^<]+)<\/dt>/g), match=>match[1]),[

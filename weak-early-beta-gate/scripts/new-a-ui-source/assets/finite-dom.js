@@ -68,7 +68,7 @@
    content.hidden=false;
    status.hidden=true;
    trigger.hidden=true;
-   if(document.activeElement===trigger||document.activeElement===byId('new-a-history-jump')){
+   if(document.activeElement===trigger){
     byId('new-a-history-heading').focus({preventScroll:true});
    }
    if(location.hash==='#history')byId('history').scrollIntoView();
@@ -117,7 +117,6 @@
   globalThis.AOwnerPageData=null;
   globalThis.AFiniteBrowser?.clear();
   history.clear();
-  if(isHome)byId('new-a-history-jump').hidden=true;
   legacy.clearHistory();
   rows.length=0;
   for(const id of ['new-a-dashboard','new-a-model-holdings','cloud-analytics-content','history']){
@@ -154,6 +153,10 @@
   }
   latest=state;
   const working=busy(state);
+  for(const input of level?.querySelectorAll('input[name="new-a-dashboard-level"]')??[]){
+   input.disabled=working||state.revision===null;
+   input.checked=presetOptions[input.value]===state.trialPreset;
+  }
   const key=JSON.stringify(state.viewPreferences);
   if((state.revision!==null||state.viewPreferences)&&key!==displayKey){
    legacy.applyAccountDisplay(state.viewPreferences);
@@ -204,8 +207,31 @@
    }
   }
  }
- const controller=app.createController({trialPreset:'balanced',recentAnalytics:isAnalytics,dashboardPrices:isHome,transport:globalThis.AFiniteTransport,onChange:update,calculateOnLoad:isAnalytics||isHome});
+ const level=byId('new-a-operating-level');
+ const presetOptions={defensive:'defensive',medium:'balanced',return_priority:'profit'};
+ let selected='return_priority';
+ try{
+  const stored=sessionStorage.getItem('cloud-owner-operating-level');
+  if(Object.hasOwn(presetOptions,stored))selected=stored;
+ }catch{
+  // The current page still works without browser storage.
+ }
+ if(level)level.innerHTML=globalThis.NewAMemberPresentation.operatingLevel(selected);
+ const controller=app.createController({trialPreset:presetOptions[selected],useSavedTrialPreset:false,
+  recentAnalytics:isAnalytics,dashboardPrices:isHome,transport:globalThis.AFiniteTransport,
+  onChange:update,calculateOnLoad:isAnalytics||isHome});
  globalThis.AFiniteUIController=controller;
+ level?.addEventListener('change',async event=>{
+  const choice=event.target.value;
+  if(!event.target.matches('input[name="new-a-dashboard-level"]')||!Object.hasOwn(presetOptions,choice))return;
+  const previous=controller.state().trialPreset;
+  if(!controller.setTrialPreset(presetOptions[choice]))return;
+  if(await controller.recalculate()){
+   try{sessionStorage.setItem('cloud-owner-operating-level',choice);}catch{/* The current page does not need storage. */}
+  }else if(controller.state().revision!==null){
+   controller.setTrialPreset(previous);
+  }
+ });
 
  globalThis.AFiniteApplySavedSettings=()=>{if(latest)update(latest);};
  document.addEventListener('click',event=>{
@@ -227,11 +253,9 @@
  const tbody=document.querySelector('#detection-table tbody');
  if(tbody)new MutationObserver(hydrateVisible).observe(tbody,{subtree:true,attributes:true,attributeFilter:['hidden']});
  if(isHome){
-  const historySection=byId('history'),jump=byId('new-a-history-jump');
+  const historySection=byId('history');
   historySection.hidden=false;
-  jump.hidden=false;
   byId('new-a-history-open').addEventListener('click',openHistory);
-  jump.addEventListener('click',openHistory);
   const openLinkedHistory=()=>{if(location.hash==='#history')openHistory();};
   window.addEventListener('hashchange',openLinkedHistory);
   if(new URLSearchParams(location.search).get('q'))openHistory();

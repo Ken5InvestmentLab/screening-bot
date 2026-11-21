@@ -24,7 +24,7 @@
   if(!validTrial(view.trial_preset)||!['dark','light','system'].includes(view.theme)||!['small','standard','large'].includes(view.font_size)||![20,50,100].includes(view.page_size))throw Error('保存した表示設定を確認できません。');
   return {trial_preset:view.trial_preset,theme:view.theme,font_size:view.font_size,page_size:view.page_size};
  }
- function createController({transport,onChange=()=>{},localPreferences=null,localViewPreferences=null,calculateOnLoad=true,trialPreset=null,recentAnalytics=false,dashboardPrices=false}){
+ function createController({transport,onChange=()=>{},localPreferences=null,localViewPreferences=null,useSavedTrialPreset=true,calculateOnLoad=true,trialPreset=null,recentAnalytics=false,dashboardPrices=false}){
   if(!validTrial(trialPreset))throw Error('trial_preset_invalid');
   const s={trialPreset,viewPreferences:null,phase:'loading',presence:'unknown',revision:null,applied:null,draft:copy(BASE),accepted:null,dirty:false,edit:0,request:0,message:'設定を読み込んでいます。',defaultProposalVerified:false};
   let committed=null,saveBinding=null;
@@ -86,7 +86,7 @@
     else if(!d.has_saved_finite_preferences&&localViewPreferences)p=validate({...p,...localViewPreferences});
     const view=validateView(d.view_preferences);
     if(d.save_binding!==undefined&&!validSaveBinding(d.save_binding))throw Error('設定の読み込みを確認できません。');
-    const preset=view?view.trial_preset:trialPreset;
+    const preset=useSavedTrialPreset&&view?view.trial_preset:s.trialPreset;
     const result=calculateOnLoad?await simulation(p,'load-'+token,preset):null;
     if(token!==s.request)return false;
     s.presence=d.has_saved_preferences?'saved':'absent';s.revision=d.revision;

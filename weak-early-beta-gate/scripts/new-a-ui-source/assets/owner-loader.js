@@ -195,30 +195,6 @@
   };
  }
 
- const openingSkipReasons={
-  PRICE_CAP:'検出日終値が設定上限超過',DUPLICATE_HELD:'同じ銘柄を保有中',CAPACITY:'保有枠不足',
-  DAILY_FILLED_CAP:'当日の買付枠上限',LOT_EXCEEDS_ALLOCATION:'注文上限超過',CASH_INSUFFICIENT:'手数料込みの資金不足',
- };
- const openingHoldReasons={
-  SIGNAL_PRICE_UNVERIFIED:'検出日終値を未確認',HALTED_UNRESOLVED:'試算を未確定',
-  UNFILLED:'価格・出来高を未確認',UNFILLED_UNCERTAIN_ONE_PRICE:'高値と安値が同値',
- };
- function dailyOpeningMarkup(event,row,snapshot,adapter,order,holdingStarted,modelPending){
-  const held=Object.hasOwn(snapshot.held_symbols??{},event.symbol);
-  const entry=row?.entry;
-  const knownPrice=!held&&chartAvailable(row,event.symbol,adapter)&&
-   event.price_status==='HISTORICAL_REFERENCE_ONLY'&&event.execution_status==='NOT_EXECUTED'&&
-   validPrice(event.reference_open)&&entry?.status==='verified'&&entry.basis==='NEXT_SESSION_OPEN_REFERENCE'&&
-   entry.date===snapshot.as_of&&entry.price===event.reference_open;
-  let outcome='判定保留';
-  if(held)outcome='判定保留（データ照合）';
-  else if(order&&Object.hasOwn(openingHoldReasons,order.status))outcome='判定保留（'+openingHoldReasons[order.status]+'）';
-  else if(knownPrice&&order?.status==='FILLED'&&holdingStarted)outcome='仮想保有開始';
-  else if(knownPrice&&order&&Object.hasOwn(openingSkipReasons,order.status))outcome='仮想保有なし（'+openingSkipReasons[order.status]+'）';
-  else if(modelPending)outcome='判定を計算中';
-  return '<div><strong>日足始値</strong> '+(knownPrice?money(event.reference_open):'未確認')+
-   '</div><small class="cloud-table-meta">'+outcome+'</small>';
- }
  function currentMarkup(snapshots,rows=[],{adapter,model,watchSelection,preparedCloses,dashboardYear,modelPending=false}={}){
   if(!snapshots.length)return '<section class="panel"><h2>最新の監視状況</h2><p>監視状況を確認できません。</p></section>';
   if(snapshots.length!==1)throw Error('current_snapshot_count');
@@ -271,28 +247,6 @@
    const total=kind.startsWith('HOLD_')&&!holdingReady?(modelPending?'計算中':'未確定'):counts[kind]+'件';
    return '<li>'+transitionBadge(kind,label+' <b>'+total+'</b>')+'</li>';
   }).join('');
-  const openingEvents=events.filter(e=>e.session===s.as_of&&e.kind==='REFERENCE_OPEN');
-  const openingKeys=new Set(openingEvents.map(episodeKey));
-  const pending=s.monitor_state?.pending_references;
-  for(const ref of Array.isArray(pending)?pending:[]){
-   const key=episodeKey(ref);
-   if(!key||ref.reference_entry_date!==s.as_of||!Object.hasOwn(held,ref.symbol)||openingKeys.has(key))continue;
-   openingKeys.add(key);
-   openingEvents.push(ref);
-  }
-  const orderByEpisode=new Map();
-  if(holdingReady&&openingEvents.length){
-   for(const order of model.orders??[]){
-    const key=episodeKey(order);
-    if(key&&order.order_date===s.as_of)orderByEpisode.set(key,orderByEpisode.has(key)?null:order);
-   }
-  }
-  const openingRows=openingEvents.map(e=>{
-   const key=episodeKey(e);
-   const label=dailyOpeningMarkup(e,byEpisode.get(key),s,adapter,orderByEpisode.get(key),
-    changes.get(key)?.labels.has('HOLD_STARTED'),modelPending);
-   return '<tr data-daily-opening="'+esc(key??'')+'"><td>'+stock(e.symbol)+'</td><td>'+label+detailFor(e,{showEntryPrice:false})+'</td></tr>';
-  }).join('');
   const referenceLabels={ENTRY_CANDIDATE:'買付候補',MONITOR_RESET:'監視条件リセット'};
   const referenceRows=events.filter(e=>e.session===s.as_of&&Object.hasOwn(referenceLabels,e.kind)).map(e=>
    '<tr><td>'+stock(e.symbol)+'</td><td>'+referenceLabels[e.kind]+(reasons[e.reason]?' · '+esc(reasons[e.reason]):'')+detailFor(e)+'</td></tr>').join('');
@@ -304,8 +258,7 @@
   const noWatches=eligible?'監視中の銘柄なし':modelPending?'監視対象を計算しています。':'監視対象を確認できません。';
   const heldRows=Object.entries(held).sort(([a],[b])=>a.localeCompare(b)).map(([symbol,item])=>'<tr><td>'+stock(symbol)+'</td><td>'+esc(heldReason[item.reason]||'確認待ち')+'</td><td>'+esc(item.day||'—')+'</td></tr>').join('');
   const table=(head,body)=>'<div class="table-wrap"><table class="scenario-table"><thead><tr>'+head.map(h=>'<th scope="col">'+h+'</th>').join('')+'</tr></thead><tbody>'+body+'</tbody></table></div>';
-  const openingSection=openingRows?'<section class="cloud-reference-events" aria-labelledby="new-a-daily-opening-heading"><h3 id="new-a-daily-opening-heading">日足始値と仮想保有の結果</h3>'+table(['銘柄','始値・判定'],openingRows)+'</section>':'';
-  return '<section class="panel" id="new-a-current" aria-labelledby="new-a-events-heading"><div class="cloud-section-head"><h2 id="new-a-events-heading">対象日の動き</h2><div class="cloud-meta"><span class="badge">対象 '+esc(s.as_of||'—')+'</span>'+(observed?'<span class="badge">観測 '+esc(observed)+' JST</span>':'')+(s.observation_kind==='DELAYED_SCHEDULED_OBSERVATION'?'<span class="badge">遅延実行</span>':'')+'</div></div><ul class="cloud-transition-summary" aria-label="対象日の件数">'+totals+'</ul><div class="cloud-meta">'+(live||delayed?'<span class="badge">新規検出 '+newCount+'銘柄</span>':'<span class="badge">照合</span>')+'<span class="badge">データ保留 '+Object.keys(held).length+'銘柄</span></div><div class="cloud-stock-grid">'+(eventCards||'<p class="cloud-empty">'+(modelPending?'監視の開始・終了はありません':'確認済みの開始・終了はありません')+'</p>')+'</div>'+openingSection+(referenceRows?'<details class="cloud-table-details cloud-reference-events"><summary>買付候補・その他の記録</summary>'+table(['銘柄','記録'],referenceRows)+'</details>':'')+'</section>'+
+  return '<section class="panel" id="new-a-current" aria-labelledby="new-a-events-heading"><div class="cloud-section-head"><h2 id="new-a-events-heading">対象日の動き</h2><div class="cloud-meta"><span class="badge">対象 '+esc(s.as_of||'—')+'</span>'+(observed?'<span class="badge">観測 '+esc(observed)+' JST</span>':'')+(s.observation_kind==='DELAYED_SCHEDULED_OBSERVATION'?'<span class="badge">遅延実行</span>':'')+'</div></div><ul class="cloud-transition-summary" aria-label="対象日の件数">'+totals+'</ul><div class="cloud-meta">'+(live||delayed?'<span class="badge">新規検出 '+newCount+'銘柄</span>':'<span class="badge">照合</span>')+'<span class="badge">データ保留 '+Object.keys(held).length+'銘柄</span></div><div class="cloud-stock-grid">'+(eventCards||'<p class="cloud-empty">'+(modelPending?'監視の開始・終了はありません':'確認済みの開始・終了はありません')+'</p>')+'</div>'+(referenceRows?'<details class="cloud-table-details cloud-reference-events"><summary>買付候補・その他の記録</summary>'+table(['銘柄','記録'],referenceRows)+'</details>':'')+'</section>'+
    '<section class="panel" aria-labelledby="new-a-watch-heading"><div class="cloud-section-head"><h2 id="new-a-watch-heading">現在の監視</h2><span class="badge">'+watchStatus+'</span></div>'+(watchRows?table(['銘柄','監視開始日','詳細'],watchRows):'<p class="cloud-empty">'+noWatches+'</p>')+(watches.length>watchPreviewSize?'<button class="settings-secondary" type="button" id="new-a-current-more">残り '+(watches.length-watchPreviewSize)+'銘柄を表示</button>':'')+(heldRows?'<details class="cloud-table-details"><summary>データ保留 '+Object.keys(held).length+'銘柄</summary>'+table(['銘柄','理由','対象日'],heldRows)+'</details>':'')+'</section>';
  }
  function openFundamental(button){
@@ -362,7 +315,7 @@
   global.AFiniteBrowser?.clear();
   global.AFiniteRevoked=true;
   global.AOwnerPageData=null;
-  for(const id of ['new-a-dashboard','new-a-model-holdings','cloud-analytics-content','history','new-a-history-jump','cloud-settings-direct']){
+  for(const id of ['new-a-dashboard','new-a-model-holdings','cloud-analytics-content','history','cloud-settings-direct']){
    const node=document.getElementById(id);
    if(node){node.replaceChildren();node.hidden=true;}
   }
@@ -392,12 +345,12 @@
     };
     return global.mountOwnerSettings(target,status,{...context,transport,dashboardPrices:page==='home',recentAnalytics:page==='analytics',
      onRevoked:unavailable,
-     onSaved(state,trialChanged){
-      const previous=global.AOwnerSavedSettings;
-      const sameTrial=previous&&previous.trialPreset===state.trialPreset
-       &&Object.entries(state.applied).every(([key,value])=>previous.applied[key]===value);
-      global.AOwnerSavedSettings=trialChanged||!sameTrial?state:{...state,accepted:previous.accepted};
-      global.AFiniteApplySavedSettings?.();
+     onSaved(state){
+      if(global.AFiniteUIController){
+       void global.AFiniteUIController.load();
+      }else{
+       global.AOwnerSavedSettings=state;
+      }
      },
     });
    });
@@ -517,6 +470,7 @@
   if(!global.AFiniteBrowser)configureTransport(data.manifest);
   await script('new-a-legacy-interactions.generated.js');
   if(pageLoad.signal.aborted)return;
+  await script('member-presentation.js');
   await script('finite-dom.js');
  }
  start().catch(unavailable);

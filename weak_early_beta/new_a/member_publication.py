@@ -7,6 +7,7 @@ import tempfile
 from .continuing_transition import ordinary_runtime_release
 from .files import atomic_write, digest, file_sha, private_root, read
 from .member_publisher import import_member_projection, read_member_marker
+from .member_reference_publication import build_member_reference, import_member_reference
 from .operational_admission import now, observe_normal_response, read_active_metadata
 from .publisher import logical_manifest, validate_manifest
 
@@ -107,6 +108,8 @@ def publish_current_member_view(repo, owner_db, member_db, *, node):
 
         if ordinary_runtime_release(repo) != release:
             raise ValueError('Ordinary Worker approval changed before member publication')
+        reference = build_member_reference(repo, node, bundle, proof, workdir / 'reference')
+        import_member_reference(member_db, reference, original, official_ready)
         result = import_member_projection(
             member_db, output, read_official_ready=official_ready, receipt_sha256=receipt_sha,
             expected_previous=read_member_marker(member_db),

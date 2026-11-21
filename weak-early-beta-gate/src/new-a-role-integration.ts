@@ -3,6 +3,7 @@ import { memberServices, type MemberAdapters } from './new-a-member-services';
 import { reportIdentity, reportVerifiedSessionSubject } from './shared-report-gate';
 import { cloudReportRole } from './cloud-role-authority';
 import type { CloudEnv } from './cloud-api';
+import { createMemberReferenceReader } from './new-a-member-reference';
 import { createNewAMemberCurrentReader } from './new-a-member-current';
 import { createNewAMemberProjectionReader } from './new-a-member-projection';
 import { createMemberPersonalReader, createMemberSettings } from './new-a-member-storage';
@@ -23,6 +24,7 @@ function memberAdapters(env: MemberEnv): Omit<MemberAdapters, 'identity'> | unde
   const current = createNewAMemberCurrentReader(owner);
   return {
     current,
+    reference: createMemberReferenceReader(member),
     common: createNewAMemberProjectionReader(member, current),
     preferences: (request, subject) => createMemberSettings(member.withSession('first-primary'), secret)(request, subject),
     personal: (subject, source) => createMemberPersonalReader(member.withSession('first-primary'))(subject, source),

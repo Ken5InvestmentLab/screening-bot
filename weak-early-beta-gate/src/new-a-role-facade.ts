@@ -36,9 +36,11 @@ const documents = new Set([
 ]);
 const historyPath = '/api/cloud/new-a-view/history.json';
 const fundamentalPath = '/api/cloud/new-a-view/fundamental.json';
+const referencePath = '/api/cloud/new-a-view/reference.json';
 const aggregates = new Map([
   [historyPath, 'page'],
   [fundamentalPath, 'item'],
+  [referencePath, 'item'],
   ['/api/cloud/new-a-view/dashboard.json', null],
   ['/api/cloud/new-a-view/analytics.json', null],
   ['/api/cloud/new-a-view/chart.json', 'preset'],
@@ -52,6 +54,7 @@ const assets = new Set([
   '/new-a-assets/member-loader.js',
   '/new-a-assets/member-presentation.js',
   '/new-a-assets/member-settings.js',
+  '/new-a-assets/reference-analytics.js',
   '/new-a-assets/report-assets/cloud-logo-light.png',
   '/new-a-assets/report-assets/cloud-logo-dark.png',
 ]);
@@ -185,7 +188,7 @@ export async function roleFacade(
       return response;
     }
     const expectedSession = aggregate || preferences ? request.headers.get(memberSessionHeader) : null;
-    if (pathname === fundamentalPath && expectedSession === null) return reject(request, 403, 'member_session_required');
+    if ((pathname === fundamentalPath || pathname === referencePath) && expectedSession === null) return reject(request, 403, 'member_session_required');
     if (session || expectedSession !== null) {
       if (!env.SESSION_SECRET) return reject(request, 503, 'member_service_unavailable');
       const tag = await memberSessionTag(env.SESSION_SECRET, subject, tier);

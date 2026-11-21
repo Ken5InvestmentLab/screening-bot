@@ -191,6 +191,14 @@ body[data-page="home"] #new-a-trial-preset-field{display:block}
 .topbar .nav-link{min-height:44px;white-space:nowrap}
 .page-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 16px}
 .page-heading h1{margin:0}
+.member-level{min-inline-size:0;max-width:100%;margin:0 0 8px;padding:0;border:0}
+.member-level legend{padding:0;margin-bottom:5px;color:var(--muted);font-size:13px}
+.member-level-options{display:inline-flex;max-width:100%;flex-wrap:wrap;gap:4px;padding:3px;border:1px solid var(--line);border-radius:24px;background:var(--panel-solid)}
+.member-level-options label{position:relative;cursor:pointer;display:block}
+.member-level-options input{position:absolute;inline-size:1px;block-size:1px;clip-path:inset(50%);overflow:hidden}
+.member-level-options span{display:flex;align-items:center;justify-content:center;min-height:44px;padding:0 13px;border:1px solid transparent;border-radius:20px;color:var(--muted);font-weight:650}
+.member-level-options input:checked + span{background:color-mix(in srgb,var(--blue) 16%,var(--panel-solid));border-color:var(--blue);color:var(--ink)}
+.member-level-options input:focus-visible + span{outline:2px solid var(--blue);outline-offset:2px}
 .cloud-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .cloud-meta .badge{font-variant-numeric:tabular-nums}
 .cloud-section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-bottom:10px}

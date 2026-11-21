@@ -35,6 +35,7 @@
   g.NewAMemberTransport = {
     history: (page, options) => read('history.json?page=' + page, options),
     fundamental: (item, options) => read('fundamental.json?item=' + encodeURIComponent(item), options),
+    reference: (item, options) => read('reference.json?item=' + encodeURIComponent(item), options),
     dashboard: options => read('dashboard.json', options),
     analytics: options => read('analytics.json', options),
     chart: (preset, options) => read('chart.json?preset=' + encodeURIComponent(preset), options),
@@ -56,6 +57,71 @@
   let accessCheck;
   let fundamentalPage = null;
   let openFundamental = null;
+  let historySearch = null;
+  const initialHistoryQuery = { symbol: '', from: '', through: '', order: 'newest' };
+  let historyQuery = { ...initialHistoryQuery };
+  const cardDetails = '.cloud-stock-grid > [data-daily-change] > .cloud-stock-detail';
+  const referenceTags = new Set(('article section div h2 h3 h4 h5 p span small strong b em abbr details summary '
+    + 'dl dt dd ol ul li table thead tbody tfoot caption tr th td colgroup col time button a br '
+    + 'svg g line polyline path rect text title desc defs clippath circle polygon ellipse lineargradient stop template').split(' '));
+
+  async function optionalReference(item, options) {
+    let result;
+    try {
+      result = await g.NewAMemberTransport.reference(item, options);
+    } catch (error) {
+      if (error.missing) return null;
+      throw error;
+    }
+    if (!g.NewAMemberPresentation.referencePayload(result, item)) throw Error(unavailable);
+    return result;
+  }
+
+  function referenceLink(href) {
+    if (href === './weak_early_beta_settings.html' || /^#[a-z][a-z0-9_-]*$/i.test(href)) return true;
+    return /^https:\/\/jp\.tradingview\.com\/chart\/\?symbol=TSE(?:%3A|:)[0-9A-Z]{4}$/.test(href);
+  }
+
+  function verifiedReference(markup, asOf) {
+    const template = document.createElement('template');
+    template.innerHTML = markup;
+    const items = new Map();
+    const ids = new Set();
+    for (const element of template.content.querySelectorAll('*')) {
+      const tag = element.localName.toLowerCase();
+      const id = element.id;
+      if (!referenceTags.has(tag) || (id && (ids.has(id) || /^(?:member-|cloud-settings-|cloud-help-)/.test(id)
+        || id === 'history' || id === 'detection-table'))) throw Error(unavailable);
+      if (id) ids.add(id);
+      if (tag === 'template' && (id !== 'new-a-reference-daily-values' || element.content.children.length)) {
+        throw Error(unavailable);
+      }
+      for (const { name, value } of element.attributes) {
+        if (/^(?:on|src)|^(?:action|form|formaction|ping|xlink:href|background|autofocus|is)$/i.test(name)
+          || (name === 'href' && (tag !== 'a' || !referenceLink(value)))
+          || (name === 'target' && (tag !== 'a' || value !== '_blank'))
+          || (/@import|url\s*\(/i.test(value) && !/^url\(#[a-z][a-z0-9_-]*\)$/i.test(value))) throw Error(unavailable);
+      }
+      if (element.hasAttribute('data-member-fundamental')) {
+        const item = element.dataset.memberFundamental;
+        const row = g.NewAMemberPresentation.fundamentalSelector(item);
+        if (tag !== 'button' || !row || row.date > asOf) throw Error(unavailable);
+        items.set(item, row);
+      }
+    }
+    return { fragment: template.content, items };
+  }
+
+  async function legacyProjection(options, analytics) {
+    const transport = g.NewAMemberTransport;
+    const [summary, chart, personal, dashboard] = await Promise.all([
+      transport.analytics(options),
+      transport.chart(selected, options),
+      analytics ? transport.personal(options) : null,
+      analytics ? null : transport.dashboard(options),
+    ]);
+    return { summary, chart, personal, dashboard };
+  }
 
   async function restorePreset(session) {
     try {
@@ -81,6 +147,8 @@
 
   function clearDisplay(message, reauthenticate = false) {
     g.CloudSettingsDialog?.close(true);
+    stopHistorySearch();
+    historyQuery = { ...initialHistoryQuery };
     clearFundamentalPage();
     attempt?.abort();
     attempt = undefined;
@@ -143,17 +211,172 @@
     return accessCheck;
   }
 
-  function addPagination(pages) {
+  function historyPagination(current, pages, onPage) {
+    if (pages <= 1) return null;
     const nav = document.createElement('nav');
+    nav.setAttribute('class', 'history-pagination');
     nav.setAttribute('aria-label', '検出履歴のページ');
-    for (const [label, number] of [['前へ', page - 1], ['次へ', page + 1]]) {
+    const position = document.createElement('span');
+    position.textContent = current + ' / ' + pages + 'ページ';
+    for (const [label, number] of [['前へ', current - 1], ['次へ', current + 1]]) {
       const button = document.createElement('button');
       button.textContent = label;
       button.disabled = number < 1 || number > pages;
-      button.addEventListener('click', () => { page = number; load(); });
+      button.addEventListener('click', () => onPage(number));
       nav.append(button);
+      if (number < current) nav.append(position);
     }
-    out.append(nav);
+    return nav;
+  }
+
+  function addPagination(pages) {
+    const nav = historyPagination(page, pages, number => {
+      page = number;
+      load({ restoreHistoryFocus: memberAccess === 'premium' });
+    });
+    if (nav) (document.getElementById('member-history-results') ?? document.getElementById('history') ?? out).append(nav);
+  }
+
+  function stopHistorySearch() {
+    if (!historySearch) return;
+    clearTimeout(historySearch.timer);
+    historySearch.controller?.abort();
+    historySearch = null;
+  }
+
+  function mountHistorySearch(native, scope, dashboardItems) {
+    const controls = document.getElementById('member-history-filters');
+    const target = document.getElementById('member-history-results');
+    const notice = document.getElementById('member-history-filter-status');
+    if (!controls || !target || !notice) return;
+    const state = { index: null, controller: null, timer: undefined };
+    historySearch = state;
+    const ui = g.NewAMemberPresentation;
+    const keys = Object.keys(initialHistoryQuery);
+    const inputs = Object.fromEntries(keys.map(key => [key, controls.querySelector('[data-history-filter="' + key + '"]')]));
+    const current = () => historySearch === state && scope.generation === snapshot
+      && scope.session === memberSession && memberAccess === 'premium';
+    const usingFilter = () => historyQuery.symbol.trim() || historyQuery.from || historyQuery.through || historyQuery.order !== 'newest';
+    const updateScope = rows => {
+      const entries = new Map(dashboardItems);
+      for (const row of rows) if (row.item) entries.set(row.item,row);
+      fundamentalPage = { ...scope, rows: entries };
+    };
+    async function readReference(item, options) {
+      const result = await g.NewAMemberTransport.reference(item, options);
+      if (!ui.referencePayload(result,item)) throw Error(unavailable);
+      if (result.generation !== scope.generation || result.as_of !== scope.asOf) throw Error(changed);
+      return result.markup;
+    }
+    async function apply(resultPage = 1) {
+      if (!current()) return;
+      state.controller?.abort();
+      const controller = new AbortController();
+      state.controller = controller;
+      const active = () => current() && state.controller === controller;
+      dismissFundamental();
+      updateScope([]);
+      target.replaceChildren();
+      if (!usingFilter()) {
+        if (page !== 1) {
+          page = 1;
+          load({ restoreHistoryFocus: true });
+          return;
+        }
+        target.innerHTML = ui.referenceHistoryTable(native.rows, selected);
+        updateScope(native.rows);
+        notice.textContent = '';
+        target.removeAttribute('aria-busy');
+        addPagination(native.pages);
+        return;
+      }
+      const { from, through } = historyQuery;
+      if (from && through && from > through) {
+        notice.textContent = '開始日と終了日を確認してください。';
+        target.removeAttribute('aria-busy');
+        return;
+      }
+      notice.textContent = '検出履歴を検索しています。';
+      target.setAttribute('aria-busy', 'true');
+      try {
+        if (!await verifyAccess() || !active()) return;
+        const options = { signal: controller.signal, generation: scope.generation, session: scope.session };
+        if (state.index === null) {
+          const markup = await readReference('history.index', options);
+          if (!active()) return;
+          const index = ui.referenceHistoryIndex(markup, scope.asOf, native.pages);
+          if (!index) throw Error(unavailable);
+          const first = (page - 1) * 100;
+          if (native.rows.some((row,offset) => {
+            const item = index.rows[first + offset];
+            return !item || row.date !== item[0] || row.symbol !== item[1] || row.companyName !== (index.names[item[2]] ?? null);
+          })) throw Error(unavailable);
+          state.index = index;
+        }
+        const matches = ui.matchingHistory(state.index, historyQuery);
+        const offsets = matches.slice((resultPage - 1) * 20, resultPage * 20);
+        const needed = new Set(offsets.map(offset => Math.floor(offset / 100) + 1));
+        const available = new Map(await Promise.all([...needed].map(async number => {
+          if (number === page) return [number,native.rows];
+          const first = (number - 1) * 100;
+          const expected = state.index.rows.slice(first,first + 100).map(([date,symbol,name]) => ({
+            date, symbol, companyName: state.index.names[name] ?? null,
+          }));
+          const markup = await readReference('history.' + number, options);
+          const rows = ui.referenceHistory(markup, number, scope.asOf, expected, true);
+          if (!rows) throw Error(unavailable);
+          return [number,rows];
+        })));
+        if (!active() || !await verifyAccess() || !active()) return;
+        const rows = offsets.map(offset => available.get(Math.floor(offset / 100) + 1)[offset % 100]);
+        updateScope(rows);
+        target.innerHTML = ui.referenceHistoryTable(rows, selected);
+        notice.textContent = '検索結果 ' + matches.length.toLocaleString('ja-JP') + '件';
+        const nav = historyPagination(resultPage, Math.ceil(matches.length / 20), number => {
+          notice.setAttribute('tabindex','-1');
+          notice.focus();
+          apply(number);
+        });
+        if (nav) target.append(nav);
+      } catch (error) {
+        if (!active()) return;
+        if (error.message === changed || error.message === accessDenied) {
+          clearDisplay(error.message, error.requiresLogin);
+          return;
+        }
+        notice.textContent = '検出履歴の検索結果を読み込めませんでした。';
+        const retrySearch = document.createElement('button');
+        retrySearch.type = 'button';
+        retrySearch.textContent = '再試行';
+        retrySearch.addEventListener('click', () => apply(resultPage));
+        target.append(retrySearch);
+      } finally {
+        if (active()) target.removeAttribute('aria-busy');
+      }
+    }
+    for (const key of keys) inputs[key].value = historyQuery[key];
+    controls.addEventListener('input', event => {
+      if (event.target !== inputs.symbol) return;
+      historyQuery.symbol = inputs.symbol.value;
+      state.controller?.abort();
+      clearTimeout(state.timer);
+      state.timer = setTimeout(apply, 240);
+    });
+    controls.addEventListener('change', event => {
+      const key = event.target.dataset.historyFilter;
+      if (!['from','through','order'].includes(key) || event.target !== inputs[key]) return;
+      historyQuery[key] = event.target.value;
+      clearTimeout(state.timer);
+      apply();
+    });
+    controls.querySelector('[data-history-clear]').addEventListener('click', () => {
+      clearTimeout(state.timer);
+      historyQuery = { ...initialHistoryQuery };
+      for (const key of keys) inputs[key].value = historyQuery[key];
+      apply();
+      inputs.symbol.focus();
+    });
+    if (usingFilter()) apply();
   }
 
   function dismissFundamental(restoreFocus = false) {
@@ -177,7 +400,7 @@
     const scope = fundamentalPage;
     const item = button.dataset.memberFundamental;
     const row = scope?.rows.get(item);
-    if (!row || memberAccess !== 'premium' || openFundamental?.button === button) return;
+    if (!row || memberAccess !== 'premium' || out.hidden || openFundamental?.button === button) return;
     dismissFundamental();
     const controller = new AbortController();
     const current = { controller, button, dialog: null };
@@ -254,7 +477,8 @@
 
   g.CloudSettingsDialog?.connect(openSettings, () => memberAccess === 'premium' && !out.hidden);
 
-  async function load({ restorePresetFocus = false } = {}) {
+  async function load({ restorePresetFocus = false, restoreHistoryFocus = false } = {}) {
+    stopHistorySearch();
     clearFundamentalPage();
     attempt?.abort();
     const controller = new AbortController();
@@ -281,37 +505,52 @@
 
       const analytics = mode === 'analytics';
       const options = { signal, generation: snapshot, session: memberSession };
-      const transport = g.NewAMemberTransport;
-      const [summary, history, chart, personal, dashboard] = await Promise.all([
-        free ? null : transport.analytics(options),
-        analytics ? null : transport.history(page, options),
-        free ? null : transport.chart(selected, options),
-        analytics ? transport.personal(options) : null,
-        !free && !analytics ? transport.dashboard(options) : null,
+      const [reference, history, historyReference] = await Promise.all([
+        free ? null : optionalReference((analytics ? 'analytics.' : 'dashboard.') + selected, options),
+        analytics ? null : g.NewAMemberTransport.history(page, options),
+        free || analytics ? null : optionalReference('history.' + page, options),
       ]);
       if (!active()) return;
-      const source = free ? history : summary;
+      const legacyDashboard = !free && reference === null;
+      const fallback = legacyDashboard || (!free && !analytics && historyReference === null);
+      const projection = legacyDashboard ? await legacyProjection(options, analytics) : {};
+      if (!active()) return;
+      const { summary, chart, personal, dashboard } = projection;
+      const source = free ? history : reference ?? summary;
       if (!source || !isToken(source.generation) || (snapshot !== null && snapshot !== source.generation)
-        || [history, chart, personal, dashboard].some(result => result !== null && result.generation !== source.generation)
-        || (dashboard && dashboard.as_of !== source.as_of)) {
+        || [history, chart, personal, dashboard, historyReference].some(result => result && result.generation !== source.generation)
+        || [history, dashboard, historyReference].some(result => result && result.as_of !== source.as_of)) {
         throw Error(changed);
       }
-      if (history && (!Array.isArray(history.rows) || !Number.isSafeInteger(history.pages) || history.pages < 1)) {
+      if (history && (!Array.isArray(history.rows) || !Number.isSafeInteger(history.pages)
+        || history.pages < page || history.pages > 200)) {
         throw Error(unavailable);
       }
+      const historyPage = !free && history?.page === page && history.as_of === source.as_of ? page : undefined;
+      let referenceHistoryRows;
+      if (historyReference) {
+        if (historyPage === undefined) throw Error(unavailable);
+        referenceHistoryRows = g.NewAMemberPresentation.referenceHistory(historyReference.markup, page, source.as_of, history.rows);
+        if (!referenceHistoryRows) throw Error(unavailable);
+      }
+      const display = reference && verifiedReference(reference.markup, reference.as_of);
       if (!await verifyAccess() || !active()) return;
 
       snapshot = source.generation;
-      const historyPage = !free && history?.page === page && history.as_of === source.as_of ? page : undefined;
-      if (historyPage !== undefined) {
-        const rows = new Map();
+      const dashboardAnalyses = display?.items ?? new Map();
+      const analyses = new Map(dashboardAnalyses);
+      if (referenceHistoryRows) {
+        for (const row of referenceHistoryRows) {
+          if (row.item) analyses.set(row.item, row);
+        }
+      } else if (historyPage !== undefined) {
         for (const row of history.rows) {
           if (row.has_fundamental !== true) continue;
           const item = g.NewAMemberPresentation.fundamentalItem(historyPage, row);
-          if (item) rows.set(item, row);
+          if (item) analyses.set(item, row);
         }
-        fundamentalPage = { rows, asOf: source.as_of, generation: snapshot, session: memberSession };
       }
+      if (!free) fundamentalPage = { rows: analyses, asOf: source.as_of, generation: snapshot, session: memberSession };
       out.innerHTML = g.NewAMemberPresentation.view({
         mode,
         access: memberAccess,
@@ -320,11 +559,19 @@
         selected,
         rows: history?.rows ?? [],
         historyPage,
+        referenceHistoryRows,
         chartRows: chart?.rows,
         personal: personal?.metrics,
         dashboard,
+        reference: display !== null,
       });
-      status.textContent = free || mode === 'home' ? '' : '共通データ ' + source.as_of;
+      if (display) {
+        const target = document.getElementById('member-reference-content');
+        target.append(display.fragment);
+        if (analytics) g.NewAReferenceAnalytics.mount(target);
+      }
+      status.textContent = fallback ? '一部の表示を読み込めませんでした。' : '';
+      retry.hidden = !fallback;
       const preset = document.getElementById('member-preset');
       preset?.addEventListener('change', event => {
         const { value } = event.target;
@@ -339,6 +586,12 @@
         preset?.querySelector('input:checked')?.focus();
       }
       if (history) addPagination(history.pages);
+      if (referenceHistoryRows) {
+        mountHistorySearch({ rows:referenceHistoryRows, pages:history.pages }, fundamentalPage, dashboardAnalyses);
+      }
+      if (restoreHistoryFocus && document.activeElement === document.body) {
+        document.getElementById('history')?.focus();
+      }
     } catch (error) {
       if (!active()) return;
       if (free && mode === 'home' && error.message !== accessDenied
@@ -356,7 +609,39 @@
 
   out.addEventListener('click', event => {
     const button = event.target.closest?.('[data-member-fundamental]');
-    if (button && out.contains(button)) showFundamental(button);
+    if (button && out.contains(button)) {
+      showFundamental(button);
+      return;
+    }
+    const historyButton = event.target.closest?.('[data-member-history-details]');
+    if (memberAccess === 'premium' && !out.hidden && historyButton && out.contains(historyButton)) {
+      const record = historyButton.closest('#detection-table .history-record');
+      if (!record) return;
+      const open = historyButton.getAttribute('aria-expanded') !== 'true';
+      record.classList.toggle('history-details-open', open);
+      historyButton.setAttribute('aria-expanded', String(open));
+      historyButton.textContent = open ? '詳細を閉じる' : '詳細を見る';
+      return;
+    }
+    const reference = document.getElementById('member-reference-content');
+    if (memberAccess !== 'premium' || out.hidden || !reference?.contains(event.target)) return;
+    const moreWatches = event.target.closest?.('#new-a-current-more');
+    if (moreWatches) {
+      const hidden = reference.querySelectorAll('[data-current-watch][hidden]');
+      for (const row of hidden) row.hidden = false;
+      moreWatches.hidden = true;
+      hidden[0]?.querySelector('summary,td')?.focus();
+      return;
+    }
+    const summary = event.target.closest?.(cardDetails + ' > summary');
+    if (!summary) return;
+    event.preventDefault();
+    const detail = summary.parentElement;
+    const top = detail.parentElement.getBoundingClientRect().top;
+    const sameRow = Array.from(reference.querySelectorAll(cardDetails)).filter(
+      candidate => Math.abs(candidate.parentElement.getBoundingClientRect().top - top) < 1);
+    const open = !detail.open;
+    for (const candidate of sameRow) candidate.open = open;
   });
   retry.addEventListener('click', load);
   document.addEventListener('visibilitychange', () => {

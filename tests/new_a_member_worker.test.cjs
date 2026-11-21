@@ -51,7 +51,9 @@ function openDb(t, sql) {
         return { prepare(sql) {
           const statement = db.prepare(sql);
           const first = async (...params) => { count++; return statement.get(...params) ?? null; };
-          return { first, bind: (...params) => ({ first: () => first(...params), run: async () => statement.run(...params) }) };
+          return { first, bind: (...params) => ({ first: () => first(...params),
+            all: async () => { count++; return { results: statement.all(...params) }; },
+            run: async () => statement.run(...params) }) };
         } };
       },
     },
@@ -314,16 +316,17 @@ test('normal origin preserves the existing owner response and requires a matchin
   assert.equal((await f.call(history)).status, 401);
 });
 
-test('the verified owner uses the same current member frame and keeps the internal API private', async t => {
+test('the shared URLs keep the verified owner calculation and the member raw-data boundary', async t => {
   const f = productionFixture(t);
   f.migrate();
   f.setPolicy('off');
   const ownerDoc = await f.call(documentPath, owner);
   assert.equal(ownerDoc.status, 200);
-  assert.equal(ownerDoc.headers.get('x-cloud-member-access'), 'premium');
+  assert.equal(ownerDoc.headers.get('cache-control'), 'private, no-store, max-age=0');
   const html = await ownerDoc.text();
-  assert.match(html, /data-cloud-mode="member"/);
-  assert.doesNotMatch(html, /owner-loader\.js|new-a-owner-access-check/);
+  assert.match(html, /owner-loader\.js/);
+  assert.match(html, /new-a-operating-level/);
+  assert.doesNotMatch(html, /new-a-owner-access-check|new-a-history-jump/);
   assert.equal((await f.call('/new-a-assets/member-loader.js', owner)).status, 200);
   assert.equal((await f.call(sessionPath, owner)).status, 204);
   assert.equal((await f.call(history, owner)).status, 200);
@@ -333,12 +336,15 @@ test('the verified owner uses the same current member frame and keeps the intern
   assert.equal((await f.call('/api/cloud/new-a-finite/input/manifest.json', allowed)).status, 403);
 
   f.setPolicy('enabled');
-  assert.equal(await (await f.call(documentPath, allowed)).text(), html);
+  const memberDoc = await (await f.call(documentPath, allowed)).text();
+  assert.match(memberDoc, /data-cloud-mode="member"/);
+  assert.doesNotMatch(memberDoc, /owner-loader\.js|new-a-owner-access-check|検出履歴へ/);
   for (const route of ['/weak_early_beta_analytics.html', '/weak_early_beta_settings.html']) {
     const [actual, other] = await Promise.all([f.call(route, owner), f.call(route, allowed)]);
     assert.equal(actual.status, 200);
     assert.equal(other.status, 200);
-    assert.equal(await actual.text(), await other.text());
+    assert.match(await actual.text(), /owner-loader\.js/);
+    assert.match(await other.text(), /member-loader\.js/);
   }
   const oldPage = await f.call('/weak_early_beta_analytics_free.html', owner);
   assert.equal(oldPage.status, 302);
@@ -579,4 +585,58 @@ test('worker never counts Discord lookup failure or an observation revoked befor
   } } };
   assert.equal((await f.call(documentPath, allowed, { env: revoked })).status, 200);
   assert.equal(f.rows().length, 0);
+});
+
+test('the reference view requires the Premium session and verified same-generation chunks', async t => {
+  const f = productionFixture(t);
+  f.migrate();
+  f.setPolicy('enabled');
+  const storage = f.memberDb.db;
+  const source = JSON.parse(storage.prepare('SELECT identity FROM private_projection_ready').get().identity);
+  const schema = 'NEW_A_MEMBER_REFERENCE_V1';
+  const identity = JSON.stringify(source) + '\n' + schema;
+  const keys = ['dashboard', 'analytics'].flatMap(name =>
+    ['defensive', 'medium', 'return_priority'].map(preset => name + '.' + preset));
+  keys.push('history.1');
+  const chunks = [];
+  const variants = keys.map((item, index) => {
+    const markup = item === 'history.1' ? '{"page":1,"rows":[{"symbol":"123A"}]}' : '<section>表示 ' + item + '</section>';
+    const json = JSON.stringify({ markup });
+    chunks.push(json);
+    return { item, bytes: Buffer.byteLength(markup), sha256: digest(markup),
+      parts: [{ index, bytes: Buffer.byteLength(json), sha256: digest(json) }] };
+  });
+  const manifest = JSON.stringify({ schema, source, variants });
+  const hash = digest(manifest);
+  storage.prepare('INSERT INTO private_projection_manifest VALUES (?,?,?)').run(identity, hash, manifest);
+  const add = storage.prepare("INSERT INTO private_projection_part VALUES (?,'analytics',?,?)");
+  for (const [index, json] of chunks.entries()) add.run(identity, index, json);
+  const route = '/api/cloud/new-a-view/reference.json?item=dashboard.return_priority';
+  const session = await f.call(sessionPath, allowed);
+  const tag = session.headers.get('x-cloud-member-session');
+  const historyResponse = await f.call(history, allowed);
+  const { generation } = await historyResponse.json();
+  const fetchReference = async (path, member = allowed, token = tag, generationPin = generation) => {
+    const request = await f.request(path, member, production);
+    request.headers.set('x-cloud-member-session', token);
+    request.headers.set('x-cloud-generation', generationPin);
+    return worker.fetch(request, f.env);
+  };
+  assert.equal((await f.call(route, denied)).status, 403);
+  assert.equal((await f.call(route, allowed)).status, 403);
+  assert.equal((await fetchReference(route)).status, 404);
+  add.run(identity, 10_000, JSON.stringify({ digest: hash }));
+  const ready = await fetchReference(route);
+  assert.equal(ready.status, 200);
+  assert.deepEqual(await ready.json(), {
+    as_of: day, generation, markup: '<section>表示 dashboard.return_priority</section>',
+  });
+  const page = await fetchReference('/api/cloud/new-a-view/reference.json?item=history.1');
+  assert.equal(page.status, 200);
+  assert.equal(JSON.parse((await page.json()).markup).page, 1);
+  assert.equal((await fetchReference(route, otherAllowed)).status, 403);
+  assert.equal((await fetchReference(route, allowed, tag, 'f'.repeat(64))).status, 409);
+  assert.equal((await fetchReference('/api/cloud/new-a-view/reference.json?item=history.999')).status, 400);
+  storage.prepare("UPDATE private_projection_part SET json='{}' WHERE identity=? AND kind='analytics' AND idx=2").run(identity);
+  assert.equal((await fetchReference(route)).status, 503);
 });

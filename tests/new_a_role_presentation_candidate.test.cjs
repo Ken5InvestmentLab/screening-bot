@@ -17,7 +17,7 @@ const premiumHome = {
 };
 test('shared dashboard follows the prior owner heading, daily cards, holdings, watch and history order',()=>{
  const html=ui.view({...premiumHome,chartRows:[{date:premiumHome.asOf,equity_yen:9500,holding_count:2}]});
- const order=['データ更新日','ダッシュボード','運用レベル','検出履歴へ','対象日の動き',
+ const order=['データ更新日','ダッシュボード','運用レベル','対象日の動き',
   '234A','456A','567A','現在の仮想保有','現在の監視','345A','>検出履歴<','1234'];
  let previous=-1;
  for(const label of order){
@@ -26,7 +26,7 @@ test('shared dashboard follows the prior owner heading, daily cards, holdings, w
   previous=index;
  }
  a.match(html,/class="page-heading"/);
- a.match(html,/<a href="#history" class="button-link cloud-jump">検出履歴へ<\/a>/);
+ a.doesNotMatch(html,/検出履歴へ|href="#history"/);
  a.match(html,/<section class="panel" id="history" tabindex="-1" aria-labelledby="member-history-heading">/);
  a.doesNotMatch(html,/today-kpis|純損益|最大DD|勝率|日足始値と仮想保有の結果/);
  a.match(html,/class="cloud-stock-grid"/);
@@ -111,6 +111,7 @@ async function renderLevelPage({mode,session,storage,access='premium'}) {
    if(url.pathname.endsWith('/session'))return new Response(null,{status:204,headers:{
     'x-cloud-member-session':session,'x-cloud-member-access':access,
    }});
+   if(url.pathname.endsWith('/reference.json'))return new Response(null,{status:404});
    if(url.pathname.endsWith('/chart.json'))requested.push(url.searchParams.get('preset'));
    return Response.json({as_of:premiumHome.asOf,generation:'2'.repeat(64),presets,rows:[],pages:1});
   },
@@ -133,7 +134,7 @@ test('both pages default to 利益優先 and retain the chosen radio for the sam
  const session='1'.repeat(64);
  const home=await renderLevelPage({mode:'home',session,storage});
  a.equal(home.initial.selected,'return_priority');
- a.equal(home.status.textContent,'');
+ a.match(home.status.textContent,/一部の表示/);
  const changed=await home.choose('defensive');
  a.equal(changed.view.selected,'defensive');
  a.ok(changed.focused);
@@ -182,7 +183,7 @@ test('Premium Analytics annualizes only the selected resolved projection over it
  a.ok(operatingLevel);
  a.ok(home.includes(operatingLevel));
  a.doesNotMatch(html,/見方を変える|<select/);
- a.match(html,/<h2>運用レベルの比較<\/h2>/);
+ a.doesNotMatch(html,/運用レベルの比較/);
  a.equal((html.match(/年率換算損益率/g)||[]).length,1);
  a.match(html,/累積損益率を経過年数で割った値/);
  a.doesNotMatch(ui.view(premiumHome),/年率換算損益率/);
@@ -201,7 +202,84 @@ test('Premium Analytics annualizes only the selected resolved projection over it
  ];
  for(const patch of cases)a.match(ui.view({...pages,...patch}),value('未確定'));
 });
-test('analytics compares all 3 presets; missing personal result not fabricated',()=>{const html=ui.view({mode:'analytics',access:'premium',asOf:'2026-11-19',presets,selected:'defensive',rows:[],chartRows:[],personal:null});for(const s of ['守り','中間','利益優先','準備中','以前の結果では代用しません'])a.ok(html.includes(s));});
+test('analytics offers the three controls without duplicating the preset comparisons',()=>{
+ const html=ui.view({mode:'analytics',access:'premium',asOf:'2026-11-19',presets,selected:'defensive',rows:[],chartRows:[],personal:null});
+ for(const text of ['守り','中間','利益優先','準備中'])a.ok(html.includes(text));
+ a.doesNotMatch(html,/運用レベルの比較/);
+});
+test('shared reference document leaves only an authorized insertion slot and retains Premium history',()=>{
+ const home=ui.view({...premiumHome,reference:true});
+ a.match(home,/<h1>ダッシュボード<\/h1>.*id="member-preset".*id="member-reference-content".*<h2 id="member-history-heading">検出履歴/);
+ a.doesNotMatch(home,/検出履歴へ|日足始値と仮想保有の結果|39213|owner-only/);
+ const analytics=ui.view({...premiumHome,mode:'analytics',reference:true});
+ a.match(analytics,/<h1>アナリティクス<\/h1>.*id="member-preset".*id="member-reference-content"/);
+ a.doesNotMatch(analytics,/member-history-heading|運用レベルの比較/);
+ a.doesNotMatch(ui.view({...premiumHome,access:'free',reference:true}),/member-reference-content|member-preset/);
+});
+test('reference envelope requires the verified date, generation and variant selection',()=>{
+ const item='dashboard.return_priority';
+ const payload={as_of:premiumHome.asOf,generation:'a'.repeat(64),markup:'<section>合成データ</section>'};
+ a.equal(ui.referencePayload(payload,item),true);
+ a.equal(ui.referencePayload({...payload,item},item),true);
+ for (const invalid of [null,{...payload,item:'dashboard.medium'},{...payload,markup:''},{...payload,generation:'b'},
+   {...payload,as_of:'2026-02-31'},{...payload,owner:'private'},{...payload,markup:'あ'.repeat(700000)}]){
+  a.equal(ui.referencePayload(invalid,item),false);
+ }
+});
+test('reference history restores the old columns and selected trial details using only confirmed row tokens',()=>{
+ const asOf='2026-11-19',date='2026-11-10',entry=['2026-11-12',100,100,10000];
+ const visible={date,symbol:'234A',has_fundamental:true};
+ const other={date,symbol:'456A',has_fundamental:false};
+ const row={date,symbol:visible.symbol,companyName:'<合成>',chartAllowed:true,signalClose:95,
+  d5:['2026-11-17',105,true],d6:null,item:'2.2026-11-10.234A',
+  levels:[['PRICE_CAP',false,null,null],['FILLED',true,entry,null],['FILLED',true,entry,['2026-11-19',120,2000,.2]]]};
+ const {item,...unlinked}=row;
+ const held={...unlinked,symbol:other.symbol,companyName:null,signalClose:null,chartAllowed:false};
+ const decode=(rows,page=2)=>ui.referenceHistory(JSON.stringify({page,rows}),2,asOf,[visible,other]);
+ const referenceHistoryRows=decode([row,held]);
+ a.equal(referenceHistoryRows.length,2);
+ const render=selected=>ui.view({...premiumHome,asOf,selected,reference:true,referenceHistoryRows});
+ const html=render('return_priority');
+ for(const text of ['検出日','銘柄','試算条件','状況','試算開始日・始値','5営業日後 終値','6営業日後 始値','試算損益',
+   '価格のみ参照','検出日終値 95円','仮想決済済','寄付 100円','2,000円','決済 2026-11-19','チャート保留']){
+  a.ok(html.includes(text),text);
+ }
+ a.match(html,/colspan="8" class="history-record"/);
+ a.match(html,/data-member-history-details aria-expanded="false">詳細を見る/);
+ for (const control of ['証券コード・銘柄名で検索','開始日','終了日','新しい順','古い順','証券コード順','検索をクリア']) {
+  a.ok(html.includes(control),control);
+ }
+ a.match(html,/data-member-fundamental="2\.2026-11-10\.234A">ファンダ/);
+ a.match(html,/symbol=TSE%3A234A/);
+ a.match(html,/&lt;合成&gt;/);
+ a.doesNotMatch(html,/<合成>|symbol=TSE%3A456A|検出履歴へ|運用レベルの比較/);
+ a.match(render('medium'),/仮想保有中/);
+ a.doesNotMatch(render('medium'),/決済 2026-11-19/);
+ a.match(render('defensive'),/株価上限/);
+ a.equal(decode([row,held],1),null);
+ a.equal(decode([held,row]),null);
+ for(const invalid of [{...row,item:'1.2026-11-10.234A'},{...row,chartAllowed:false},{...row,d5:['2026-11-20',22,true]},
+   {...row,levels:[row.levels[0],row.levels[1],['EXPIRED',true,null,['2026-11-19',120,2000,.2]]]},
+   {...row,owner_preference:10}]){
+  a.equal(decode([invalid,held]),null);
+ }
+});
+test('history index lookup supports legacy code/name, date range and sort while rejecting malformed indexes',()=>{
+ const names=['岡田','合成システム'];
+ const index={names,rows:[['2026-11-19','4444',1],['2026-11-18','234A',1],['2026-11-16','3210',0],['2026-11-15','1001',null]]};
+ const asOf='2026-11-19';
+ const validated=ui.referenceHistoryIndex(JSON.stringify(index),asOf,1);
+ a.equal(JSON.stringify(validated),JSON.stringify(index));
+ const defaults={symbol:'',from:'',through:'',order:'newest'};
+ a.deepEqual(Array.from(ui.matchingHistory(validated,{...defaults,symbol:'　２３４ａ　'})),[1]);
+ a.deepEqual(Array.from(ui.matchingHistory(validated,{...defaults,symbol:'合成',from:'2026-11-18',through:'2026-11-18'})),[1]);
+ a.deepEqual(Array.from(ui.matchingHistory(validated,{...defaults,order:'oldest'})),[3,2,1,0]);
+ a.deepEqual(Array.from(ui.matchingHistory(validated,{...defaults,order:'symbol'})),[3,1,2,0]);
+ for (const invalid of [{...index,rows:[index.rows[0],index.rows[0]]},{...index,rows:[['2026-11-20','234A',0]]},
+   {...index,rows:[['2026-11-18','234A',-1]]},{...index,rows:[['2026-11-18','234A',2]]}]){
+  a.equal(ui.referenceHistoryIndex(JSON.stringify(invalid),asOf,1),null);
+ }
+});
 test('free presentation shows server-provided closed history and one existing purchase action',()=>{
  const html=ui.view({mode:'home',access:'free',asOf:'2026-11-19',presets,selected:'medium',rows:[{date:'2026-11-18',symbol:'1234',state:'HOLD_ENDED'},{date:'2026-11-18',symbol:'4321',state:'EXPIRED'}],chartRows:[],personal:metrics,dashboard:{today:[{symbol:'TODAY_ONLY'}],watching:[{symbol:'WATCH_ONLY'}]}});
  for(const value of ['仮想保有終了銘柄','1234','仮想保有終了','今日の動きと監視状況','href="/purchase"'])a.ok(html.includes(value),value);

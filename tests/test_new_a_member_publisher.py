@@ -10,6 +10,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from weak_early_beta.new_a import member_publication
+from weak_early_beta.new_a.member_reference_publication import SCHEMA as REFERENCE_SCHEMA, VARIANTS, READY_INDEX
 from weak_early_beta.new_a.files import atomic_write, file_sha, private_root, read
 from weak_early_beta.new_a.member_publisher import import_member_projection, read_member_marker
 from weak_early_beta.new_a.operational_admission import read_active_metadata
@@ -397,7 +398,8 @@ class MemberPublisherTest(unittest.TestCase):
 
         def build(args, **kwargs):
             self.assertEqual(len(args), 10)
-            self.assertEqual(Path(args[1]).name, "prepare-new-a-member-projection.cjs")
+            entry = Path(args[1]).name
+            self.assertIn(entry, {"prepare-new-a-member-projection.cjs", "prepare-new-a-reference-view.cjs"})
             self.assertEqual(kwargs["cwd"], self.root.resolve())
             self.assertTrue(kwargs["capture_output"])
             flags = dict(zip(args[2::2], args[3::2]))
@@ -411,10 +413,17 @@ class MemberPublisherTest(unittest.TestCase):
             self.assertEqual(proof["active_dataset_id"], row["dataset_id"])
             self.assertEqual(proof["active_revision"], row["revision"])
             self.assertIs(proof["owner_http_observed"], False)
-            projection(
-                Path(flags["--out"]), source(row["revision"]),
-                source_manifest_sha256=proof["active_logical_manifest_sha256"], owner_readback_sha256=pin,
-            )
+            output = Path(flags["--out"])
+            if entry == "prepare-new-a-reference-view.cjs":
+                atomic_write(output / "reference-view.json", {
+                    "source": source(row["revision"]),
+                    "variants": {item: "<section>reference</section>" for item in VARIANTS},
+                })
+            else:
+                projection(
+                    output, source(row["revision"]),
+                    source_manifest_sha256=proof["active_logical_manifest_sha256"], owner_readback_sha256=pin,
+                )
             return SimpleNamespace(returncode=0)
 
         release_patch = patch.object(member_publication, "ordinary_runtime_release", return_value=release)
@@ -435,9 +444,14 @@ class MemberPublisherTest(unittest.TestCase):
             "worker_version_id": release["version_id"], "same_generation_replay": False,
         })
         self.assertEqual(marker["identity"], encode(source(4)))
+        ready = self.member.query(
+            "SELECT json FROM private_projection_part WHERE identity=? AND kind='analytics' AND idx=?",
+            (marker["identity"] + "\n" + REFERENCE_SCHEMA, READY_INDEX),
+        )
+        self.assertEqual(len(ready), 1)
         self.assertEqual(read(root / "latest-member-publication.json"), result)
         self.assertEqual(observer.call_count, 2)
-        builder.assert_called_once()
+        self.assertEqual(builder.call_count, 2)
         replay = member_publication.publish_current_member_view(self.root, self.owner, self.member, node="node")
         self.assertEqual(replay, {**result, "same_generation_replay": True})
 
@@ -474,7 +488,7 @@ class MemberPublisherTest(unittest.TestCase):
         self.assertEqual(read_member_marker(self.member)["identity"], encode(source(4)))
         self.assertEqual(read(receipt_path), previous)
         self.assertEqual(observer.call_count, 2)
-        builder.assert_called_once()
+        self.assertEqual(builder.call_count, 2)
 
     @unittest.skipUnless(shutil.which("node"), "Node required to exercise the Worker reader")
     def test_worker_reader_serves_sqlite_import_and_withholds_superseded_generation(self):

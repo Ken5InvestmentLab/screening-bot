@@ -23,6 +23,7 @@ FUNDAMENTAL_POPUP_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_POPUP_SUCCESSOR_SOUR
 FUNDAMENTAL_IMPACT_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_IMPACT_SUCCESSOR_SOURCE_REVIEW_V1"
 CLOUD_UI_REVIEW_SCHEMA = "NEW_A_MEMBER_CLOUD_UI_SUCCESSOR_SOURCE_REVIEW_V1"
 CLOUD_UI_POLISH_REVIEW_SCHEMA = "NEW_A_MEMBER_CLOUD_UI_POLISH_SUCCESSOR_SOURCE_REVIEW_V1"
+CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA = "NEW_A_MEMBER_CLOUD_OWNER_REFERENCE_SUCCESSOR_SOURCE_REVIEW_V1"
 _PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumのアクセス権を購入する</a>'.encode()
 _NEW_PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumアクセス権を購入する</a>'.encode()
 _SUCCESSOR_REVIEW_PATHS = frozenset({
@@ -191,8 +192,49 @@ _CLOUD_UI_POLISH_PRODUCT_PATHS = frozenset({
 # The entrypoint binds the shared page to the verified owner after the existing owner gate.
 _CLOUD_UI_POLISH_ENTRY_SHA256 = "7b467a73aa92f487c4020715b773e35b955d31f51a0dc903ab187590557b9391"
 _CLOUD_UI_POLISH_PRODUCT_SHA256 = "c6714194ec123f2f6c262d5638de25d04ce3ea34ec95a10c136ffbbc7f76c479"
+_CLOUD_OWNER_REFERENCE_BASELINE = "0c3643c5b3ae513c95818fabc418affd56937d72"
+_CLOUD_OWNER_REFERENCE_ADDITIONS = frozenset({
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/reference-analytics.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/reference-analytics.cjs",
+    "weak-early-beta-gate/scripts/new-a-ui-source/reference-history.cjs",
+    "weak-early-beta-gate/scripts/prepare-new-a-reference-view.cjs",
+    "weak-early-beta-gate/src/new-a-member-reference.ts",
+    "weak_early_beta/new_a/member_reference_publication.py",
+})
+_CLOUD_OWNER_REFERENCE_PRODUCT_PATHS = _CLOUD_OWNER_REFERENCE_ADDITIONS | {
+    "tests/cloud_bundle_sync.test.cjs",
+    "tests/new_a_dashboard_details.test.cjs",
+    "tests/new_a_member_consistency.test.cjs",
+    "tests/new_a_member_worker.test.cjs",
+    "tests/new_a_role_presentation_candidate.test.cjs",
+    "tests/test_new_a_member_publisher.py",
+    "weak-early-beta-gate/scripts/build-new-a-frame.mjs",
+    "weak-early-beta-gate/scripts/build-new-a-member-frame.mjs",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/finite-controller.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/finite-dom.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/member-loader.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/member-presentation.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/owner-loader.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/frame.html",
+    "weak-early-beta-gate/scripts/prepare-new-a-member-projection.cjs",
+    "weak-early-beta-gate/src/index.ts",
+    "weak-early-beta-gate/src/new-a-cloud.ts",
+    "weak-early-beta-gate/src/new-a-member-services.ts",
+    "weak-early-beta-gate/src/new-a-role-facade.ts",
+    "weak-early-beta-gate/src/new-a-role-integration.ts",
+    "weak_early_beta/new_a/member_publication.py",
+}
+_CLOUD_OWNER_REFERENCE_REVIEW_PATHS = frozenset({
+    "weak_early_beta/new_a/member_ordinary_acceptance.py",
+    "weak_early_beta/new_a/member_release_source_review.py",
+})
+_CLOUD_OWNER_REFERENCE_AUTH_SHA256 = {
+    "weak-early-beta-gate/src/index.ts": "feea298e2a0d58ccfdb771ee56ca2980e3cded6a728cc93243bbe570c1cbf8e4",
+    "weak-early-beta-gate/src/new-a-cloud.ts": "a75dae1a95b9d1544bf60fb80a237a496d902ad1cf8c3be18102b3fe6defad96",
+}
+_CLOUD_OWNER_REFERENCE_PRODUCT_SHA256 = "ca332dac12888ff4b17d889b515a88f5400ac0cfdcd4e637781c740a2c737abc"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
-    CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA,
+    CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
     ROLE_ONLY_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA, FUNDAMENTAL_POPUP_REVIEW_SCHEMA, FUNDAMENTAL_IMPACT_REVIEW_SCHEMA,
 })
 MEMBER_BINDING = {
@@ -286,7 +328,14 @@ def _check_role_only_successor(repo, candidate, paths):
 
 
 def _member_successor(repo, baseline, candidate):
-    if baseline == _CLOUD_UI_POLISH_BASELINE:
+    if baseline == _CLOUD_OWNER_REFERENCE_BASELINE:
+        paths = _successor_paths(repo, baseline, candidate, allowed_additions=_CLOUD_OWNER_REFERENCE_ADDITIONS)
+        if paths != _CLOUD_OWNER_REFERENCE_PRODUCT_PATHS | _CLOUD_OWNER_REFERENCE_REVIEW_PATHS:
+            raise ValueError("Cloud owner reference successor differs from the reviewed product or test scope")
+        if _product_digest(repo, candidate, _CLOUD_OWNER_REFERENCE_PRODUCT_PATHS) != _CLOUD_OWNER_REFERENCE_PRODUCT_SHA256:
+            raise ValueError("Cloud owner reference successor differs from the reviewed product or test bytes")
+        schema = CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA
+    elif baseline == _CLOUD_UI_POLISH_BASELINE:
         paths = _successor_paths(repo, baseline, candidate)
         if paths != _CLOUD_UI_POLISH_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
             raise ValueError("Cloud UI polish successor differs from the reviewed product or test scope")
@@ -373,7 +422,11 @@ def review_member_release_source(repo, baseline, candidate):
     if prior_members or "CLOUD_MEMBER_VIEW_ENABLED" in common_config["vars"]:
         exact_shared_owner_entry = (baseline == _CLOUD_UI_POLISH_BASELINE and changed == [ENTRY]
                                     and hashlib.sha256(after[ENTRY]).hexdigest() == _CLOUD_UI_POLISH_ENTRY_SHA256)
-        if changed and not exact_shared_owner_entry:
+        exact_owner_reference_auth = (
+            baseline == _CLOUD_OWNER_REFERENCE_BASELINE
+            and {name: hashlib.sha256(after[name]).hexdigest() for name in changed} == _CLOUD_OWNER_REFERENCE_AUTH_SHA256
+        )
+        if changed and not (exact_shared_owner_entry or exact_owner_reference_auth):
             raise ValueError("Member successor changes existing Discord or owner authorization source")
         expected_config = baseline_config_bytes
         if baseline == _ROLE_ONLY_BASELINE:
@@ -383,7 +436,7 @@ def review_member_release_source(repo, baseline, candidate):
                 or common_config["vars"].get("CLOUD_MEMBER_VIEW_ENABLED") != "true" or prior_members != [MEMBER_BINDING]):
             raise ValueError("Member successor changes the approved Worker configuration or member D1")
         if (baseline in {_JOURNAL_BASELINE, _FUNDAMENTAL_POPUP_BASELINE, _FUNDAMENTAL_IMPACT_BASELINE,
-                         _CLOUD_UI_BASELINE, _CLOUD_UI_POLISH_BASELINE}
+                         _CLOUD_UI_BASELINE, _CLOUD_UI_POLISH_BASELINE, _CLOUD_OWNER_REFERENCE_BASELINE}
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "role_only"):
             raise ValueError("Version-bound member successor requires the existing role-only audience")
         return _member_successor(repo, baseline, candidate)

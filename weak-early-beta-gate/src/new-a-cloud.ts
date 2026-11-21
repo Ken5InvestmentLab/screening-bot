@@ -108,7 +108,7 @@ export async function newACloudRoute(request:Request,env:CloudEnv,context:Truste
    try{theme=await readInitialTheme(env.CLOUD_DB,await cloudMemberId(context.subject));}
    catch{/* A preference storage error must not prevent the owner page from loading. */}
   }
-  return protectedReply(request,200,ownerFrame(p,context,theme),false);
+  return protectedReply(request,200,ownerFrame(p,context,theme,env.CLOUD_MEMBER_VIEW_ENABLED === 'true'),false);
  }
  if(legacyData.test(p)||p.startsWith('/report-assets/'))return protectedReply(request,410,{error:'legacy_data_not_served'});
  if(p.startsWith('/new-a-assets/')){

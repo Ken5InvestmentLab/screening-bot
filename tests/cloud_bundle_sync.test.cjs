@@ -34,7 +34,7 @@ test('actual sync builds the exact data-free public inventory and a worker-only 
  assert.equal(f.result.status, 0, f.result.stderr);
  const files = await inventory(f.publicDir);
  const pages = ['latest', 'analytics', 'silence', 'dive', 'shadow', 'fusion', 'balance', 'guide'];
- const memberScripts = ['member-loader.js', 'member-presentation.js', 'member-settings.js'];
+ const memberScripts = ['member-loader.js', 'member-presentation.js', 'member-settings.js', 'reference-analytics.js'];
  const scripts = [
   'browser-transport.js', 'finite-controller.js', 'finite-dom.js', 'initial-display.js',
   'owner-loader.js', 'owner-notifications.js', 'owner-settings.js', ...memberScripts,
@@ -71,6 +71,9 @@ test('actual sync builds the exact data-free public inventory and a worker-only 
  assert.match(premiumHome, /aria-haspopup="dialog" aria-controls="cloud-settings-dialog"/);
  assert.doesNotMatch(freeHome + freeSettings + premiumSettings, /<dialog id="cloud-settings-dialog"/);
  assert.match(premiumSettings, /src="\/new-a-assets\/member-settings\.js"/);
+ const premiumAnalytics = renderMemberFrame('/weak_early_beta_analytics.html', 'premium');
+ assert.match(premiumAnalytics, /src="\/new-a-assets\/reference-analytics\.js"/);
+ assert.doesNotMatch(premiumHome + freeHome, /reference-analytics/);
  const scan = spawnSync(process.execPath, [path.join(f.gate, 'scripts/verify-new-a-code-only.mjs')], {encoding: 'utf8'});
  assert.equal(scan.status, 0, scan.stderr);
 });

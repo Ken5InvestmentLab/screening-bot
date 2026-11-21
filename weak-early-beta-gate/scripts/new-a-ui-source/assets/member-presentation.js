@@ -44,10 +44,96 @@ function annualizedProfitPct(current, rows) {
 }
 const exactKeys = (value, keys) => value !== null && typeof value === 'object' && !Array.isArray(value)
   && Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value,key));
+function referencePayload(value, item) {
+  const keys = ['as_of','generation','markup'];
+  const hasItem = exactKeys(value,[...keys,'item']) && value.item === item;
+  const maxMarkup = 512 * 1024;
+  return (hasItem || exactKeys(value,keys)) && day(value.as_of)
+    && typeof value.generation === 'string' && /^[a-f0-9]{64}$/.test(value.generation)
+    && typeof value.markup === 'string' && value.markup.trim().length !== 0
+    && value.markup.length <= maxMarkup
+    && new TextEncoder().encode(value.markup).byteLength <= maxMarkup;
+}
 function fundamentalItem(page, row) {
-  return Number.isSafeInteger(page) && page >= 1 && page <= 999999 && row?.has_fundamental === true
+  return Number.isSafeInteger(page) && page >= 1 && page <= 200 && row?.has_fundamental === true
     && day(row.date) && typeof row.symbol === 'string' && /^[0-9A-Z]{4}$/.test(row.symbol)
     ? [page,row.date,row.symbol].join('.') : null;
+}
+function fundamentalSelector(item) {
+  const match = typeof item === 'string' && /^([1-9]\d{0,2})\.(\d{4}-\d{2}-\d{2})\.([0-9A-Z]{4})$/.exec(item);
+  return match && Number(match[1]) <= 200 && day(match[2]) ? { date: match[2], symbol: match[3] } : null;
+}
+const historyStates = {
+  ...states, TRIGGERED:'支持反発確認', EXPIRED:'監視期限', UP_ESCAPED:'上方離脱', DOWN_INVALIDATED:'下方無効',
+  DAILY_FILLED_CAP:'1日新規上限', FILLED:'約定', CAPACITY:'保有上限', LOT_EXCEEDS_ALLOCATION:'注文上限超過',
+  CASH_INSUFFICIENT:'資金不足', DUPLICATE_HELD:'保有中', PRICE_CAP:'株価上限', SIGNAL_PRICE_UNVERIFIED:'株価未確認',
+  UNFILLED:'未約定', UNFILLED_UNCERTAIN_ONE_PRICE:'一値・約定未確認', HALTED_UNRESOLVED:'未解決で停止',
+  IDENTITY_UNVERIFIED:'銘柄対応未確認',
+};
+const positive = value => Number.isFinite(value) && value > 0;
+const tuple = (value, length) => Array.isArray(value) && value.length === length;
+function referenceHistory(markup, page, asOf, basicRows, fromIndex = false) {
+  let result;
+  try { result = JSON.parse(markup); } catch { return null; }
+  if (!exactKeys(result,['page','rows']) || result.page !== page || !Array.isArray(result.rows) || !Array.isArray(basicRows)
+    || result.rows.length > 100 || result.rows.length !== basicRows.length) return null;
+  const keys = ['date','symbol','companyName','chartAllowed','signalClose','d5','d6','levels'];
+  const encoder = new TextEncoder();
+  const valid = result.rows.every((row,index) => {
+    const basic = basicRows[index];
+    const hasItem = exactKeys(row,[...keys,'item']);
+    if ((!hasItem && !exactKeys(row,keys)) || !day(row.date) || row.date > asOf || row.date !== basic?.date
+      || typeof row.symbol !== 'string' || !/^[0-9A-Z]{4}$/.test(row.symbol) || row.symbol !== basic?.symbol
+      || typeof row.chartAllowed !== 'boolean' || (row.signalClose !== null && !positive(row.signalClose))
+      || (row.companyName !== null && (typeof row.companyName !== 'string' || !row.companyName.trim()
+        || row.companyName.length > 256 || encoder.encode(row.companyName).length > 256))
+      || (fromIndex && row.companyName !== basic.companyName)
+      || (hasItem && (!row.chartAllowed || typeof row.item !== 'string'
+        || row.item !== fundamentalItem(page,fromIndex ? { ...basic, has_fundamental:true } : basic)))
+      || !tuple(row.levels,3)) return false;
+    const validDate = date => day(date) && date >= row.date && date <= asOf;
+    const validPoint = point => point === null || (tuple(point,3) && validDate(point[0])
+      && positive(point[1]) && typeof point[2] === 'boolean');
+    if (!validPoint(row.d5) || !validPoint(row.d6)) return false;
+    return row.levels.every(level => {
+      if (!tuple(level,4)) return false;
+      const [state,selected,entry,exit] = level;
+      return typeof state === 'string' && Object.hasOwn(historyStates,state) && typeof selected === 'boolean'
+        && (entry === null || (tuple(entry,4) && validDate(entry[0]) && entry.slice(1).every(positive)))
+        && (exit === null || (entry !== null && tuple(exit,4) && validDate(exit[0]) && exit[0] >= entry[0]
+          && positive(exit[1]) && Number.isFinite(exit[2]) && Number.isFinite(exit[3])));
+    });
+  });
+  return valid ? result.rows : null;
+}
+function referenceHistoryIndex(markup, asOf, pageCount) {
+  let index;
+  try { index = JSON.parse(markup); } catch { return null; }
+  if (!exactKeys(index,['names','rows']) || !Array.isArray(index.names) || !Array.isArray(index.rows)
+    || index.rows.length > 20000 || index.names.length > index.rows.length
+    || Math.max(1,Math.ceil(index.rows.length / 100)) !== pageCount) return null;
+  const encoder = new TextEncoder();
+  if (!index.names.every(name => typeof name === 'string' && name.trim() && name.length <= 256
+    && encoder.encode(name).length <= 256)) return null;
+  const identities = new Set();
+  for (const row of index.rows) {
+    if (!tuple(row,3) || !day(row[0]) || row[0] > asOf || typeof row[1] !== 'string' || !/^[0-9A-Z]{4}$/.test(row[1])
+      || (row[2] !== null && (!Number.isSafeInteger(row[2]) || row[2] < 0 || row[2] >= index.names.length))) return null;
+    const identity = row[0] + '.' + row[1];
+    if (identities.has(identity)) return null;
+    identities.add(identity);
+  }
+  return index;
+}
+function matchingHistory(index, { symbol, from, through, order }) {
+  const query = symbol.normalize('NFKC').trim().toLowerCase();
+  const matches = index.rows.flatMap(([date,code,name], offset) =>
+    ((!from || date >= from) && (!through || date <= through)
+      && (!query || code.toLowerCase().includes(query) || (name !== null
+        && index.names[name].normalize('NFKC').toLowerCase().includes(query)))) ? [offset] : []);
+  if (order === 'oldest') matches.sort((left,right) => index.rows[left][0].localeCompare(index.rows[right][0]));
+  if (order === 'symbol') matches.sort((left,right) => index.rows[left][1].localeCompare(index.rows[right][1]));
+  return matches;
 }
 function fundamentalText({label,text}) {
   const references = label === '開示リンク' || label === 'Sources';
@@ -96,18 +182,77 @@ function fundamentalMarkup(report, {date,symbol,asOf,generation}) {
     + '<p>検出日 ' + esc(date) + '</p><p>分析時点 ' + esc(report.analysis_cutoff) + '</p>'
     + '<dl>' + fields + '</dl></article></div>';
 }
+function fundamentalButton(item) {
+  return item ? '<button class="fundamental-toggle cloud-stock-action" type="button" aria-haspopup="dialog" aria-expanded="false" data-member-fundamental="'
+    + esc(item) + '">ファンダ</button>' : '';
+}
 function history(rows, premiumPage) {
   return '<div class="history-table-wrap"><table id="detection-table"><thead><tr><th>検出日</th><th>銘柄</th>'
     + '<th>状態</th><th>詳細</th></tr></thead><tbody>' + rows.map(row => {
       const item = fundamentalItem(premiumPage,row);
-      const action = item ? '<div class="actions"><button class="fundamental-toggle cloud-stock-action" type="button" aria-haspopup="dialog" aria-expanded="false" data-member-fundamental="'
-        + esc(item) + '">ファンダ</button></div>' : '';
+      const action = item ? '<div class="actions">' + fundamentalButton(item) + '</div>' : '';
       const state = esc(Object.hasOwn(states,row.state) ? states[row.state] : row.state);
       return '<tr><td data-label="検出日">' + esc(row.date) + action + '</td><th scope="row">' + esc(row.symbol)
         + '</th><td data-label="状態">' + state + '</td><td><details><summary>確認</summary><p>検出日 ' + esc(row.date)
         + '<br>銘柄 ' + esc(row.symbol) + '<br>状態 ' + state + '</p>'
         + '<p class="note">共通の検出情報です。本人の保有・注文ではありません。</p></details></td></tr>';
     }).join('') + '</tbody></table></div>';
+}
+const historyColumns = [
+  '検出日','銘柄','試算条件','状況','試算開始日・始値','5営業日後 終値','6営業日後 始値','試算損益',
+];
+function historyReferenceCell(point) {
+  if (point === null) return '—';
+  const [date, price, priceOnly] = point;
+  return esc(date) + '<small>' + number(price) + '円 · ' + (priceOnly ? '価格のみ参照' : '参照') + '</small>';
+}
+function referenceHistoryTable(rows, preset) {
+  if (rows.length === 0) return '<p class="note">該当する銘柄がありません。</p>';
+  const level = Object.keys(names).indexOf(preset);
+  const headers = historyColumns.map((label,index) => '<div' + (index === 7 ? ' class="number"' : '') + '>'
+    + label + (index === 5 || index === 6 ? '<small>参照</small>' : '') + '</div>').join('');
+  const records = rows.map(row => {
+    const [state, selected, entry, exit] = row.levels[level];
+    const status = state === 'FILLED' ? (exit ? '仮想決済済' : '仮想保有中') : historyStates[state];
+    const trial = selected ? (entry ? number(entry[2]) + '株で試算' : '試算対象') : '—';
+    const details = entry ? esc(entry[0]) + '<small>寄付 ' + number(entry[1]) + '円</small><small>'
+      + number(entry[2]) + '株 · ' + number(entry[3]) + '円</small>' : '—';
+    const result = exit ? '<strong>' + number(exit[2]) + '円</strong><small>' + number(exit[3]*100) + '%</small>'
+      + '<div class="cloud-exit-details"><small>決済 ' + esc(exit[0]) + ' · ' + number(exit[1]) + '円</small></div>'
+      : entry ? '<strong>仮想保有中</strong>' : '—';
+    const close = row.signalClose === null ? '未確認' : number(row.signalClose) + '円';
+    const identification = row.chartAllowed ? '' : '<small>当時の銘柄名を確認中</small>';
+    const chart = row.chartAllowed
+      ? '<a class="button-link cloud-stock-action" href="https://jp.tradingview.com/chart/?symbol=TSE%3A'
+        + encodeURIComponent(row.symbol) + '" target="_blank" rel="noopener noreferrer">チャート</a>'
+      : '<span class="button-link" aria-disabled="true">チャート保留</span>';
+    return '<tr><td colspan="8" class="history-record"><div class="history-visible-grid">'
+      + '<div class="history-date" data-label="検出日"><div class="history-date-value">' + esc(row.date)
+      + '</div><div class="actions history-date-actions">' + fundamentalButton(row.item) + chart + '</div></div>'
+      + '<div class="history-company"><strong><span class="symbol">' + esc(row.symbol) + '</span>'
+      + (row.companyName === null ? '' : ' ' + esc(row.companyName)) + '</strong><small>検出日終値 ' + close + '</small>'
+      + identification + '</div><div data-label="試算条件"><small>' + trial + '</small></div>'
+      + '<div data-label="状況"><span class="status pending">' + status + '</span></div>'
+      + '<div data-label="試算開始日・始値">' + details + '</div>'
+      + '<div data-label="5営業日後 終値">' + historyReferenceCell(row.d5) + '</div>'
+      + '<div data-label="6営業日後 始値">' + historyReferenceCell(row.d6) + '</div>'
+      + '<div data-label="成績" class="number cloud-history-result">' + result + '</div></div>'
+      + '<button type="button" class="history-mobile-toggle" data-member-history-details aria-expanded="false">詳細を見る</button></td></tr>';
+  }).join('');
+  return '<div class="history-details"><div class="table-wrap history-table-wrap"><table id="detection-table">'
+    + '<thead><tr><th colspan="8"><div class="history-visible-grid">' + headers + '</div></th></tr></thead>'
+    + '<tbody>' + records + '</tbody></table></div></div>';
+}
+function historyFilters() {
+  return '<div class="filters" id="member-history-filters" role="group" aria-label="検出履歴の絞り込み">'
+    + '<label class="filter-field"><span>銘柄</span><input type="search" data-history-filter="symbol" '
+    + 'autocomplete="off" placeholder="証券コード・銘柄名で検索"></label>'
+    + '<label class="filter-field"><span>開始日</span><input type="date" data-history-filter="from"></label>'
+    + '<label class="filter-field"><span>終了日</span><input type="date" data-history-filter="through"></label>'
+    + '<label class="filter-field"><span>並び順</span><select data-history-filter="order"><option value="newest">新しい順</option>'
+    + '<option value="oldest">古い順</option><option value="symbol">証券コード順</option></select></label>'
+    + '<button class="clear-search" type="button" data-history-clear>検索をクリア</button>'
+    + '<output class="result-count" id="member-history-filter-status" aria-live="polite"></output></div>';
 }
 const purchase = '<a class="member-purchase" href="/purchase">Premiumアクセス権を購入する</a>';
 const titleFor = mode => mode === 'analytics' ? 'アナリティクス' : mode === 'settings' ? '設定' : 'ダッシュボード';
@@ -175,16 +320,24 @@ function operatingLevel(selected) {
       + value + '"' + (value === selected ? ' checked' : '') + '><span>' + label + '</span></label>').join('')
     + '</div></fieldset>';
 }
-function premiumHome({asOf, selected, rows, chartRows, dashboard, historyPage}, current) {
+function premiumHeading(mode, asOf, selected) {
+  return '<div class="page-heading"><div><p class="note">データ更新日 <time datetime="'
+    + esc(asOf) + '">' + esc(asOf) + '</time></p><h1>' + titleFor(mode) + '</h1></div>'
+    + operatingLevel(selected) + '</div>';
+}
+function historyPanel(rows, historyPage, referenceRows, selected) {
+  return '<section class="panel" id="history" tabindex="-1" aria-labelledby="member-history-heading">'
+    + '<h2 id="member-history-heading">検出履歴</h2>'
+    + (referenceRows ? historyFilters() + '<div id="member-history-results">' + referenceHistoryTable(referenceRows,selected) + '</div>'
+      : history(rows,historyPage)) + '</section>';
+}
+function premiumHome({asOf, selected, rows, chartRows, dashboard, historyPage, referenceHistoryRows}, current) {
   if (!Array.isArray(dashboard?.today) || !Array.isArray(dashboard?.watching)) throw Error('dashboard_unavailable');
   const latest = chartRows?.at(-1);
   const holdingCount = current.resolved && latest?.date === asOf
     && Number.isSafeInteger(latest.holding_count) && latest.holding_count >= 0 ? latest.holding_count : null;
   const holdings = holdingCount === null ? '未確定' : number(holdingCount) + '銘柄';
-  return '<div class="page-heading"><div>'
-    + '<p class="note">データ更新日 <time datetime="' + esc(asOf) + '">' + esc(asOf) + '</time></p>'
-    + '<h1>ダッシュボード</h1></div>' + operatingLevel(selected)
-    + '<a href="#history" class="button-link cloud-jump">検出履歴へ</a></div>'
+  return premiumHeading('home',asOf,selected)
     + '<section class="panel" id="new-a-current" aria-labelledby="member-activity-heading"><div class="cloud-section-head">'
     + '<h2 id="member-activity-heading">対象日の動き</h2></div>'
     + movementSummary(dashboard.today) + movementCards(dashboard.today) + entryCandidates(dashboard.today) + '</section>'
@@ -193,8 +346,7 @@ function premiumHome({asOf, selected, rows, chartRows, dashboard, historyPage}, 
     + '<section class="panel" aria-labelledby="member-watching-heading"><div class="cloud-section-head">'
     + '<h2 id="member-watching-heading">現在の監視</h2><span class="badge">' + dashboard.watching.length + '銘柄</span></div>'
     + currentWatch(dashboard.watching) + '</section>'
-    + '<section class="panel" id="history" tabindex="-1" aria-labelledby="member-history-heading">'
-    + '<h2 id="member-history-heading">検出履歴</h2>' + history(rows,historyPage) + '</section>';
+    + historyPanel(rows,historyPage,referenceHistoryRows,selected);
 }
 function freeHome(rows = null) {
   const closed = rows?.filter(row => row.state === 'HOLD_ENDED');
@@ -203,13 +355,19 @@ function freeHome(rows = null) {
     + (closed === undefined ? '' : '<section class="panel"><h2>仮想保有終了銘柄</h2>'
       + (closed.length ? history(closed) : '<p class="note">このページに仮想保有終了銘柄はありません。</p>') + '</section>');
 }
-function view({mode,access,asOf,presets,selected,rows,chartRows,personal,dashboard,historyPage}){
+function view({mode,access,asOf,presets,selected,rows,chartRows,personal,dashboard,historyPage,reference,referenceHistoryRows}){
  if(access==='free')return mode==='home'?freeHome(rows):lockedPage(mode);
  if(access!=='premium')throw Error('access_unavailable');
+ if(reference===true)return premiumHeading(mode,asOf,selected)+'<div id="member-reference-content"></div>'
+  +(mode==='home'?historyPanel(rows,historyPage,referenceHistoryRows,selected):'');
  const current=presets.find(x=>x.preset===selected);if(!current)throw Error('preset_unavailable');
- if(mode==='home')return premiumHome({asOf,selected,rows,chartRows,dashboard,historyPage},current);
- return heading(mode, asOf)+'<section class="panel">'+operatingLevel(selected)+'<p class="note">共通条件による仮想試算です。売買や通知の設定は変更しません。</p>'+metrics(current.resolved?current.metrics:null,mode==='analytics'?annualizedProfitPct(current,chartRows):undefined)+'</section><section class="panel"><h2>日次資金推移</h2>'+chart(chartRows)+'</section>'+(mode==='analytics'?'<section class="panel"><h2>あなたの保存条件による試算</h2>'+(personal?metrics(personal):'<p role="status">現在のデータ・保存条件に一致する結果を準備中、または未確定です。以前の結果では代用しません。</p>')+'</section><section class="panel"><h2>運用レベルの比較</h2>'+presets.map(x=>'<h3>'+esc(names[x.preset]??x.preset)+'</h3>'+metrics(x.resolved?x.metrics:null)).join('')+'</section>':'<section class="panel"><h2>検出履歴</h2>'+history(rows)+'</section>');
+ if(mode==='home')return premiumHome({asOf,selected,rows,chartRows,dashboard,historyPage,referenceHistoryRows},current);
+ return premiumHeading(mode,asOf,selected)+'<section class="panel">'+metrics(current.resolved?current.metrics:null,annualizedProfitPct(current,chartRows))
+  +'</section><section class="panel"><h2>日次資金推移</h2>'+chart(chartRows)+'</section><section class="panel"><h2>あなたの保存条件による試算</h2>'
+  +(personal?metrics(personal):'<p role="status">保存した条件による試算結果を準備中です。</p>')+'</section>';
 }
-g.NewAMemberPresentation={metrics,chart,history,view,lockedPage,freeHome,fundamentalItem,fundamentalMarkup};
+g.NewAMemberPresentation={metrics,chart,history,view,lockedPage,freeHome,operatingLevel,referencePayload,referenceHistory,
+  referenceHistoryIndex,matchingHistory,referenceHistoryTable,
+  fundamentalItem,fundamentalSelector,fundamentalMarkup};
 if(typeof module!=='undefined')module.exports=g.NewAMemberPresentation;
 })(globalThis);

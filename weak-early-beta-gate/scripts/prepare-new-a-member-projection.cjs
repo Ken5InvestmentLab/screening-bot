@@ -96,7 +96,7 @@ function assembleCurrent(records) {
   return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
 }
 
-async function openVerifiedBundle(bundle, manifest) {
+async function openVerifiedBundle(bundle, manifest, { includeDisplay = false } = {}) {
   async function readPart(descriptor) {
     const raw = await readBounded(path.join(bundle, descriptor.name), partLimit);
     assert(raw.length === descriptor.bytes && digest(raw) === descriptor.sha256, 'Canonical source part hash or size mismatch');
@@ -117,7 +117,7 @@ async function openVerifiedBundle(bundle, manifest) {
   const presentations = [];
   for (const descriptor of manifest.collections.presentation) {
     for (const row of await readPart(descriptor)) {
-      if (row?.fundamental?.auditStatus === 'pass') presentations.push(row);
+      if (includeDisplay || row?.fundamental?.auditStatus === 'pass') presentations.push(row);
     }
   }
   const current = assembleCurrent(await collectParts(manifest.collections.current_daily));
@@ -152,9 +152,25 @@ async function openVerifiedBundle(bundle, manifest) {
     }
   }
   assert.equal(quotes.size, manifest.expected_quote_keys, 'Canonical quote key count mismatch');
+  let dashboardCloses;
+  if (includeDisplay) {
+    const { valid } = require('./new-a-ui-source/engine/finite-engine.cjs');
+    const date = manifest.as_of;
+    const prices = Object.create(null);
+    if (date === input.limits?.completeThrough) {
+      for (const [key, quote] of quotes) {
+        const [symbol, day] = key.split('|');
+        if (day === date && /^[0-9][0-9A-Z]{3}$/.test(symbol) && valid(quote, true)) {
+          prices[symbol] = { date, price: quote.actual_close };
+        }
+      }
+    }
+    dashboardCloses = { date, prices };
+  }
   return {
     watches: input.watches,
     presentations,
+    ...(includeDisplay ? { dashboardCloses } : {}),
     calendar: input.calendar,
     current,
     runtime: createDatasetRuntime(input, {
@@ -449,7 +465,10 @@ async function main(args) {
   await fs.writeFile(path.join(values.out, 'receipt.json'), JSON.stringify(receipt, null, 2) + '\n', { flag: 'wx' });
 }
 
-module.exports = { prepareNewAMemberProjection };
+module.exports = {
+  prepareNewAMemberProjection, attachFundamentals, digest, historyPageSize, openVerifiedBundle, presets,
+  readActiveEvidence, readBounded, safeHistory,
+};
 if (require.main === module) {
   main(process.argv.slice(2)).catch(error => {
     console.error(error.message);

@@ -3,9 +3,11 @@
 import csv
 import datetime
 import io
+import json
 import math
 import os
 import re
+import subprocess
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
@@ -37,8 +39,8 @@ def _attachment(date, chart_links, entries=None, openings=None):
         columns = ["通知種別", "対象日", "証券コード", "TradingView"]
         rows = [("監視開始", date, symbol, url) for symbol, url in chart_links]
         if entries is not None:
-            rows.extend(("買付候補（未約定）", entries["session"], symbol, "")
-                        for symbol in entries["symbols"])
+            label = "仮想保有開始候補" if "shared_order" in entries else "買付候補（未約定）"
+            rows.extend((label, entries["session"], symbol, "") for symbol in entries["symbols"])
         if openings is not None:
             writer.writerow([*columns, "日足始値（円）"])
             writer.writerows((*row, "") for row in rows)
@@ -124,6 +126,39 @@ def _closing_openings(snapshot, events, pending, index, previous_day):
     return None
 
 
+def _shared_trial_order_rule():
+    repo = Path(__file__).resolve().parents[2]
+    config = repo / ".cache/weak_early_beta/daily-runner.config.json"
+    preferences = repo / "weak-early-beta-gate/src/new-a-preferences.ts"
+    engine = repo / "weak-early-beta-gate/scripts/new-a-ui-source/engine/finite-engine.cjs"
+    script = """
+const { SHARED_TRIAL_DEFAULTS, validateTrial } = require(process.argv[1]);
+const { trialTerms } = require(process.argv[2]);
+const { base_shares, per_order_cap_yen, max_positions } = validateTrial(SHARED_TRIAL_DEFAULTS);
+const { daily_fill_cap: profit_daily_fill_cap } = trialTerms("profit");
+process.stdout.write(JSON.stringify({ base_shares, per_order_cap_yen, max_positions, profit_daily_fill_cap }));
+"""
+    try:
+        node = read(config)["nodePath"] if config.is_file() else "node"
+        if not isinstance(node, str) or not node:
+            raise ValueError("existing runner Node runtime unavailable")
+        result = subprocess.run(
+            [node, "--input-type=commonjs", "-e", script, str(preferences), str(engine)],
+            cwd=repo, check=True, capture_output=True, encoding="utf-8", timeout=15,
+        )
+        order = json.loads(result.stdout)
+    except (OSError, subprocess.SubprocessError, ValueError, KeyError, TypeError):
+        raise ValueError("shared trial order rule unavailable") from None
+    positive_keys = ("base_shares", "per_order_cap_yen", "max_positions")
+    if (not isinstance(order, dict) or set(order) != {*positive_keys, "profit_daily_fill_cap"}
+            or any(type(order[key]) is not int or order[key] <= 0 for key in positive_keys)):
+        raise ValueError("invalid shared trial order rule")
+    daily_cap = order["profit_daily_fill_cap"]
+    if daily_cap is not None and (type(daily_cap) is not int or daily_cap <= 0):
+        raise ValueError("invalid shared trial order rule")
+    return order
+
+
 def _summary_details(root, snapshot):
     from .owner_notice_producer import _verified_calendar
 
@@ -172,6 +207,7 @@ def _summary_details(root, snapshot):
             "session": next_date,
             "symbols": sorted({event["symbol"] for event in candidates}),
             "snapshot_sha256": snapshot["payload_sha256"],
+            "shared_order": _shared_trial_order_rule(),
         }
     return details
 
@@ -195,6 +231,30 @@ def _entry_field(entries, attached):
     shown = "・".join(symbols[:12] if attached else symbols)
     if attached:
         shown += f"（全{len(symbols)}銘柄は添付CSV）"
+    if "shared_order" in entries:
+        shares = entries["shared_order"]["base_shares"]
+        cap = entries["shared_order"]["per_order_cap_yen"]
+        max_positions = entries["shared_order"]["max_positions"]
+        scaled_limit, remainder = divmod(cap * 100, shares)
+        cap_text = f"{cap // 10_000:,}万円" if cap % 10_000 == 0 else f"{cap:,}円"
+        if remainder:
+            # Retain the exact ratio rather than rounding a nonterminating cap up.
+            limit = f"（{cap_text}÷{shares:,}株）以下"
+        else:
+            limit = f"{scaled_limit // 100:,}.{scaled_limit % 100:02d}".rstrip("0").rstrip(".") + "円以下"
+        daily_cap = entries["shared_order"]["profit_daily_fill_cap"]
+        priority = (f"利益優先：優先順で1日最大{daily_cap}件" if daily_cap is not None
+                    else "利益優先：候補の優先順で判定")
+        return {
+            "name": f"翌取引日の仮想保有開始候補（{entries['session']}）",
+            "value": (f"{shown}\n"
+                      f"注文額の条件：始値{limit}（{shares:,}株・1注文{cap_text}）\n"
+                      f"手数料込みで残資金内、同時保有枠（最大{max_positions:,}銘柄）に空きがあり、"
+                      "同じ銘柄を仮想保有中でないこと\n"
+                      "当日の有効な日足と正の出来高があり、高値と安値が異なること\n"
+                      f"{priority}"),
+        }
+    # Pending entries staged before the order rule retained their original text.
     return {
         "name": f"翌営業日の買付候補（{entries['session']}）",
         "value": (f"{shown}\n"

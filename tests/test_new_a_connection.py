@@ -263,21 +263,38 @@ class BatchedDiscord(unittest.TestCase):
         preview = self.call(dry_run=True)
         self.assertEqual((preview["signal_notifications"], preview["completion_notifications"]), (1, 1))
         self.post.assert_not_called()
-        sent = self.call()
+        from weak_early_beta.new_a import notifications
+
+        with patch.object(notifications, "_shared_trial_order_rule",
+                          side_effect=AssertionError("retry must use the stored order rule")):
+            sent = self.call()
         self.assertEqual((sent["signal_notifications"], sent["completion_notifications"], sent["external_sends"]),
                          (1, 1, 1))
         calendar.assert_called_once()
         embed = self.posts[0][0]["embeds"][0]
         self.assertIn("[1111]", embed["description"])
         next_open = embed["fields"][-1]
-        self.assertEqual(next_open["name"], "翌営業日の買付候補（2026-06-03）")
+        self.assertEqual(next_open["name"], "翌取引日の仮想保有開始候補（2026-06-03）")
         self.assertIn("2345・417A", next_open["value"])
-        self.assertIn("翌営業日の取引終了後に日足始値を確認", next_open["value"])
-        self.assertIn("未約定", next_open["value"])
+        self.assertIn("注文額の条件：始値5,000円以下（100株・1注文50万円）", next_open["value"])
+        self.assertIn("手数料込みで残資金内、同時保有枠（最大10銘柄）に空き", next_open["value"])
+        self.assertIn("同じ銘柄を仮想保有中でない", next_open["value"])
+        self.assertIn("正の出来高があり、高値と安値が異なる", next_open["value"])
+        self.assertIn("利益優先：優先順で1日最大3件", next_open["value"])
         self.assertEqual(self.call()["external_sends"], 0)
         self.assertEqual(self.post.call_count, 1)
         self.assertEqual({(status, json.loads(raw)["message_id"]) for _, status, raw in self.receipts()},
                          {("SENT", self.message_id)})
+
+    def test_missing_shared_order_rule_cannot_stage_unverified_candidates(self):
+        from weak_early_beta.new_a import notifications
+
+        self.prepare_next_session()
+        with patch.object(notifications.subprocess, "run", side_effect=OSError):
+            with self.assertRaisesRegex(ValueError, "shared trial order rule unavailable"):
+                self.call(dry_run=True)
+        self.post.assert_not_called()
+        self.assertFalse(self.receipts())
 
     def test_zero_watches_with_candidates_still_has_one_completion_batch(self):
         self.events(0)
@@ -304,6 +321,31 @@ class BatchedDiscord(unittest.TestCase):
         self.assertEqual(self.call()["external_sends"], 1)
         calendar.assert_not_called()
         self.assertNotIn("翌営業日", json.dumps(self.posts[0][0], ensure_ascii=False))
+
+    def test_legacy_pending_candidates_keep_original_message_and_csv(self):
+        import csv
+        import io
+        from weak_early_beta.new_a import notifications
+
+        candidates = [f"{1000 + i:04}" for i in range(250)]
+        self.prepare_next_session(symbols=candidates)
+        legacy = {
+            "next_session_entries": {
+                "session": "2026-06-03", "symbols": candidates,
+                "snapshot_sha256": self.snapshot["payload_sha256"],
+            },
+        }
+        with patch.object(notifications, "_shared_trial_order_rule",
+                          side_effect=AssertionError("stored candidates must not read current terms")):
+            with patch.object(notifications, "_summary_details", return_value=legacy):
+                self.call(dry_run=True)
+            self.assertEqual(self.call()["external_sends"], 1)
+        message, files = self.posts[0]
+        field = message["embeds"][0]["fields"][-1]
+        self.assertEqual(field["name"], "翌営業日の買付候補（2026-06-03）")
+        self.assertNotIn("始値上限", field["value"])
+        rows = list(csv.reader(io.StringIO(files["files[0]"][1].decode("utf-8-sig"))))[1:]
+        self.assertEqual({row[2] for row in rows if row[0] == "買付候補（未約定）"}, set(candidates))
 
     def test_existing_uncertain_evening_batch_uses_exact_history_without_resending(self):
         from unittest.mock import Mock
@@ -361,7 +403,7 @@ class BatchedDiscord(unittest.TestCase):
         self.assertLessEqual(len(message["embeds"][0]["fields"][-1]["value"]), 1024)
         self.assertEqual(list(files), ["files[0]"])
         rows = list(csv.reader(io.StringIO(files["files[0]"][1].decode("utf-8-sig"))))[1:]
-        self.assertEqual({row[2] for row in rows if row[0] == "買付候補（未約定）"}, set(candidates))
+        self.assertEqual({row[2] for row in rows if row[0] == "仮想保有開始候補"}, set(candidates))
         self.assertEqual(len([row for row in rows if row[0] == "監視開始"]), 220)
 
     def add_closing_opening(self, symbol, price, *, event=True, previous="2026-05-29"):
@@ -412,7 +454,7 @@ class BatchedDiscord(unittest.TestCase):
         fields = {field["name"]: field["value"] for field in message["embeds"][0]["fields"]}
         self.assertEqual(fields["終了後に確認した始値（日足始値）"],
                          "5001　1,271.5円\n5002　始値保留\n5003　始値保留")
-        self.assertIn("2345", fields["翌営業日の買付候補（2026-06-03）"])
+        self.assertIn("2345", fields["翌取引日の仮想保有開始候補（2026-06-03）"])
         self.assertNotIn("713158963", json.dumps(message, ensure_ascii=False))
         button = message["components"][0]["components"][0]
         self.assertEqual(button, {

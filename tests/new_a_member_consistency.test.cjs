@@ -100,7 +100,7 @@ const presenter = { require: require('node:module').createRequire(path.join(asse
 vm.runInNewContext(fs.readFileSync(path.join(assets, 'member-presentation.js'), 'utf8'), presenter);
 const {
   fundamentalItem, fundamentalMarkup, fundamentalSelector, referencePayload, referenceHistory,
-  referenceHistoryIndex, matchingHistory, referenceHistoryTable,
+  referenceHistoryIndex, matchingHistory, referenceHistoryTable, historyContent,
 } = presenter.module.exports;
 const initialToken = 'a'.repeat(64);
 const nextToken = 'b'.repeat(64);
@@ -157,6 +157,14 @@ function browser(options = {}) {
     close(force) { assert.equal(force,true); this.open=false; },
   };
   const nodes = Object.fromEntries(['state', 'retry', 'content', 'preset'].map(key => ['member-' + key, element()]));
+  const historyPanel = element('section');
+  const historyRegion = element('div');
+  const containsMain = nodes['member-content'].contains.bind(nodes['member-content']);
+  nodes['member-content'].contains = node => containsMain(node) || historyRegion.contains(node);
+  const historyButton = element('button');
+  const historyState = element('p');
+  const historyRenderings = [];
+  let intersectHistory;
   const historyFilters = element('div');
   const historyResults = element('div');
   const historyNotice = element('output');
@@ -175,6 +183,10 @@ function browser(options = {}) {
     events: {},
     getElementById(id) {
       if (id === 'member-reference-content' && nodes['member-content'].innerHTML === 'synthetic-reference-slot') return referenceRoot;
+      if (id === 'history') return historyPanel;
+      if (id === 'member-history-content') return historyRegion;
+      if (id === 'member-history-open') return historyButton;
+      if (id === 'member-history-state') return historyState;
       if (options.historyFilters) {
         if (id === 'member-history-filters') return historyFilters;
         if (id === 'member-history-results') return historyResults;
@@ -192,7 +204,18 @@ function browser(options = {}) {
   };
   const context = {
     document,
-    location: { pathname: '/weak_early_beta_latest.html' },
+    location: { pathname: '/weak_early_beta_latest.html', hash: options.hash ?? '' },
+    IntersectionObserver: class {
+      constructor(callback) { this.callback = callback; }
+      observe(panel) {
+        assert.equal(panel, historyPanel);
+        intersectHistory = () => {
+          if (!this.disconnected) this.callback([{ isIntersecting: true }]);
+        };
+        if (!options.historyOffscreen) queueMicrotask(intersectHistory);
+      }
+      disconnect() { this.disconnected = true; }
+    },
     AbortSignal,
     AbortController,
     addEventListener(name,handler) { windowEvents[name]=handler; },
@@ -212,6 +235,10 @@ function browser(options = {}) {
       freeHome: () => 'synthetic-premium-purchase',
       fundamentalItem, fundamentalMarkup, fundamentalSelector, referencePayload, referenceHistory,
       referenceHistoryIndex, matchingHistory, referenceHistoryTable,
+      historyContent(rows, page, referenceRows, selected) {
+        historyRenderings.push({ page, referenceRows, selected });
+        return historyContent(rows, page, referenceRows, selected);
+      },
     },
     fetch: async (route, init) => {
       const url = new URL(route, 'https://example.invalid');
@@ -235,7 +262,8 @@ function browser(options = {}) {
   vm.runInContext(loader, context);
   return {
     document, requests, nodes, premiumLink, referenceRoot, referenceMounts,
-    historyFilters, historyResults, historyNotice, inputs, clearSearch,
+    historyFilters, historyResults, historyNotice, historyRegion, historyButton, historyState,
+    historyRenderings, inputs, clearSearch, scrollToHistory() { intersectHistory(); },
     settingsDialog, restore() { windowEvents.pageshow({ persisted:true }); },
     navigateAway() { windowEvents.pagehide(); },
     poll() { interval(); },
@@ -287,7 +315,8 @@ test('approved reference renders with pinned member scope and uses neither legac
     await flush();
     const requests = view.requests.map(request=>request.name);
     assert.deepEqual(requests, mode === 'home'
-      ? ['session','reference.json','history.json','reference.json','session'] : ['session','reference.json','session']);
+      ? ['session','reference.json','session','session','history.json','reference.json','session']
+      : ['session','reference.json','session']);
     const fetched = view.requests.find(request=>request.name==='reference.json');
     assert.equal(fetched.url.searchParams.get('item'),item);
     assert.equal(fetched.init.headers['x-cloud-member-session'],initialSession);
@@ -296,6 +325,57 @@ test('approved reference renders with pinned member scope and uses neither legac
     assert.deepEqual(view.referenceMounts, mode === 'analytics' ? [view.referenceRoot] : []);
     assert.equal(view.nodes['member-state'].textContent,'');
   }
+});
+
+test('dashboard cards render before offscreen or stalled history and history uses the active generation', async () => {
+  const delayedHistory = Promise.withResolvers();
+  const dashboard = browser({
+    historyOffscreen: true,
+    read(name, url) {
+      if (name === 'history.json') return delayedHistory.promise;
+      if (name === 'reference.json') return Response.json(url.searchParams.get('item') === 'history.1'
+        ? historyReference(1) : navigationView);
+      return null;
+    },
+  });
+  await flush();
+  assert.deepEqual(dashboard.requests.map(call => call.name), ['session', 'reference.json', 'session']);
+  assert.equal(dashboard.referenceRoot.children.length, 1);
+  assert.equal(dashboard.historyRenderings.length, 0);
+  dashboard.scrollToHistory();
+  await flush();
+  const history = dashboard.requests.find(call => call.name === 'history.json');
+  assert.equal(history.init.headers['x-cloud-generation'], initialToken);
+  assert.equal(history.init.headers['x-cloud-member-session'], initialSession);
+  assert.equal(dashboard.historyRegion.getAttribute('aria-busy'), 'true');
+  assert.equal(dashboard.historyRenderings.length, 0);
+  assert.equal(dashboard.referenceRoot.children.length, 1);
+
+  delayedHistory.resolve(Response.json({ as_of: day, generation: initialToken, page: 1, pages: 1, rows: [] }));
+  await flush();
+  assert.equal(dashboard.historyRenderings.length, 1);
+  assert.equal(dashboard.historyRegion.getAttribute('aria-busy'), undefined);
+  assert.equal(dashboard.referenceRoot.children.length, 1);
+});
+
+test('role loss aborts delayed dashboard history and does not repaint either protected region', async () => {
+  const delayedHistory = Promise.withResolvers();
+  const dashboard = browser({
+    read(name) { return name === 'history.json' ? delayedHistory.promise
+      : name === 'reference.json' ? Response.json(navigationView) : null; },
+  });
+  await flush();
+  const history = dashboard.requests.find(call => call.name === 'history.json');
+  assert.ok(history);
+  dashboard.setAccess(403);
+  dashboard.poll();
+  await flush();
+  assert.equal(history.init.signal.aborted, true);
+  delayedHistory.resolve(Response.json({ as_of: day, generation: initialToken, page: 1, pages: 1, rows: [] }));
+  await flush();
+  assert.equal(dashboard.nodes['member-content'].innerHTML, '');
+  assert.equal(dashboard.historyRenderings.length, 0);
+  assert.match(dashboard.nodes['member-state'].textContent, /アクセス権/);
 });
 
 test('only absent reference uses a partial V3 render; mismatched, blocked and unsafe reference stays hidden', async () => {
@@ -309,7 +389,6 @@ test('only absent reference uses a partial V3 render; mismatched, blocked and un
     [()=>new Response(null,{status:409}), [], /データが更新/],
     [()=>Response.json(null), [], /現在読み込めません/],
     [()=>Response.json({...navigationView,item:'dashboard.medium'}), [], /現在読み込めません/],
-    [()=>Response.json({...navigationView,generation:nextToken}), [], /データが更新/],
     [()=>Response.json(navigationView), [projectedElement('script')], /現在読み込めません/],
     [()=>Response.json(navigationView), [projectedElement('button',{onclick:'bad'})], /現在読み込めません/],
     [()=>Response.json(navigationView), [projectedElement('a',{href:'javascript:false'})], /現在読み込めません/],
@@ -360,13 +439,49 @@ function analysisBrowser(options = {}) {
   const button = element('button');
   button.dataset = { memberFundamental: analysisItem };
   button.closest = () => button;
-  return { ...view, content, button, click() { content.append(button); content.events.click({ target: button }); },
+  return { ...view, content, button, click() {
+    view.historyRegion.append(button);
+    content.events.click({ target: button });
+  },
     dialog: () => content.children.find(child => child.type === 'dialog') };
 }
 
+test('loading history preserves an in-flight dashboard analysis with the same item and generation', async () => {
+  const delayedReport = Promise.withResolvers();
+  const delayedHistory = Promise.withResolvers();
+  const view = browser({
+    historyOffscreen: true,
+    referenceElements: [projectedElement('button', { 'data-member-fundamental': analysisItem })],
+    read(name, url) {
+      if (name === 'history.json') return delayedHistory.promise;
+      if (name === 'fundamental.json') return delayedReport.promise;
+      if (name === 'reference.json') return Response.json(url.searchParams.get('item') === 'history.1'
+        ? historyReference(1, [detailRow]) : navigationView);
+      return null;
+    },
+  });
+  await flush();
+  const content = view.nodes['member-content'];
+  const button = element('button');
+  button.dataset = { memberFundamental: analysisItem };
+  button.closest = () => button;
+  content.append(button);
+  content.events.click({ target: button });
+  view.scrollToHistory();
+  await flush();
+  const report = view.requests.find(request => request.name === 'fundamental.json');
+  assert.ok(report);
+  delayedHistory.resolve(Response.json({ as_of: day, generation: initialToken, page: 1, pages: 1, rows: [availableAnalysis] }));
+  await flush();
+  assert.equal(view.historyRenderings.length, 1);
+  assert.equal(report.init.signal.aborted, false);
+  delayedReport.resolve(Response.json(analysis));
+  await flush();
+  assert.ok(content.children.find(child => child.type === 'dialog' && child.open));
+});
+
 test('reference history follows the page generation, controls mobile details and opens only a verified exact analysis', async () => {
-  const captures = [];
-  const view = analysisBrowser({ capture: values => captures.push(values), read: (name,url) => {
+  const view = analysisBrowser({ read: (name,url) => {
     const item = url.searchParams.get('item');
     if (name === 'reference.json') return Response.json(item.startsWith('dashboard.') ? navigationView
       : historyReference(Number(item.split('.')[1]), [{...detailRow,item:item === 'history.1' ? analysisItem : '2.2026-11-18.234A'}]));
@@ -374,7 +489,7 @@ test('reference history follows the page generation, controls mobile details and
     return null;
   } });
   await flush();
-  assert.equal(captures.at(-1).referenceHistoryRows[0].item,analysisItem);
+  assert.equal(view.historyRenderings.at(-1).referenceRows[0].item, analysisItem);
   const detail = element('button');
   const classes = new Set();
   const record = { classList:{ toggle(name, open) { if (open) classes.add(name); else classes.delete(name); } } };
@@ -390,10 +505,11 @@ test('reference history follows the page generation, controls mobile details and
   view.click();
   await flush();
   assert.equal(view.dialog().open,true);
-  view.content.children[0].lastElementChild.events.click();
+  view.historyRegion.children[0].lastElementChild.events.click();
   await flush();
   assert.equal(view.dialog(),undefined);
-  assert.equal(captures.at(-1).referenceHistoryRows[0].item,'2.2026-11-18.234A');
+  assert.equal(view.historyRenderings.at(-1).referenceRows[0].item, '2.2026-11-18.234A');
+  assert.equal(view.requests.filter(request => request.url.searchParams.get('item')?.startsWith('dashboard.')).length, 1);
   const page2 = view.requests.find(request=>request.url.searchParams.get('item')==='history.2');
   assert.equal(page2.init.headers['x-cloud-generation'],initialToken);
   assert.equal(page2.init.headers['x-cloud-member-session'],initialSession);
@@ -401,19 +517,19 @@ test('reference history follows the page generation, controls mobile details and
 
 test('history reference falls back independently only on explicit 404', async () => {
   const responses = [
-    [new Response(null,{status:404}), 'synthetic-reference-slot', /一部の表示/],
-    [new Response(null,{status:403}), '', /アクセス権/],
-    [new Response(null,{status:409}), '', /データが更新/],
-    [Response.json({...historyReference(1),generation:nextToken}), '', /データが更新/],
-    [Response.json(historyReference(2)), '', /現在読み込めません/],
-    [Response.json(historyReference(1,[{...detailRow,item:'2.2026-11-18.234A'}])), '', /現在読み込めません/],
+    [new Response(null,{status:404}), /検出履歴の詳細を読み込めません/, true],
+    [new Response(null,{status:403}), /アクセス権/, false],
+    [new Response(null,{status:409}), /データが更新/, false],
+    [Response.json({...historyReference(1),generation:nextToken}), /データが更新/, false],
+    [Response.json(historyReference(2)), /検出履歴を読み込めません/, true],
+    [Response.json(historyReference(1,[{...detailRow,item:'2.2026-11-18.234A'}])), /検出履歴を読み込めません/, true],
   ];
-  for (const [response,content,message] of responses) {
+  for (const [response, message, dashboardRemains] of responses) {
     const view = analysisBrowser({read:(name,url)=>name==='reference.json'
       ? url.searchParams.get('item')==='history.1' ? response : Response.json(navigationView) : null});
     await flush();
-    assert.equal(view.content.innerHTML,content);
-    assert.match(view.nodes['member-state'].textContent,message);
+    assert.equal(view.content.innerHTML, dashboardRemains ? 'synthetic-reference-slot' : '');
+    assert.match((dashboardRemains ? view.historyState : view.nodes['member-state']).textContent, message);
     assert.equal(view.requests.some(request=>request.name==='dashboard.json'),false);
   }
 });
@@ -523,7 +639,7 @@ test('page or role change aborts an in-flight report and prevents a late respons
     view.click();
     await flush();
     const fetch = view.requests.find(request => request.name === 'fundamental.json');
-    if (changed === 'page') view.content.children[0].lastElementChild.events.click();
+    if (changed === 'page') view.historyRegion.children[0].lastElementChild.events.click();
     else { view.setTier('free'); view.poll(); }
     await flush();
     assert.equal(fetch.init.signal.aborted, true);
@@ -621,7 +737,7 @@ test('later pages send the last generation and rollback to page one after a sour
   await flush();
   assert.equal(view.nodes['member-content'].innerHTML, 'synthetic-private-content');
   change = true;
-  view.nodes['member-content'].children[0].lastElementChild.events.click();
+  view.historyRegion.children[0].lastElementChild.events.click();
   await flush();
   const page2 = view.requests.find(request => request.url.searchParams.get('page') === '2');
   assert.equal(page2.init.headers['x-cloud-generation'], initialToken);

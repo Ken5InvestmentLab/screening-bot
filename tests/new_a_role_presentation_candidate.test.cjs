@@ -97,13 +97,16 @@ async function renderLevelPage({mode,session,storage,access='premium'}) {
  const node=()=>({addEventListener(){},append(){},setAttribute(){}});
  const status=node(),retry=node();
  const out={...node(),replaceChildren(){document.activeElement=body;}};
- const elements={'member-state':status,'member-retry':retry,'member-content':out,'member-preset':preset};
+ const elements={
+  'member-state':status,'member-retry':retry,'member-content':out,'member-preset':preset,
+  history:node(),'member-history-content':node(),'member-history-open':node(),'member-history-state':node(),
+ };
  const document={
   body,activeElement:body,visibilityState:'visible',createElement:node,addEventListener(){},
   getElementById:id=>elements[id],querySelectorAll:()=>[],
  };
  vm.runInNewContext(fs.readFileSync(path.join(src,'member-loader.js'),'utf8'),{
-  document,AbortController,AbortSignal,TextEncoder,crypto:webcrypto,sessionStorage:storage,
+  document,location:{hash:''},AbortController,AbortSignal,TextEncoder,crypto:webcrypto,sessionStorage:storage,
   addEventListener(){},setInterval(){},
   NewAMemberPresentation:{view(value){rendered.resolve(value);return '';}},
   async fetch(route){

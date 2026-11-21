@@ -59,6 +59,8 @@
   let fundamentalPage = null;
   let openFundamental = null;
   let historySearch = null;
+  let historyObserver = null;
+  let historyAttempt = null;
   const initialHistoryQuery = { symbol: '', from: '', through: '', order: 'newest' };
   let historyQuery = { ...initialHistoryQuery };
   const cardDetails = '.cloud-stock-grid > [data-daily-change] > .cloud-stock-detail';
@@ -177,7 +179,7 @@
 
   function clearDisplay(message, reauthenticate = false) {
     g.CloudSettingsDialog?.close(true);
-    stopHistorySearch();
+    stopHistory();
     historyQuery = { ...initialHistoryQuery };
     clearFundamentalPage();
     attempt?.abort();
@@ -259,12 +261,9 @@
     return nav;
   }
 
-  function addPagination(pages) {
-    const nav = historyPagination(page, pages, number => {
-      page = number;
-      load({ restoreHistoryFocus: memberAccess === 'premium' });
-    });
-    if (nav) (document.getElementById('member-history-results') ?? document.getElementById('history') ?? out).append(nav);
+  function addPagination(pages, onPage, container = out) {
+    const nav = historyPagination(page, pages, onPage);
+    if (nav) (document.getElementById('member-history-results') ?? container).append(nav);
   }
 
   function stopHistorySearch() {
@@ -274,7 +273,15 @@
     historySearch = null;
   }
 
-  function mountHistorySearch(native, scope, dashboardItems) {
+  function stopHistory() {
+    historyObserver?.disconnect();
+    historyObserver = null;
+    historyAttempt?.abort();
+    historyAttempt = null;
+    stopHistorySearch();
+  }
+
+  function mountHistorySearch(native, scope, dashboardItems, onPage) {
     const controls = document.getElementById('member-history-filters');
     const target = document.getElementById('member-history-results');
     const notice = document.getElementById('member-history-filter-status');
@@ -289,8 +296,8 @@
     const usingFilter = () => historyQuery.symbol.trim() || historyQuery.from || historyQuery.through || historyQuery.order !== 'newest';
     const updateScope = rows => {
       const entries = new Map(dashboardItems);
-      for (const row of rows) if (row.item) entries.set(row.item,row);
-      fundamentalPage = { ...scope, rows: entries };
+      for (const row of rows) if (row.item && !entries.has(row.item)) entries.set(row.item, row);
+      scope.rows = entries;
     };
     async function readReference(item, options) {
       const result = await g.NewAMemberTransport.reference(item, options);
@@ -309,15 +316,14 @@
       target.replaceChildren();
       if (!usingFilter()) {
         if (page !== 1) {
-          page = 1;
-          load({ restoreHistoryFocus: true });
+          onPage(1);
           return;
         }
         target.innerHTML = ui.referenceHistoryTable(native.rows, selected);
         updateScope(native.rows);
         notice.textContent = '';
         target.removeAttribute('aria-busy');
-        addPagination(native.pages);
+        addPagination(native.pages, onPage, target);
         return;
       }
       const { from, through } = historyQuery;
@@ -436,7 +442,8 @@
     const current = { controller, button, dialog: null };
     openFundamental = current;
     const active = () => openFundamental === current && fundamentalPage === scope && button.isConnected
-      && memberAccess === 'premium' && scope.generation === snapshot && scope.session === memberSession;
+      && memberAccess === 'premium' && scope.generation === snapshot && scope.session === memberSession
+      && scope.rows.get(item) === row;
     button.setAttribute('aria-busy', 'true');
     try {
       const report = await g.NewAMemberTransport.fundamental(item, {
@@ -507,8 +514,98 @@
 
   g.CloudSettingsDialog?.connect(openSettings, () => memberAccess === 'premium' && !out.hidden);
 
-  async function load({ restorePresetFocus = false, restoreHistoryFocus = false } = {}) {
-    stopHistorySearch();
+  function mountDeferredHistory(scope, dashboardItems, isDashboardActive) {
+    const panel = document.getElementById('history');
+    const region = document.getElementById('member-history-content');
+    const notice = document.getElementById('member-history-state');
+    const button = document.getElementById('member-history-open');
+    const ui = g.NewAMemberPresentation;
+    let requestedPage = page;
+    const active = () => isDashboardActive() && scope.generation === snapshot
+      && scope.session === memberSession && memberAccess === 'premium';
+
+    async function readHistory(number, restoreFocus = false) {
+      if (!active() || historyAttempt) return;
+      requestedPage = number;
+      stopHistory();
+      if (openFundamental && region.contains(openFundamental.button)) dismissFundamental();
+      scope.rows = new Map(dashboardItems);
+      const controller = new AbortController();
+      historyAttempt = controller;
+      const current = () => active() && historyAttempt === controller;
+      const options = { signal: controller.signal, generation: scope.generation, session: scope.session };
+      if (restoreFocus) panel.focus();
+      region.replaceChildren();
+      region.setAttribute('aria-busy', 'true');
+      button.hidden = true;
+      notice.textContent = '検出履歴を読み込んでいます。';
+
+      try {
+        if (!await verifyAccess() || !current()) return;
+        const [history, reference] = await Promise.all([
+          g.NewAMemberTransport.history(number, options),
+          optionalReference('history.' + number, options),
+        ]);
+        if (!current()) return;
+        if (history.generation !== scope.generation || history.as_of !== scope.asOf
+          || reference && (reference.generation !== scope.generation || reference.as_of !== scope.asOf)) {
+          throw Error(changed);
+        }
+        if (!Array.isArray(history.rows) || history.page !== number || !Number.isSafeInteger(history.pages)
+          || history.pages < number || history.pages > 200) throw Error(unavailable);
+        const referenceRows = reference && ui.referenceHistory(reference.markup, number, scope.asOf, history.rows);
+        if (reference && !referenceRows) throw Error(unavailable);
+        if (!await verifyAccess() || !current()) return;
+
+        page = number;
+        const rows = new Map(dashboardItems);
+        if (referenceRows) {
+          for (const row of referenceRows) if (row.item && !rows.has(row.item)) rows.set(row.item, row);
+        } else {
+          for (const row of history.rows) {
+            if (row.has_fundamental !== true) continue;
+            const item = ui.fundamentalItem(number, row);
+            if (item && !rows.has(item)) rows.set(item, row);
+          }
+        }
+        scope.rows = rows;
+        region.innerHTML = ui.historyContent(history.rows, number, referenceRows, selected);
+        notice.textContent = reference ? '' : '検出履歴の詳細を読み込めませんでした。';
+        button.textContent = '再試行';
+        button.hidden = !!reference;
+        const onPage = nextPage => readHistory(nextPage, true);
+        addPagination(history.pages, onPage, region);
+        if (referenceRows) mountHistorySearch({ rows: referenceRows, pages: history.pages }, scope, dashboardItems, onPage);
+      } catch (error) {
+        if (!current()) return;
+        if (error.message === changed || error.message === accessDenied) {
+          clearDisplay(error.message, error.requiresLogin);
+          return;
+        }
+        notice.textContent = '検出履歴を読み込めませんでした。';
+        button.textContent = '再試行';
+        button.hidden = false;
+      } finally {
+        if (current()) {
+          historyAttempt = null;
+          region.removeAttribute('aria-busy');
+        }
+      }
+    }
+
+    button.addEventListener('click', () => readHistory(requestedPage, true));
+    if (g.location.hash === '#history') {
+      readHistory(page);
+    } else if (typeof g.IntersectionObserver === 'function') {
+      historyObserver = new g.IntersectionObserver(entries => {
+        if (entries.some(entry => entry.isIntersecting)) readHistory(page);
+      }, { rootMargin: '200px 0px' });
+      historyObserver.observe(panel);
+    }
+  }
+
+  async function load({ restorePresetFocus = false } = {}) {
+    stopHistory();
     clearFundamentalPage();
     attempt?.abort();
     const controller = new AbortController();
@@ -535,52 +632,32 @@
 
       const analytics = mode === 'analytics';
       const options = { signal, generation: snapshot, session: memberSession };
-      const [reference, history, historyReference] = await Promise.all([
+      const [reference, history] = await Promise.all([
         free ? null : analytics ? analyticsOverview(selected, options) : optionalReference('dashboard.' + selected, options),
-        analytics ? null : g.NewAMemberTransport.history(page, options),
-        free || analytics ? null : optionalReference('history.' + page, options),
+        free && !analytics ? g.NewAMemberTransport.history(page, options) : null,
       ]);
       if (!active()) return;
       const legacyDashboard = !free && reference === null;
-      const fallback = legacyDashboard || (!free && !analytics && historyReference === null);
       const projection = legacyDashboard ? await legacyProjection(options, analytics) : {};
       if (!active()) return;
       const { summary, chart, personal, dashboard } = projection;
       const source = free ? history : reference ?? summary;
       if (!source || !isToken(source.generation) || (snapshot !== null && snapshot !== source.generation)
-        || [history, chart, personal, dashboard, historyReference].some(result => result && result.generation !== source.generation)
-        || [history, dashboard, historyReference].some(result => result && result.as_of !== source.as_of)) {
+        || [history, chart, personal, dashboard].some(result => result && result.generation !== source.generation)
+        || [history, dashboard].some(result => result && result.as_of !== source.as_of)) {
         throw Error(changed);
       }
       if (history && (!Array.isArray(history.rows) || !Number.isSafeInteger(history.pages)
         || history.pages < page || history.pages > 200)) {
         throw Error(unavailable);
       }
-      const historyPage = !free && history?.page === page && history.as_of === source.as_of ? page : undefined;
-      let referenceHistoryRows;
-      if (historyReference) {
-        if (historyPage === undefined) throw Error(unavailable);
-        referenceHistoryRows = g.NewAMemberPresentation.referenceHistory(historyReference.markup, page, source.as_of, history.rows);
-        if (!referenceHistoryRows) throw Error(unavailable);
-      }
       const display = reference && verifiedReference(reference.markup, reference.as_of);
       if (!await verifyAccess() || !active()) return;
 
       snapshot = source.generation;
       const dashboardAnalyses = display?.items ?? new Map();
-      const analyses = new Map(dashboardAnalyses);
-      if (referenceHistoryRows) {
-        for (const row of referenceHistoryRows) {
-          if (row.item) analyses.set(row.item, row);
-        }
-      } else if (historyPage !== undefined) {
-        for (const row of history.rows) {
-          if (row.has_fundamental !== true) continue;
-          const item = g.NewAMemberPresentation.fundamentalItem(historyPage, row);
-          if (item) analyses.set(item, row);
-        }
-      }
-      if (!free) fundamentalPage = { rows: analyses, asOf: source.as_of, generation: snapshot, session: memberSession };
+      const scope = { asOf: source.as_of, generation: snapshot, session: memberSession, rows: dashboardAnalyses };
+      if (!free) fundamentalPage = scope;
       out.innerHTML = g.NewAMemberPresentation.view({
         mode,
         access: memberAccess,
@@ -588,8 +665,7 @@
         presets: summary?.presets,
         selected,
         rows: history?.rows ?? [],
-        historyPage,
-        referenceHistoryRows,
+        deferHistory: !free && !analytics,
         chartRows: chart?.rows,
         personal: personal?.metrics,
         dashboard,
@@ -603,8 +679,8 @@
           g.NewAReferenceAnalytics.mount(target, () => analyticsDaily(item, options, source, active));
         }
       }
-      status.textContent = fallback ? '一部の表示を読み込めませんでした。' : '';
-      retry.hidden = !fallback;
+      status.textContent = legacyDashboard ? '一部の表示を読み込めませんでした。' : '';
+      retry.hidden = !legacyDashboard;
       const preset = document.getElementById('member-preset');
       preset?.addEventListener('change', event => {
         const { value } = event.target;
@@ -618,13 +694,11 @@
       if (restorePresetFocus && document.activeElement === document.body) {
         preset?.querySelector('input:checked')?.focus();
       }
-      if (history) addPagination(history.pages);
-      if (referenceHistoryRows) {
-        mountHistorySearch({ rows:referenceHistoryRows, pages:history.pages }, fundamentalPage, dashboardAnalyses);
-      }
-      if (restoreHistoryFocus && document.activeElement === document.body) {
-        document.getElementById('history')?.focus();
-      }
+      if (!free && !analytics) mountDeferredHistory(scope, dashboardAnalyses, active);
+      if (history) addPagination(history.pages, number => {
+        page = number;
+        load();
+      });
     } catch (error) {
       if (!active()) return;
       if (free && mode === 'home' && error.message !== accessDenied

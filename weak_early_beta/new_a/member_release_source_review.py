@@ -26,7 +26,7 @@ CLOUD_UI_POLISH_REVIEW_SCHEMA = "NEW_A_MEMBER_CLOUD_UI_POLISH_SUCCESSOR_SOURCE_R
 CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA = "NEW_A_MEMBER_CLOUD_OWNER_REFERENCE_SUCCESSOR_SOURCE_REVIEW_V1"
 FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_INLINE_LINKS_SUCCESSOR_SOURCE_REVIEW_V1"
 UNIFIED_MEMBER_UI_REVIEW_SCHEMA = "NEW_A_MEMBER_UNIFIED_UI_SUCCESSOR_SOURCE_REVIEW_V1"
-ANNUAL_ZERO_LINE_REVIEW_SCHEMA = "NEW_A_MEMBER_ANNUAL_ZERO_LINE_SUCCESSOR_SOURCE_REVIEW_V1"
+LOADING_AND_ZERO_REVIEW_SCHEMA = "NEW_A_MEMBER_LOADING_AND_ZERO_SUCCESSOR_SOURCE_REVIEW_V1"
 _PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumのアクセス権を購入する</a>'.encode()
 _NEW_PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumアクセス権を購入する</a>'.encode()
 _SUCCESSOR_REVIEW_PATHS = frozenset({
@@ -258,12 +258,23 @@ _UNIFIED_MEMBER_UI_BASELINE = "fca0cde2c46411e82a5f0d12064be19396c43432"
 _UNIFIED_MEMBER_UI_PRODUCT_PATHS = frozenset({ENTRY, "tests/new_a_member_worker.test.cjs", "weak-early-beta-gate/AGENTS.md"})
 _UNIFIED_MEMBER_UI_PRODUCT_SHA256 = "8b644e26f6109a99dc6334065fe054b3313aa6a24857b370825ed8bf2f773cfa"
 _UNIFIED_MEMBER_UI_ENTRY_SHA256 = "20b368723cae0de43ce19e4fda894c1e19a037e5d0537aaa520205ff42808d5f"
-_ANNUAL_ZERO_LINE_BASELINE = "be45d0fc3fb499af5fc2958295c13ce18f056ad7"
-_ANNUAL_ZERO_LINE_PRODUCT_PATHS = frozenset({"weak-early-beta-gate/scripts/new-a-ui-source/frame.html"})
-_ANNUAL_ZERO_LINE_PRODUCT_SHA256 = "00ad9b70ee2c8872430b1dc70dae56492fc215c1efda281a1aad470d26f0c0c4"
+_LOADING_AND_ZERO_BASELINE = "be45d0fc3fb499af5fc2958295c13ce18f056ad7"
+_LOADING_AND_ZERO_PRODUCT_PATHS = frozenset({
+    "tests/new_a_analytics_presets.test.cjs",
+    "tests/new_a_member_consistency.test.cjs",
+    "tests/new_a_member_worker.test.cjs",
+    "tests/new_a_role_presentation_candidate.test.cjs",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/member-loader.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/member-presentation.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/reference-analytics.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/frame.html",
+    "weak-early-beta-gate/src/new-a-member-reference.ts",
+    "weak-early-beta-gate/src/new-a-member-services.ts",
+})
+_LOADING_AND_ZERO_PRODUCT_SHA256 = "0a8c28e426a5f20324ae7daf8de4e6ab8757569c0aa54139dffae2076fd9ef42"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
     CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
-    FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA, UNIFIED_MEMBER_UI_REVIEW_SCHEMA, ANNUAL_ZERO_LINE_REVIEW_SCHEMA,
+    FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA, UNIFIED_MEMBER_UI_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA,
     ROLE_ONLY_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA, FUNDAMENTAL_POPUP_REVIEW_SCHEMA, FUNDAMENTAL_IMPACT_REVIEW_SCHEMA,
 })
 MEMBER_BINDING = {
@@ -357,13 +368,13 @@ def _check_role_only_successor(repo, candidate, paths):
 
 
 def _member_successor(repo, baseline, candidate):
-    if baseline == _ANNUAL_ZERO_LINE_BASELINE:
+    if baseline == _LOADING_AND_ZERO_BASELINE:
         paths = _successor_paths(repo, baseline, candidate)
-        if paths != _ANNUAL_ZERO_LINE_PRODUCT_PATHS | _CLOUD_OWNER_REFERENCE_REVIEW_PATHS:
-            raise ValueError("Annual zero-line successor differs from the reviewed scope")
-        if _product_digest(repo, candidate, _ANNUAL_ZERO_LINE_PRODUCT_PATHS) != _ANNUAL_ZERO_LINE_PRODUCT_SHA256:
-            raise ValueError("Annual zero-line successor differs from the reviewed bytes")
-        schema = ANNUAL_ZERO_LINE_REVIEW_SCHEMA
+        if paths != _LOADING_AND_ZERO_PRODUCT_PATHS | _CLOUD_OWNER_REFERENCE_REVIEW_PATHS:
+            raise ValueError("Cloud loading and zero-line successor differs from the reviewed scope")
+        if _product_digest(repo, candidate, _LOADING_AND_ZERO_PRODUCT_PATHS) != _LOADING_AND_ZERO_PRODUCT_SHA256:
+            raise ValueError("Cloud loading and zero-line successor differs from the reviewed bytes")
+        schema = LOADING_AND_ZERO_REVIEW_SCHEMA
     elif baseline == _UNIFIED_MEMBER_UI_BASELINE:
         paths = _successor_paths(repo, baseline, candidate)
         if paths != _UNIFIED_MEMBER_UI_PRODUCT_PATHS | _CLOUD_OWNER_REFERENCE_REVIEW_PATHS:
@@ -489,7 +500,7 @@ def review_member_release_source(repo, baseline, candidate):
             raise ValueError("Member successor changes the approved Worker configuration or member D1")
         if (baseline in {_JOURNAL_BASELINE, _FUNDAMENTAL_POPUP_BASELINE, _FUNDAMENTAL_IMPACT_BASELINE,
                          _CLOUD_UI_BASELINE, _CLOUD_UI_POLISH_BASELINE, _CLOUD_OWNER_REFERENCE_BASELINE,
-                         _FUNDAMENTAL_INLINE_LINKS_BASELINE, _UNIFIED_MEMBER_UI_BASELINE, _ANNUAL_ZERO_LINE_BASELINE}
+                         _FUNDAMENTAL_INLINE_LINKS_BASELINE, _UNIFIED_MEMBER_UI_BASELINE, _LOADING_AND_ZERO_BASELINE}
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "role_only"):
             raise ValueError("Version-bound member successor requires the existing role-only audience")
         return _member_successor(repo, baseline, candidate)

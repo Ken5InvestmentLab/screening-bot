@@ -311,13 +311,21 @@ function premiumHeading(mode, asOf, selected) {
     + esc(asOf) + '">' + esc(asOf) + '</time></p><h1>' + titleFor(mode) + '</h1></div>'
     + operatingLevel(selected) + '</div>';
 }
-function historyPanel(rows, historyPage, referenceRows, selected) {
+function historyContent(rows, historyPage, referenceRows, selected) {
+  return referenceRows
+    ? historyFilters() + '<div id="member-history-results">' + referenceHistoryTable(referenceRows, selected) + '</div>'
+    : history(rows, historyPage);
+}
+function historyPanel(rows, historyPage, referenceRows, selected, deferHistory) {
   return '<section class="panel" id="history" tabindex="-1" aria-labelledby="member-history-heading">'
     + '<h2 id="member-history-heading">検出履歴</h2>'
-    + (referenceRows ? historyFilters() + '<div id="member-history-results">' + referenceHistoryTable(referenceRows,selected) + '</div>'
-      : history(rows,historyPage)) + '</section>';
+    + (deferHistory
+      ? '<p id="member-history-state" role="status"></p>'
+        + '<button type="button" class="settings-secondary" id="member-history-open">検出履歴を表示</button>'
+        + '<div id="member-history-content"></div>'
+      : historyContent(rows, historyPage, referenceRows, selected)) + '</section>';
 }
-function premiumHome({asOf, selected, rows, chartRows, dashboard, historyPage, referenceHistoryRows}, current) {
+function premiumHome({asOf, selected, rows, chartRows, dashboard, historyPage, referenceHistoryRows, deferHistory}, current) {
   if (!Array.isArray(dashboard?.today) || !Array.isArray(dashboard?.watching)) throw Error('dashboard_unavailable');
   const latest = chartRows?.at(-1);
   const holdingCount = current.resolved && latest?.date === asOf
@@ -332,7 +340,7 @@ function premiumHome({asOf, selected, rows, chartRows, dashboard, historyPage, r
     + '<section class="panel" aria-labelledby="member-watching-heading"><div class="cloud-section-head">'
     + '<h2 id="member-watching-heading">現在の監視</h2><span class="badge">' + dashboard.watching.length + '銘柄</span></div>'
     + currentWatch(dashboard.watching) + '</section>'
-    + historyPanel(rows,historyPage,referenceHistoryRows,selected);
+    + historyPanel(rows, historyPage, referenceHistoryRows, selected, deferHistory);
 }
 function freeHome(rows = null) {
   const closed = rows?.filter(row => row.state === 'HOLD_ENDED');
@@ -341,19 +349,19 @@ function freeHome(rows = null) {
     + (closed === undefined ? '' : '<section class="panel"><h2>仮想保有終了銘柄</h2>'
       + (closed.length ? history(closed) : '<p class="note">このページに仮想保有終了銘柄はありません。</p>') + '</section>');
 }
-function view({mode,access,asOf,presets,selected,rows,chartRows,personal,dashboard,historyPage,reference,referenceHistoryRows}){
+function view({mode,access,asOf,presets,selected,rows,chartRows,personal,dashboard,historyPage,reference,referenceHistoryRows,deferHistory}){
  if(access==='free')return mode==='home'?freeHome(rows):lockedPage(mode);
  if(access!=='premium')throw Error('access_unavailable');
  if(reference===true)return premiumHeading(mode,asOf,selected)+'<div id="member-reference-content"></div>'
-  +(mode==='home'?historyPanel(rows,historyPage,referenceHistoryRows,selected):'');
+  +(mode==='home'?historyPanel(rows,historyPage,referenceHistoryRows,selected,deferHistory):'');
  const current=presets.find(x=>x.preset===selected);if(!current)throw Error('preset_unavailable');
- if(mode==='home')return premiumHome({asOf,selected,rows,chartRows,dashboard,historyPage,referenceHistoryRows},current);
+ if(mode==='home')return premiumHome({asOf,selected,rows,chartRows,dashboard,historyPage,referenceHistoryRows,deferHistory},current);
  return premiumHeading(mode,asOf,selected)+'<section class="panel">'+metrics(current.resolved?current.metrics:null,annualizedProfitPct(current,chartRows))
   +'</section><section class="panel"><h2>日次資金推移</h2>'+chart(chartRows)+'</section><section class="panel"><h2>あなたの保存条件による試算</h2>'
   +(personal?metrics(personal):'<p role="status">保存した条件による試算結果を準備中です。</p>')+'</section>';
 }
 g.NewAMemberPresentation={metrics,chart,history,view,lockedPage,freeHome,operatingLevel,referencePayload,referenceHistory,
-  referenceHistoryIndex,matchingHistory,referenceHistoryTable,
+  referenceHistoryIndex,matchingHistory,referenceHistoryTable,historyContent,
   fundamentalItem,fundamentalSelector,fundamentalMarkup};
 if(typeof module!=='undefined')module.exports=g.NewAMemberPresentation;
 })(globalThis);

@@ -281,7 +281,7 @@ function projectedElement(localName, values = {}) {
 
 test('approved reference renders with pinned member scope and uses neither legacy data nor quote downloads', async () => {
   for (const mode of ['home','analytics']) {
-    const item = (mode === 'home' ? 'dashboard' : 'analytics') + '.return_priority';
+    const item = (mode === 'home' ? 'dashboard' : 'analytics.overview') + '.return_priority';
     const view = browser({ page:mode, read:(name,url)=>name === 'reference.json'
       ? Response.json(url.searchParams.get('item') === 'history.1' ? historyReference(1) : {...navigationView,item}) : null });
     await flush();

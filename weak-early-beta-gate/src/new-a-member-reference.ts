@@ -24,6 +24,34 @@ export function isMemberReferenceItem(value: string): boolean {
   return permitted.has(value) || value === historyIndex || (page !== null && Number(page[1]) <= maxHistoryPages);
 }
 
+type ReferenceView = 'full' | 'overview' | 'daily';
+const analyticsPart = /^analytics\.(overview|daily)\.(defensive|medium|return_priority)$/;
+const dailyTable = '<table class="scenario-table" data-finite-table="daily">';
+const dailyBodyStart = '</thead><tbody>';
+const dailyBodyEnd = '</tbody></table></div></div><button id="new-a-daily-more"';
+const dailyTemplate = '<template id="new-a-reference-daily-values">';
+
+export function parseMemberReferenceRequest(item: string): { item: string; view: ReferenceView } | null {
+  const part = analyticsPart.exec(item);
+  if (part && part[0] === item) {
+    return { item: 'analytics.' + part[2], view: part[1] === 'daily' ? 'daily' : 'overview' };
+  }
+  return isMemberReferenceItem(item) ? { item, view: 'full' } : null;
+}
+
+export function memberReferenceMarkup(markup: string, view: ReferenceView): string | null {
+  if (view === 'full') return markup;
+  // Read from the already verified canonical markup so earlier generations work without a republish.
+  const table = markup.indexOf(dailyTable);
+  const start = table === -1 ? -1 : markup.indexOf(dailyBodyStart, table + dailyTable.length);
+  const end = start === -1 ? -1 : markup.indexOf(dailyBodyEnd, start + dailyBodyStart.length);
+  const template = markup.lastIndexOf(dailyTemplate);
+  const hasDaily = end !== -1 && template >= end + dailyBodyEnd.length && markup.endsWith('</template>');
+  if (!hasDaily) return view === 'overview' ? markup : null;
+  if (view === 'daily') return markup.slice(template);
+  return markup.slice(0, start + dailyBodyStart.length) + markup.slice(end, template);
+}
+
 function identity(source: ReadyPointer) {
   return JSON.stringify({
     status: source.status, dataset_id: source.dataset_id, revision: source.revision,

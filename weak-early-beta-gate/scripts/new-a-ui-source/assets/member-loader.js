@@ -28,6 +28,7 @@
     if (!response.ok) {
       const error = Error(unavailable);
       error.missing = response.status === 404;
+      error.status = response.status;
       throw error;
     }
     return response.json();
@@ -110,6 +111,35 @@
       }
     }
     return { fragment: template.content, items };
+  }
+
+  async function analyticsOverview(preset, options) {
+    try {
+      return await optionalReference('analytics.overview.' + preset, options);
+    } catch (error) {
+      // A tab may encounter an earlier Worker version while the UI is being deployed.
+      if (error.status !== 400) throw error;
+      return optionalReference('analytics.' + preset, options);
+    }
+  }
+
+  async function analyticsDaily(item, options, source, active) {
+    try {
+      const response = await g.NewAMemberTransport.reference(item, { ...options, generation: source.generation });
+      if (!active()) return null;
+      if (!g.NewAMemberPresentation.referencePayload(response, item)) throw Error(unavailable);
+      if (response.generation !== source.generation || response.as_of !== source.as_of) throw Error(changed);
+      const { fragment } = verifiedReference(response.markup, source.as_of);
+      const template = fragment.querySelector('#new-a-reference-daily-values');
+      if (!template || fragment.children.length !== 1) throw Error(unavailable);
+      const current = await verifyAccess();
+      return current && active() ? template.content.textContent : null;
+    } catch (error) {
+      if (!active()) return null;
+      if (error.message !== changed && error.message !== accessDenied) throw error;
+      clearDisplay(error.message, error.requiresLogin);
+      return null;
+    }
   }
 
   async function legacyProjection(options, analytics) {
@@ -506,7 +536,7 @@
       const analytics = mode === 'analytics';
       const options = { signal, generation: snapshot, session: memberSession };
       const [reference, history, historyReference] = await Promise.all([
-        free ? null : optionalReference((analytics ? 'analytics.' : 'dashboard.') + selected, options),
+        free ? null : analytics ? analyticsOverview(selected, options) : optionalReference('dashboard.' + selected, options),
         analytics ? null : g.NewAMemberTransport.history(page, options),
         free || analytics ? null : optionalReference('history.' + page, options),
       ]);
@@ -568,7 +598,10 @@
       if (display) {
         const target = document.getElementById('member-reference-content');
         target.append(display.fragment);
-        if (analytics) g.NewAReferenceAnalytics.mount(target);
+        if (analytics) {
+          const item = 'analytics.daily.' + selected;
+          g.NewAReferenceAnalytics.mount(target, () => analyticsDaily(item, options, source, active));
+        }
       }
       status.textContent = fallback ? '一部の表示を読み込めませんでした。' : '';
       retry.hidden = !fallback;

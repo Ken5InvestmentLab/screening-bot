@@ -617,9 +617,16 @@ test('the reference view requires the Premium session and verified same-generati
   const keys = ['dashboard', 'analytics'].flatMap(name =>
     ['defensive', 'medium', 'return_priority'].map(preset => name + '.' + preset));
   keys.push('history.1');
+  const dailyMarkup = '<template id="new-a-reference-daily-values">{"daily":[["2026-11-19",90,10,100,1,false]]}</template>';
+  const chartMarkup = '<div class="cloud-chart" id="new-a-daily-chart"><svg><path d="M1 1"></path></svg></div>';
+  const dailyTable = '<div id="new-a-daily-table"><div class="table-wrap"><table class="scenario-table" data-finite-table="daily">'
+    + '<thead><tr><th>日付</th></tr></thead><tbody><tr><td>2026-11-19</td></tr></tbody></table></div></div>'
+    + '<button id="new-a-daily-more" hidden>次の50営業日</button>';
+  const analyticsMarkup = chartMarkup + '<details><summary>日次表</summary>' + dailyTable + '</details>' + dailyMarkup;
   const chunks = [];
   const variants = keys.map((item, index) => {
-    const markup = item === 'history.1' ? '{"page":1,"rows":[{"symbol":"123A"}]}' : '<section>表示 ' + item + '</section>';
+    const markup = item === 'history.1' ? '{"page":1,"rows":[{"symbol":"123A"}]}'
+      : item === 'analytics.return_priority' ? analyticsMarkup : '<section>表示 ' + item + '</section>';
     const json = JSON.stringify({ markup });
     chunks.push(json);
     return { item, bytes: Buffer.byteLength(markup), sha256: digest(markup),
@@ -650,6 +657,29 @@ test('the reference view requires the Premium session and verified same-generati
   assert.deepEqual(await ready.json(), {
     as_of: day, generation, markup: '<section>表示 dashboard.return_priority</section>',
   });
+  const overviewRoute = '/api/cloud/new-a-view/reference.json?item=analytics.overview.return_priority';
+  const dailyRoute = '/api/cloud/new-a-view/reference.json?item=analytics.daily.return_priority';
+  const compact = await fetchReference(overviewRoute);
+  assert.equal(compact.status, 200);
+  assert.deepEqual(await compact.json(), {
+    as_of: day, generation, markup: analyticsMarkup.replace('<tr><td>2026-11-19</td></tr>', '').replace(dailyMarkup, ''),
+  });
+  const daily = await fetchReference(dailyRoute);
+  assert.equal(daily.status, 200);
+  assert.deepEqual(await daily.json(), { as_of: day, generation, markup: dailyMarkup });
+  const full = await fetchReference('/api/cloud/new-a-view/reference.json?item=analytics.return_priority');
+  assert.equal(full.status, 200);
+  assert.deepEqual(await full.json(), { as_of: day, generation, markup: analyticsMarkup });
+  assert.equal((await f.call(dailyRoute, denied)).status, 403);
+  assert.equal((await fetchReference(dailyRoute, otherAllowed)).status, 403);
+  assert.equal((await fetchReference(dailyRoute, allowed, tag, 'f'.repeat(64))).status, 409);
+  const missingGeneration = await f.request(dailyRoute, allowed, production);
+  missingGeneration.headers.set('x-cloud-member-session', tag);
+  assert.deepEqual(await (await worker.fetch(missingGeneration, f.env)).json(), { error: 'generation_required' });
+  assert.equal((await fetchReference('/api/cloud/new-a-view/reference.json?item=analytics.daily.invalid')).status, 400);
+  const oldMarkup = await fetchReference('/api/cloud/new-a-view/reference.json?item=analytics.overview.defensive');
+  assert.deepEqual(await oldMarkup.json(), { as_of: day, generation, markup: '<section>表示 analytics.defensive</section>' });
+  assert.equal((await fetchReference('/api/cloud/new-a-view/reference.json?item=analytics.daily.defensive')).status, 404);
   const page = await fetchReference('/api/cloud/new-a-view/reference.json?item=history.1');
   assert.equal(page.status, 200);
   assert.equal(JSON.parse((await page.json()).markup).page, 1);

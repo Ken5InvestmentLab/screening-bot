@@ -81,6 +81,52 @@ test('Premium Analytics removes persisted CSV and pages daily values without exp
  assert.equal(nodes['#new-a-daily-more'].hidden,true);
 });
 
+test('Premium Analytics fetches the daily table on open, can retry, and pages without another fetch',async()=>{
+ const daily=Array.from({length:51},(_,offset)=>[
+  new Date(Date.UTC(2026,0,offset+1)).toISOString().slice(0,10),90,10,100,1,false,
+ ]);
+ const element=()=>({dataset:{},children:[],listeners:{},append(...children){this.children.push(...children);},
+  setAttribute(){},addEventListener(event,fn){this.listeners[event]=fn;},remove(){this.removed=true;}});
+ const tableBody={rows:[],append(fragment){this.rows.push(...fragment.children);}};
+ const details=element();
+ const more=element();
+ const table={closest:()=>details,tBodies:[tableBody],tHead:{rows:[{cells:daily[0].map(()=>({textContent:'見出し'}))}]}};
+ const nodes={'#new-a-daily-table table':table,'#new-a-daily-more':more};
+ const context={document:{createDocumentFragment:element,createElement:element}};
+ vm.runInNewContext(fs.readFileSync(path.join(source,'assets/reference-analytics.js'),'utf8'),context);
+ let calls=0, settle;
+ context.NewAReferenceAnalytics.mount({querySelector:selector=>nodes[selector]},()=>{
+  calls++;
+  if(calls===1) return Promise.reject(Error('temporary_error'));
+  return new Promise(resolve=>{settle=resolve;});
+ });
+ const [message,retry]=details.children;
+ assert.equal(calls,0);
+ assert.equal(tableBody.rows.length,0);
+ assert.equal(more.hidden,true);
+ details.open=true;
+ await details.listeners.toggle();
+ assert.equal(calls,1);
+ assert.equal(retry.hidden,false);
+ assert.match(message.textContent,/読み込めません/);
+ const loading=retry.listeners.click();
+ await details.listeners.toggle();
+ assert.equal(calls,2);
+ assert.equal(tableBody.rows.length,0);
+ settle(JSON.stringify({daily}));
+ await loading;
+ assert.equal(tableBody.rows.length,50);
+ assert.equal(more.hidden,false);
+ assert.equal(message.removed,true);
+ assert.equal(retry.removed,true);
+ more.listeners.click();
+ await details.listeners.toggle();
+ assert.equal(calls,2);
+ assert.equal(tableBody.rows.length,51);
+ assert.equal(tableBody.rows[50].children[0].textContent,'2026-02-20');
+ assert.equal(more.hidden,true);
+});
+
 test('preset day counts include purchase day and skip the holiday; model remains grandfathered',()=>{
  const runtime=dataset.createDatasetRuntime(input(),{get:quote}),model=runtime.simulate(prefs,{exitPolicy:policy});
  assert.equal(model.trades[0].exit_date,'2026-11-24');

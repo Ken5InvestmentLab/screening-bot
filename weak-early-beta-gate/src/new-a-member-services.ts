@@ -1,5 +1,5 @@
 import type { MemberTier, RoleIdentity, RoleServices } from './new-a-role-facade';
-import { isMemberReferenceItem } from './new-a-member-reference';
+import { memberReferenceMarkup, parseMemberReferenceRequest } from './new-a-member-reference';
 import { memberFrame } from './new-a-member-frame.generated';
 
 export type ReadyPointer = {
@@ -69,8 +69,8 @@ export function memberServices(d: MemberAdapters, generationSecret: string | und
       const fundamental = url.pathname.endsWith('/fundamental.json');
       if (tier === 'free' && !history) return json({ error: 'role_required' }, 403);
       const reference = url.pathname.endsWith('/reference.json');
-      const referenceItem = reference ? url.searchParams.get('item') : null;
-      if (reference && (!referenceItem || !isMemberReferenceItem(referenceItem))) return json({ error: 'invalid_query' }, 400);
+      const referenceRequest = reference ? parseMemberReferenceRequest(url.searchParams.get('item') ?? '') : null;
+      if (reference && !referenceRequest) return json({ error: 'invalid_query' }, 400);
       const item = fundamental ? fundamentalSelector(url) : null;
       const raw = item?.page ?? url.searchParams.get('page') ?? '1';
       const preset = url.searchParams.get('preset');
@@ -86,12 +86,15 @@ export function memberServices(d: MemberAdapters, generationSecret: string | und
       const source = { ...current };
       const generation = await signGeneration(generationSecret, subject, tier, source);
       const expected = request.headers.get(generationHeader);
-      if (fundamental && expected === null) return json({ error: 'generation_required' }, 403);
+      if ((fundamental || referenceRequest?.view === 'daily') && expected === null) {
+        return json({ error: 'generation_required' }, 403);
+      }
       if (expected !== null && expected !== generation) return json({ error: 'source_changed' }, 409);
       const capture = { as_of: source.as_of, generation };
-      if (reference && referenceItem) {
-        const markup = await d.reference?.(source, referenceItem);
+      if (referenceRequest) {
+        const published = await d.reference?.(source, referenceRequest.item);
         if (!same(source, await d.current())) return json({ error: 'source_changed' }, 409);
+        const markup = published && memberReferenceMarkup(published, referenceRequest.view);
         if (!markup) return json({ error: 'reference_unavailable' }, 404);
         return json({ ...capture, markup });
       }

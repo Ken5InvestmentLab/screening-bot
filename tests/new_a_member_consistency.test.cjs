@@ -14,12 +14,17 @@ const referenceModule = { exports: {} };
 vm.runInNewContext(transpile('new-a-member-reference.ts'), {
   module: referenceModule, exports: referenceModule.exports, TextEncoder,
 });
+const projectionModule = { exports: {} };
+vm.runInNewContext(transpile('new-a-member-projection.ts'), {
+  module: projectionModule, exports: projectionModule.exports, TextEncoder,
+});
 const servicesModule = { exports: {} };
 vm.runInNewContext(transpile('new-a-member-services.ts'), {
   module: servicesModule,
   exports: servicesModule.exports,
   require: name => {
     if (name === './new-a-member-reference') return referenceModule.exports;
+    if (name === './new-a-member-projection') return projectionModule.exports;
     assert.equal(name, './new-a-member-frame.generated');
     return { memberFrame: () => '' };
   },

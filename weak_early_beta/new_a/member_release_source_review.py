@@ -28,6 +28,7 @@ FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_INLINE_LINKS_
 UNIFIED_MEMBER_UI_REVIEW_SCHEMA = "NEW_A_MEMBER_UNIFIED_UI_SUCCESSOR_SOURCE_REVIEW_V1"
 LOADING_AND_ZERO_REVIEW_SCHEMA = "NEW_A_MEMBER_LOADING_AND_ZERO_SUCCESSOR_SOURCE_REVIEW_V1"
 SHARED_DEFAULTS_REVIEW_SCHEMA = "NEW_A_MEMBER_SHARED_DEFAULTS_SUCCESSOR_SOURCE_REVIEW_V1"
+ENTRY_NOTICE_REVIEW_SCHEMA = "NEW_A_MEMBER_ENTRY_NOTICE_SUCCESSOR_SOURCE_REVIEW_V1"
 _PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumのアクセス権を購入する</a>'.encode()
 _NEW_PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumアクセス権を購入する</a>'.encode()
 _SUCCESSOR_REVIEW_PATHS = frozenset({
@@ -294,10 +295,16 @@ _SHARED_DEFAULTS_PRODUCT_PATHS = frozenset({
     "weak_early_beta/new_a/member_reference_publication.py",
 })
 _SHARED_DEFAULTS_PRODUCT_SHA256 = "08dd9366f491e0ba40a907799261b6e43e88e8414e2cc0366932670e3a9ea856"
+_ENTRY_NOTICE_BASELINE = "ce6251769a756c3c8903bc1975ca1eea4c98fa84"
+_ENTRY_NOTICE_PRODUCT_PATHS = frozenset({
+    "tests/test_new_a_connection.py",
+    "weak_early_beta/new_a/notifications.py",
+})
+_ENTRY_NOTICE_PRODUCT_SHA256 = "83013b29f8bb050eed03cae127be2f6ba31b22af4ae963019efbe88575fb17a8"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
     CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
     FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA, UNIFIED_MEMBER_UI_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA,
-    SHARED_DEFAULTS_REVIEW_SCHEMA,
+    SHARED_DEFAULTS_REVIEW_SCHEMA, ENTRY_NOTICE_REVIEW_SCHEMA,
     ROLE_ONLY_REVIEW_SCHEMA, JOURNAL_REVIEW_SCHEMA, FUNDAMENTAL_POPUP_REVIEW_SCHEMA, FUNDAMENTAL_IMPACT_REVIEW_SCHEMA,
 })
 MEMBER_BINDING = {
@@ -391,7 +398,14 @@ def _check_role_only_successor(repo, candidate, paths):
 
 
 def _member_successor(repo, baseline, candidate):
-    if baseline == _SHARED_DEFAULTS_BASELINE:
+    if baseline == _ENTRY_NOTICE_BASELINE:
+        paths = _successor_paths(repo, baseline, candidate)
+        if paths != _ENTRY_NOTICE_PRODUCT_PATHS | _CLOUD_OWNER_REFERENCE_REVIEW_PATHS:
+            raise ValueError("Cloud entry notice successor differs from the reviewed scope")
+        if _product_digest(repo, candidate, _ENTRY_NOTICE_PRODUCT_PATHS) != _ENTRY_NOTICE_PRODUCT_SHA256:
+            raise ValueError("Cloud entry notice successor differs from the reviewed bytes")
+        schema = ENTRY_NOTICE_REVIEW_SCHEMA
+    elif baseline == _SHARED_DEFAULTS_BASELINE:
         paths = _successor_paths(repo, baseline, candidate)
         if paths != _SHARED_DEFAULTS_PRODUCT_PATHS | _CLOUD_OWNER_REFERENCE_REVIEW_PATHS:
             raise ValueError("Shared Cloud defaults successor differs from the reviewed scope")
@@ -531,7 +545,7 @@ def review_member_release_source(repo, baseline, candidate):
         if (baseline in {_JOURNAL_BASELINE, _FUNDAMENTAL_POPUP_BASELINE, _FUNDAMENTAL_IMPACT_BASELINE,
                          _CLOUD_UI_BASELINE, _CLOUD_UI_POLISH_BASELINE, _CLOUD_OWNER_REFERENCE_BASELINE,
                          _FUNDAMENTAL_INLINE_LINKS_BASELINE, _UNIFIED_MEMBER_UI_BASELINE, _LOADING_AND_ZERO_BASELINE,
-                         _SHARED_DEFAULTS_BASELINE}
+                         _SHARED_DEFAULTS_BASELINE, _ENTRY_NOTICE_BASELINE}
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "role_only"):
             raise ValueError("Version-bound member successor requires the existing role-only audience")
         return _member_successor(repo, baseline, candidate)

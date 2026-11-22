@@ -123,6 +123,25 @@
     return { fragment: template.content, items };
   }
 
+  function removeLegacyDataHolds(fragment) {
+    const hasHoldCount = element => /^データ保留 \d+銘柄$/.test(element.textContent.trim());
+    const current = fragment.querySelector('#new-a-current');
+    for (const badge of current?.querySelectorAll(':scope > .cloud-meta > span.badge') ?? []) {
+      if (hasHoldCount(badge)) badge.remove();
+    }
+    const watches = fragment.querySelector('section[aria-labelledby="new-a-watch-heading"]');
+    for (const details of watches?.querySelectorAll(':scope > details.cloud-table-details') ?? []) {
+      const summary = details.firstElementChild;
+      if (summary?.localName === 'summary' && hasHoldCount(summary)) details.remove();
+    }
+    for (const badge of watches?.querySelectorAll('tr[data-current-watch] > td > span.badge.cloud-status-held') ?? []) {
+      if (badge.textContent.trim() !== 'データ保留') continue;
+      const reason = badge.nextElementSibling;
+      if (reason?.matches('small.cloud-table-meta')) reason.remove();
+      badge.remove();
+    }
+  }
+
   async function analyticsOverview(preset, options, allowLegacy) {
     try {
       return await optionalReference('analytics.overview.' + preset, options);
@@ -772,6 +791,7 @@
       });
       if (display) {
         const target = document.getElementById('member-reference-content');
+        if (mode === 'home') removeLegacyDataHolds(display.fragment);
         target.append(display.fragment);
         if (analytics) {
           const item = 'analytics.daily.' + selected;

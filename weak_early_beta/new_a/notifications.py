@@ -292,14 +292,7 @@ def _batch(snapshot, rows, report_url):
         fields.append({"name": "実際の観測日時（日本時間）", "value": observed.strftime("%Y-%m-%d %H:%M:%S")})
     if counts["completion_notifications"]:
         total = len({payload["symbol"] for _, payload, _ in rows if payload.get("kind") != SUMMARY})
-        data_hold_count = sum(
-            hold.get("reason") not in {"VERIFIED_DELISTED", "VERIFIED_RESTRICTED"}
-            for hold in snapshot.get("held_symbols", {}).values()
-        )
-        fields.extend([
-            {"name": "新規検出", "value": f"{total}銘柄", "inline": True},
-            {"name": "判定保留", "value": f"{data_hold_count}銘柄", "inline": True},
-        ])
+        fields.append({"name": "新規検出", "value": f"{total}銘柄", "inline": True})
     embed = {
         "title": "Cloud 2.0 新A 日次検出" + ("（遅延実行）" if delayed else ""),
         "url": urljoin(report_url, "weak_early_beta_latest.html"),

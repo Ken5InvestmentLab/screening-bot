@@ -239,7 +239,8 @@ function browser(options = {}) {
           ? options.referenceElements(node.innerHTML) : options.referenceElements ?? [];
         node.content = {
           querySelectorAll: children,
-          querySelector: selector => children().find(item => '#' + item.id === selector),
+          querySelector: selector => children().find(item =>
+            '#' + item.id === selector || (item.selector && item.selector === selector)),
           get children() { return children(); },
         };
       }
@@ -369,6 +370,41 @@ test('approved reference renders with pinned member scope and uses neither legac
     assert.equal(view.referenceRoot.children.length,1);
     assert.deepEqual(view.referenceMounts, mode === 'analytics' ? [view.referenceRoot] : []);
     assert.equal(view.nodes['member-state'].textContent,'');
+  }
+});
+
+test('verified dashboard removes the retained hold badge, table and row annotation without changing analytics', async () => {
+  for (const mode of ['home','analytics']) {
+    const node = (tag, textContent) => ({
+      ...projectedElement(tag),
+      textContent,
+      remove() { this.removed = true; },
+    });
+    const count = node('span', 'データ保留 48銘柄');
+    const detections = node('span', '新規検出 3銘柄');
+    const holds = { ...node('details'), firstElementChild:node('summary','データ保留 48銘柄') };
+    const other = { ...node('details'), firstElementChild:node('summary','買付候補・その他の記録') };
+    const reason = { ...node('small', ' 価格照合'), matches:selector => selector === 'small.cloud-table-meta' };
+    const rowBadge = { ...node('span','データ保留'), nextElementSibling:reason };
+    const unrelated = { ...node('span','現在の表示'), nextElementSibling:node('small','無関係の注記') };
+    const current = { ...projectedElement('section', { id:'new-a-current' }), querySelectorAll:selector => {
+      assert.equal(selector, ':scope > .cloud-meta > span.badge');
+      return [count,detections];
+    }};
+    const watching = { ...projectedElement('section', { 'aria-labelledby':'new-a-watch-heading' }),
+      selector:'section[aria-labelledby="new-a-watch-heading"]',
+      querySelectorAll(selector) {
+        if (selector === ':scope > details.cloud-table-details') return [holds,other];
+        assert.equal(selector, 'tr[data-current-watch] > td > span.badge.cloud-status-held');
+        return [rowBadge,unrelated];
+      },
+    };
+    const view = browser({ page:mode, historyOffscreen:true, referenceElements:[current,watching],
+      read:(name,url)=>name === 'reference.json' ? Response.json({...navigationView,item:url.searchParams.get('item')}) : null });
+    await flush();
+    assert.equal(view.referenceRoot.children.length,1);
+    for (const removed of [count,holds,rowBadge,reason]) assert.equal(!!removed.removed,mode === 'home');
+    for (const retained of [detections,other,unrelated,unrelated.nextElementSibling]) assert.equal(retained.removed,undefined);
   }
 });
 

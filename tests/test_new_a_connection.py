@@ -211,9 +211,10 @@ class BatchedDiscord(unittest.TestCase):
         self.assertEqual(embed["url"], self.report + "weak_early_beta_latest.html")
         for event in self.snapshot["events"]:
             self.assertIn(f"[{event['symbol']}](https://jp.tradingview.com/chart/", embed["description"])
-        self.assertEqual([field["value"] for field in embed["fields"]][0], self.day)
-        self.assertEqual([field["value"] for field in embed["fields"]][1][0], "8")
-        self.assertEqual(embed["fields"][2], {"name": "判定保留", "value": "2銘柄", "inline": True})
+        self.assertEqual(embed["fields"], [
+            {"name": "検出日", "value": self.day, "inline": True},
+            {"name": "新規検出", "value": "8銘柄", "inline": True},
+        ])
         self.assertFalse(files)
         receipts = self.receipts()
         self.assertEqual(len(receipts), 9)

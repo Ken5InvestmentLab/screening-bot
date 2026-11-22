@@ -389,10 +389,10 @@ test('dashboard identifies the snapshot day, delayed observations and unresolved
  assert.match(html,/遅延実行/);
  assert.match(html,/新規検出 1銘柄/);
  assert.match(html,/監視開始 <b>1件/);
- assert.equal((html.match(/データ保留 2銘柄/g)??[]).length,2);
  assert.equal((html.match(/data-current-watch/g)??[]).length,2);
- for(const label of ['取得未確認','価格照合'])assert(html.includes(label));
- assert.doesNotMatch(html,/4444|5555|取引制限|上場廃止/);
+ assert.match(html,/>1111</);
+ assert.match(html,/>3333</);
+ assert.doesNotMatch(html,/2222|4444|5555|取引制限|上場廃止|データ保留|取得未確認|価格照合/);
  const position={candidate_date:'2026-11-14',episode_id:1,entry_cost:10000,shares:100};
  const positions=['4444','5555'].map(symbol=>({identity:[symbol,position.candidate_date,position.episode_id].join('|')}));
  const prices=Object.fromEntries(['4444','5555'].map(symbol=>[symbol,{date:snapshot.as_of,price:125}]));

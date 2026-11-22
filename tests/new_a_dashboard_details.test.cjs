@@ -210,11 +210,11 @@ test('candidate, reset and exit schedule do not count as target-day transitions'
   assert.match(renderHoldings({ result: stale }, { asOf: date }), /対象日時点の仮想保有は未確定/);
 });
 
-test('data on hold is distinct from watching and virtual holding', () => {
+test('unresolved daily quotes stay out of dashboard labels and retain a watch row', () => {
   const watchSelection = [{ ...key, watch_status: 'WATCHING', selection_reason: null }];
   const html = currentMarkup([{ ...snapshot, held_symbols: { 1234: { reason: 'MISSING_SOURCE' } } }], [row], { watchSelection });
-  assert.match(html, /<tr data-current-watch>.*?<span class="badge cloud-status-held">データ保留/);
-  assert.doesNotMatch(html, /<span class="badge">監視中<\/span>/);
+  assert.match(html, /<tr data-current-watch>/);
+  assert.doesNotMatch(html, /データ保留|取得未確認|価格照合|cloud-status-held|<span class="badge">監視中<\/span>/);
 });
 
 test('confirmed holding gains, losses, and flat returns appear outside details', () => {

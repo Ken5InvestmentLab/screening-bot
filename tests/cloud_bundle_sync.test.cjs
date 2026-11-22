@@ -18,7 +18,7 @@ function checkHelp(html){
  assert.match(popup,/<section class="cloud-help-section" aria-labelledby="cloud-help-labels-title">\s*<h3 id="cloud-help-labels-title">ラベルの見方<\/h3>/);
  const [labels,levels]=Array.from(popup.matchAll(/<dl class="cloud-help-labels">([\s\S]*?)<\/dl>/g), match=>match[1]);
  assert.deepEqual(Array.from(labels.matchAll(/<dt>([^<]+)<\/dt>/g), match=>match[1]),[
-  '監視開始・監視中','監視終了','仮想保有開始候補（仮想買付候補）','仮想保有開始・仮想保有終了','データ保留','試算対象',
+  '監視開始・監視中','監視終了','仮想保有開始候補（仮想買付候補）','仮想保有開始・仮想保有終了','試算対象',
  ]);
  for (const explanation of [
   'その前の20取引日の平均の<strong>1.3倍以上</strong>',
@@ -32,7 +32,7 @@ function checkHelp(html){
   ['中間','5取引日目の始値','1日の件数上限なし'],
   ['利益優先','8取引日目の始値','1日3銘柄まで'],
  ]);
- assert.doesNotMatch(popup,/<a |<ol /);
+ assert.doesNotMatch(popup,/<a |<ol |データ保留/);
  assert.match(html,/\.cloud-help-dialog\{width:min\(520px,calc\(100vw - 20px\)\)\}/);
  assert.match(html,/\.topbar \.cloud-primary-nav\{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:4px\}/);
 }

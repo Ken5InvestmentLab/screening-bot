@@ -415,13 +415,17 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
         self.assertEqual(review['predecessor_member_policy_sha256'], digest(incumbent))
         self.assertEqual(member.MEMBER_SUCCESSORS[FIXED_TRIAL_FEE_REVIEW_SCHEMA],
                          FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA)
-        tiered = {**source_review, 'schema': FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA, 'member_audience': 'tiered'}
+        self.assertEqual(member.MEMBER_SUCCESSORS[FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA],
+                         member.SETTLED_PRICE_REVIEW_SCHEMA)
         tiered_plan = {**self.plan, 'predecessor_member_policy': incumbent}
-        tiered_review = member._review(tiered_plan, self.old, tiered, deployment, row, None)
-        self.assertEqual(tiered_review['member_audience'], 'tiered')
-        self.assertEqual(tiered_review['predecessor_member_policy_sha256'], digest(incumbent))
-        with self.assertRaisesRegex(ValueError, 'verified member audience'):
-            member._review(tiered_plan, self.old, dict(tiered, member_audience='role_only'), deployment, row, None)
+        for tiered_schema in (FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA, member.SETTLED_PRICE_REVIEW_SCHEMA):
+            with self.subTest(tiered_schema=tiered_schema):
+                tiered = {**source_review, 'schema': tiered_schema, 'member_audience': 'tiered'}
+                tiered_review = member._review(tiered_plan, self.old, tiered, deployment, row, None)
+                self.assertEqual(tiered_review['member_audience'], 'tiered')
+                self.assertEqual(tiered_review['predecessor_member_policy_sha256'], digest(incumbent))
+                with self.assertRaisesRegex(ValueError, 'verified member audience'):
+                    member._review(tiered_plan, self.old, dict(tiered, member_audience='role_only'), deployment, row, None)
         old_build = previous['build_input_sha256']
         with self.assertRaisesRegex(ValueError, 'exact normal CI'):
             observe(self.ci, dict(self.deployment, build_input_sha256=old_build), effective_off)

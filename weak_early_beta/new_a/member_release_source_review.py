@@ -31,6 +31,8 @@ SHARED_DEFAULTS_REVIEW_SCHEMA = "NEW_A_MEMBER_SHARED_DEFAULTS_SUCCESSOR_SOURCE_R
 ENTRY_NOTICE_REVIEW_SCHEMA = "NEW_A_MEMBER_ENTRY_NOTICE_SUCCESSOR_SOURCE_REVIEW_V1"
 FIXED_TRIAL_FEE_REVIEW_SCHEMA = "NEW_A_MEMBER_FIXED_TRIAL_FEE_SUCCESSOR_SOURCE_REVIEW_V1"
 FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA = "NEW_A_MEMBER_FREE_COMPLETED_ANALYTICS_SUCCESSOR_SOURCE_REVIEW_V1"
+SETTLED_PRICE_REVIEW_SCHEMA = "NEW_A_MEMBER_SETTLED_PRICE_SUCCESSOR_SOURCE_REVIEW_V1"
+TIERED_SUCCESSOR_SCHEMAS = frozenset({FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA, SETTLED_PRICE_REVIEW_SCHEMA})
 _PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumのアクセス権を購入する</a>'.encode()
 _NEW_PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumアクセス権を購入する</a>'.encode()
 _SUCCESSOR_REVIEW_PATHS = frozenset({
@@ -351,6 +353,25 @@ _FREE_COMPLETED_ANALYTICS_PRODUCT_PATHS = _MEMBER_DASHBOARD_PATHS | {
     "tests/new_a_analytics_presets.test.cjs",
 }
 _FREE_COMPLETED_ANALYTICS_PRODUCT_SHA256 = "0d7bb3d19dcc41f06d0f2c0dff9797607f8690cad188a9cbac706c3096ef7d74"
+_SETTLED_PRICE_BASELINE = "ff41f59ee2ad4fcd41c5b0244fe3461164bfbf31"
+_SETTLED_PRICE_ADDITIONS = frozenset({
+    "tests/test_new_a_missing_quote_decisions.py",
+    "tests/test_new_a_settlement_recovery.py",
+    "weak_early_beta/new_a/settlement_recovery.py",
+})
+_SETTLED_PRICE_PRODUCT_PATHS = _SETTLED_PRICE_ADDITIONS | {
+    "tests/new_a_analytics_presets.test.cjs",
+    "tests/new_a_member_projection_preparation.test.cjs",
+    "weak-early-beta-gate/scripts/new-a-ui-source/engine/dataset-runtime.cjs",
+    "weak-early-beta-gate/scripts/new-a-ui-source/engine/finite-engine.cjs",
+    "weak-early-beta-gate/scripts/new-a-ui-source/engine/worker-entry.js",
+    "weak-early-beta-gate/scripts/prepare-new-a-member-projection.cjs",
+    "weak_early_beta/new_a/bundle.py",
+    "weak_early_beta/new_a/packet.py",
+    "weak_early_beta/new_a/pipeline.py",
+    "weak_early_beta/new_a/run.py",
+}
+_SETTLED_PRICE_PRODUCT_SHA256 = "5d8c394367851f43b35dfc8818ee221843c518a8e94a5ac0cbcd535546807b42"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
     CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
     FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA, UNIFIED_MEMBER_UI_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA,
@@ -448,7 +469,14 @@ def _check_role_only_successor(repo, candidate, paths):
 
 
 def _member_successor(repo, baseline, candidate):
-    if baseline == _FREE_COMPLETED_ANALYTICS_BASELINE:
+    if baseline == _SETTLED_PRICE_BASELINE:
+        paths = _successor_paths(repo, baseline, candidate, allowed_additions=_SETTLED_PRICE_ADDITIONS)
+        if paths != _SETTLED_PRICE_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
+            raise ValueError("Cloud settled-price successor differs from the exact reviewed source scope")
+        if _product_digest(repo, candidate, _SETTLED_PRICE_PRODUCT_PATHS) != _SETTLED_PRICE_PRODUCT_SHA256:
+            raise ValueError("Cloud settled-price successor differs from the reviewed bytes")
+        schema = SETTLED_PRICE_REVIEW_SCHEMA
+    elif baseline == _FREE_COMPLETED_ANALYTICS_BASELINE:
         paths = _successor_paths(repo, baseline, candidate, allowed_additions=(_FREE_COMPLETED_ANALYTICS_CALENDAR,))
         if paths != _FREE_COMPLETED_ANALYTICS_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS | {CONFIG}:
             raise ValueError("Free completed history and analytics differ from the reviewed source scope")
@@ -571,7 +599,7 @@ def _member_successor(repo, baseline, candidate):
         "member_support_configured": True,
         "owner_only_gate_preserved": True,
         **({"member_audience": "role_only"} if schema in _ROLE_ONLY_SUCCESSOR_SCHEMAS else {}),
-        **({"member_audience": "tiered"} if schema == FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA else {}),
+        **({"member_audience": "tiered"} if schema in TIERED_SUCCESSOR_SCHEMAS else {}),
         **({"reviewed_runner_commit": _JOURNAL_REVIEWED_RUNNER} if schema == JOURNAL_REVIEW_SCHEMA else {}),
     }
 
@@ -617,6 +645,8 @@ def review_member_release_source(repo, baseline, candidate):
                          _SHARED_DEFAULTS_BASELINE, _ENTRY_NOTICE_BASELINE}
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "role_only"):
             raise ValueError("Version-bound member successor requires the existing role-only audience")
+        if baseline == _SETTLED_PRICE_BASELINE and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "tiered":
+            raise ValueError("Cloud settled-price successor requires the existing tiered audience")
         return _member_successor(repo, baseline, candidate)
 
     if changed != [ENTRY]:

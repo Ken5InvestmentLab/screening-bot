@@ -538,3 +538,44 @@ class PresentationSuccessorReviewTest(unittest.TestCase):
             wrong_gate = self.commit("Changed reviewed Free access")
             with self.assertRaisesRegex(ValueError, "differ from the reviewed bytes"):
                 review.review_member_release_source(self.repo, baseline, wrong_gate)
+
+    def test_settled_prices_require_exact_bytes_and_preserve_the_existing_tiered_boundary(self):
+        config = json.dumps(self.config, indent=2).encode().replace(
+            b'    "CLOUD_MEMBER_VIEW_ENABLED": "true",\n', review._ROLE_ONLY_CONFIG_LINE + review._TIERED_AUDIENCE_LINE)
+        self.assertIn(review._TIERED_AUDIENCE_LINE, config)
+        self.write(review.CONFIG, config)
+        paths = review._SETTLED_PRICE_PRODUCT_PATHS | review._SUCCESSOR_REVIEW_PATHS
+        for path in sorted(paths - review._SETTLED_PRICE_ADDITIONS):
+            self.write(path, b"prior " + path.encode())
+        baseline = self.commit("Approved tiered Cloud")
+        for path in sorted(paths):
+            self.write(path, b"reviewed " + path.encode())
+        candidate = self.commit("Exact scheduled settlement")
+        product_sha = review._product_digest(self.repo, candidate, review._SETTLED_PRICE_PRODUCT_PATHS)
+        with (patch.object(review, "_SETTLED_PRICE_BASELINE", baseline),
+              patch.object(review, "_SETTLED_PRICE_PRODUCT_SHA256", product_sha)):
+            result = review.review_member_release_source(self.repo, baseline, candidate)
+            self.assertEqual(result["schema"], review.SETTLED_PRICE_REVIEW_SCHEMA)
+            self.assertEqual(result["member_audience"], "tiered")
+            self.assertTrue(result["owner_only_gate_preserved"])
+
+            self.write(review.CONFIG, config.replace(review._TIERED_AUDIENCE_LINE, review._ROLE_ONLY_AUDIENCE_LINE))
+            with self.assertRaisesRegex(ValueError, "approved Worker configuration"):
+                review.review_member_release_source(self.repo, baseline, self.commit("Changed audience"))
+            self.write(review.CONFIG, config)
+
+            original_auth = review.git(self.repo, "show", f"{candidate}:{review.ENTRY}")
+            self.write(review.ENTRY, b"unreviewed authentication")
+            with self.assertRaisesRegex(ValueError, "existing Discord or owner authorization"):
+                review.review_member_release_source(self.repo, baseline, self.commit("Changed authentication"))
+            self.write(review.ENTRY, original_auth)
+
+            path = "weak_early_beta/new_a/settlement_recovery.py"
+            self.write(path, b"unreviewed settlement behavior")
+            with self.assertRaisesRegex(ValueError, "settled-price successor differs from the reviewed bytes"):
+                review.review_member_release_source(self.repo, baseline, self.commit("Changed settlement"))
+            self.write(path, review.git(self.repo, "show", f"{candidate}:{path}"))
+
+            self.write(review.PRESENTATION, b"unreviewed presentation")
+            with self.assertRaisesRegex(ValueError, "settled-price successor differs from the exact reviewed source scope"):
+                review.review_member_release_source(self.repo, baseline, self.commit("Changed another asset"))

@@ -360,18 +360,28 @@ test('the current view uses only its matched details and reads all history on de
  await assert.rejects(view.readHistory(),/authorization_required/);
  await assert.rejects(api.readCurrent(network,webcrypto),/authorization_required/);
 });
-test('dashboard identifies the snapshot day, a delayed observation and independent held stocks',()=>{
+test('dashboard identifies the snapshot day, delayed observations and unresolved quotes',()=>{
  const c={module:{exports:{}}};
  vm.createContext(c);
  vm.runInContext(fs.readFileSync(path.join(gate,'scripts/new-a-ui-source/assets/owner-loader.js'),'utf8'),c);
  const snapshot={
   schema:'NEW_A_OWNER_DAILY_DISPLAY_V1',audience:'EXISTING_CLOUD_OWNER_ONLY',as_of:'2026-11-16',
   observed_at:'2026-11-16T16:00:00Z',observation_kind:'DELAYED_SCHEDULED_OBSERVATION',
-  held_symbols:{'1111':{day:'2026-11-16',reason:'MISSING_SOURCE'},'2222':{day:'2026-11-16',reason:'SOURCE_QUARANTINED'},'4444':{day:'2026-11-16',reason:'VERIFIED_RESTRICTED'}},
-  monitor_state:{watches:{'1111|1':{episode:{symbol:'1111',candidate_date:'2026-11-14',episode_id:1}},'3333|1':{episode:{symbol:'3333',candidate_date:'2026-11-15',episode_id:1}}}},
+  held_symbols:Object.freeze({
+   '1111':{day:'2026-11-16',reason:'MISSING_SOURCE'},
+   '2222':{day:'2026-11-16',reason:'SOURCE_QUARANTINED'},
+   '4444':{day:'2026-11-16',reason:'VERIFIED_RESTRICTED'},
+   '5555':{day:'2026-11-16',reason:'VERIFIED_DELISTED'},
+  }),
+  monitor_state:{watches:{
+   '1111|1':{episode:{symbol:'1111',candidate_date:'2026-11-14',episode_id:1}},
+   '3333|1':{episode:{symbol:'3333',candidate_date:'2026-11-15',episode_id:1}},
+   '4444|1':{episode:{symbol:'4444',candidate_date:'2026-11-14',episode_id:1}},
+   '5555|1':{episode:{symbol:'5555',candidate_date:'2026-11-14',episode_id:1}},
+  }},
   events:[{session:'2026-11-16',symbol:'3333',candidate_date:'2026-11-16',episode_id:1,kind:'WATCH_STARTED',is_delayed_scheduled_signal:true},{session:'2026-11-16',symbol:'3333',candidate_date:'2026-11-16',episode_id:1,kind:'WATCH_STARTED',is_delayed_scheduled_signal:true}],
  };
- const {currentMarkup}=c.module.exports;
+ const {currentMarkup,holdingPerformance}=c.module.exports;
  const watchSelection=Object.values(snapshot.monitor_state.watches).map(({episode})=>({...episode,watch_status:'WATCHING',selection_reason:null}));
  const html=currentMarkup([snapshot],[],{watchSelection});
  assert.match(html,/対象 2026-11-16/);
@@ -379,8 +389,15 @@ test('dashboard identifies the snapshot day, a delayed observation and independe
  assert.match(html,/遅延実行/);
  assert.match(html,/新規検出 1銘柄/);
  assert.match(html,/監視開始 <b>1件/);
- assert.match(html,/データ保留 3銘柄/);
- for(const label of ['取得未確認','価格照合','取引制限'])assert(html.includes(label));
+ assert.equal((html.match(/データ保留 2銘柄/g)??[]).length,2);
+ assert.equal((html.match(/data-current-watch/g)??[]).length,2);
+ for(const label of ['取得未確認','価格照合'])assert(html.includes(label));
+ assert.doesNotMatch(html,/4444|5555|取引制限|上場廃止/);
+ const position={candidate_date:'2026-11-14',episode_id:1,entry_cost:10000,shares:100};
+ const positions=['4444','5555'].map(symbol=>({identity:[symbol,position.candidate_date,position.episode_id].join('|')}));
+ const prices=Object.fromEntries(['4444','5555'].map(symbol=>[symbol,{date:snapshot.as_of,price:125}]));
+ const performance=holdingPerformance(snapshot,positions,undefined,{date:snapshot.as_of,prices});
+ for(const symbol of ['4444','5555'])assert.match(performance(position,symbol),/未確認/);
  assert.doesNotMatch(html,/<span class="badge">監視中<\/span>/);
  assert.doesNotMatch(html,/今日の新規検出|最終観測/);
  assert.doesNotMatch(currentMarkup([{...snapshot,observation_kind:'CATCHUP_NOT_NEW'}]),/新規検出 /);

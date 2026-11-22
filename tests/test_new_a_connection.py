@@ -191,7 +191,12 @@ class BatchedDiscord(unittest.TestCase):
 
     def test_eight_symbols_and_summary_in_one_post_then_no_pending(self):
         self.events(8)
-        self.snapshot["held_symbols"] = {"T1": {}, "T2": {}}
+        self.snapshot["held_symbols"] = {
+            "2001": {"day": self.day, "reason": "MISSING_SOURCE"},
+            "2002": {"day": self.day, "reason": "SOURCE_QUARANTINED"},
+            "2003": {"day": self.day, "reason": "VERIFIED_DELISTED"},
+            "2004": {"day": self.day, "reason": "VERIFIED_RESTRICTED"},
+        }
         self.snapshot["data_status"] = "COMPLETED_WITH_HELD_SYMBOLS"
         self.fixture.save()
         preview = self.call(dry_run=True)
@@ -208,7 +213,7 @@ class BatchedDiscord(unittest.TestCase):
             self.assertIn(f"[{event['symbol']}](https://jp.tradingview.com/chart/", embed["description"])
         self.assertEqual([field["value"] for field in embed["fields"]][0], self.day)
         self.assertEqual([field["value"] for field in embed["fields"]][1][0], "8")
-        self.assertEqual([field["value"] for field in embed["fields"]][2][0], "2")
+        self.assertEqual(embed["fields"][2], {"name": "判定保留", "value": "2銘柄", "inline": True})
         self.assertFalse(files)
         receipts = self.receipts()
         self.assertEqual(len(receipts), 9)

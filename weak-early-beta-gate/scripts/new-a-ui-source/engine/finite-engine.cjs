@@ -33,13 +33,22 @@ function validatePreferences(p){
 }
 function compare(a,b){return a.candidate_date.localeCompare(b.candidate_date)||b.priority_score-a.priority_score||a.symbol.localeCompare(b.symbol,'en')||a.episode_id-b.episode_id;}
 function summarize(result,cash0){
- const {daily,orders,trades,open_positions,unresolved}=result,resolved=!unresolved.length;
+ const {daily,orders,trades,open_positions,unresolved}=result;
+ const last=daily.at(-1),resolved=!unresolved.length&&(!last||!last.unresolved&&finite(last.equity_diagnostic));
  const counts={};for(const o of orders)counts[o.status]=(counts[o.status]||0)+1;
- let peak=cash0,dd=0;for(const d of daily){peak=Math.max(peak,d.equity_diagnostic);dd=Math.min(dd,d.equity_diagnostic/peak-1);}
- const end=daily.at(-1)?.equity_diagnostic??cash0,realized=trades.reduce((s,t)=>s+t.profit,0),wins=trades.filter(t=>t.profit>0),losses=trades.filter(t=>t.profit<0),returns=trades.map(t=>t.return*100).sort((a,b)=>a-b);
+ let peak=cash0,dd=0;
+ for(const d of daily){
+  if(d.unresolved||!finite(d.equity_diagnostic))continue;
+  peak=Math.max(peak,d.equity_diagnostic);dd=Math.min(dd,d.equity_diagnostic/peak-1);
+ }
+ const end=last?.equity_diagnostic??cash0,realized=trades.reduce((s,t)=>s+t.profit,0),wins=trades.filter(t=>t.profit>0),losses=trades.filter(t=>t.profit<0),returns=trades.map(t=>t.return*100).sort((a,b)=>a-b);
  const sum=(a,k)=>a.reduce((s,t)=>s+t[k],0),average=(a,k)=>a.length?sum(a,k)/a.length:null;
  let previous=cash0;const yearly=[];
- for(const year of [...new Set(daily.map(d=>d.date.slice(0,4)))]){const days=daily.filter(d=>d.date.startsWith(year)),last=days.at(-1).equity_diagnostic;yearly.push({year:Number(year),markedNetProfit:resolved?last-previous:null,fills:orders.filter(o=>o.status==='FILLED'&&o.order_date.startsWith(year)).length});previous=last;}
+ for(const year of [...new Set(daily.map(d=>d.date.slice(0,4)))]){
+  const lastDay=daily.filter(d=>d.date.startsWith(year)).at(-1);
+  const last=lastDay.unresolved?null:lastDay.equity_diagnostic;
+  yearly.push({year:Number(year),markedNetProfit:resolved&&finite(last)&&finite(previous)?last-previous:null,fills:orders.filter(o=>o.status==='FILLED'&&o.order_date.startsWith(year)).length});previous=last;
+ }
  return {resolved,counts,yearly,metrics:{initialCash:cash0,endEquity:resolved?end:null,netProfit:resolved?end-cash0:null,realizedProfit:resolved?realized:null,unrealizedProfit:resolved?end-cash0-realized:null,maxDrawdown:resolved?dd:null,requiredCash:resolved?result.required_cash:null,fills:counts.FILLED||0,closed:trades.length,open:Object.keys(open_positions).length,unresolvedCount:unresolved.length,winRate:resolved&&trades.length?wins.length/trades.length:null,meanReturnPct:resolved?average(trades,'return')===null?null:average(trades,'return')*100:null,medianReturnPct:resolved&&returns.length?(returns[Math.floor((returns.length-1)/2)]+returns[Math.floor(returns.length/2)])/2:null,averageWinYen:resolved?average(wins,'profit'):null,averageLossYen:resolved?average(losses,'profit'):null,totalWinYen:resolved?sum(wins,'profit'):null,totalLossYen:resolved?sum(losses,'profit'):null}};
 }
 function replay({calendar,intents,quotes},preferences,{variableShares=false,exitPolicy=null,trialPreset=null}={}){
@@ -49,6 +58,68 @@ function replay({calendar,intents,quotes},preferences,{variableShares=false,exit
  for(const e of intents){if(!e.symbol||!finite(e.priority_score)||!Number.isSafeInteger(e.episode_id)||!index.has(e.trigger_date)||!index.has(e.candidate_date)||e.candidate_date>e.trigger_date)throw Error('intent_invalid');const ti=index.get(e.trigger_date)+1;if(ti<calendar.length){if(!byday.has(ti))byday.set(ti,[]);byday.get(ti).push(e);}}
  let cash=prefs.initial_cash_yen,minimum=cash;const positions=new Map(),daily=[],orders=[],trades=[],unresolved=[];
  const trouble=(date,symbol,reason)=>unresolved.push({date,symbol,reason});
+ const scheduledExits=new Map();
+ const supportsLateExit=trial!==null&&typeof quotes.scheduledExit==='function';
+ const supportsSkippedMark=trial!==null&&typeof quotes.decisionSkipped==='function';
+ function retainLateExit(symbol,date){
+  if(!supportsLateExit)return;
+  const receipt=quotes.scheduledExit(symbol,date);
+  if(receipt&&finite(receipt.open)&&receipt.open>0&&finite(receipt.factor)&&receipt.factor>0
+    &&typeof receipt.observed_after==='string'&&receipt.observed_after>date&&index.has(receipt.observed_after)){
+   scheduledExits.set(symbol,{open:receipt.open,factor:receipt.factor,observed_after:receipt.observed_after});
+  }
+ }
+ function updateShares(symbol,position,factor,date){
+  const ratio=factor/position.factor;
+  if(!near(ratio,1)){
+   const quantity=position.shares*ratio;
+   position.actions++;
+   if(Math.abs(quantity-Math.round(quantity))>1e-6)trouble(date,symbol,'FRACTIONAL_ACTION_NO_SETTLEMENT');
+   position.shares=quantity;
+  }
+  position.factor=factor;
+ }
+ function settle(symbol,position,price,details={}){
+  const date=calendar[position.exit_i];
+  const proceeds=position.shares*price*(1-prefs.cost_percent/100);
+  cash+=proceeds;
+  trades.push({symbol,...position,scheduled_exit_date:date,actual_exit_timing:timing,delay_market_sessions:0,exit_price_nominal:price,exit_date:date,proceeds,profit:proceeds-position.entry_cost,return:proceeds/position.entry_cost-1,odd_lot_exit:Math.abs(position.shares/100-Math.round(position.shares/100))>1e-8,...details});
+  positions.delete(symbol);
+ }
+ function handleScheduledExit(symbol,position,date,quote){
+  if(valid(quote,true)&&quote.high!==quote.low){
+   const price=timing==='OPEN'?quote.open*quote.actual_close/quote.close:quote.actual_close;
+   settle(symbol,position,price);
+   return true;
+  }
+  trouble(date,symbol,'UNRESOLVED_SCHEDULED_EXIT');
+  retainLateExit(symbol,date);
+  return false;
+ }
+ function resolveObservedExits(date){
+  for(const [symbol,receipt] of scheduledExits){
+   if(receipt.observed_after!==date)continue;
+   scheduledExits.delete(symbol);
+   const position=positions.get(symbol);
+   const scheduledDate=calendar[position.exit_i];
+   const ratio=receipt.factor/position.factor;
+   const quantity=near(ratio,1)?position.shares:position.shares*ratio;
+   if(!finite(quantity)||quantity<=0||Math.abs(quantity-Math.round(quantity))>1e-6){
+    trouble(scheduledDate,symbol,'FRACTIONAL_ACTION_NO_SETTLEMENT');
+    continue;
+   }
+   updateShares(symbol,position,receipt.factor,scheduledDate);
+   settle(symbol,position,receipt.open,{settlement_observed_after:date});
+   for(let at=unresolved.length-1;at>=0;at--){
+    const issue=unresolved[at];
+    if(issue.date===scheduledDate&&issue.symbol===symbol
+       &&['MISSING_HELD_QUOTE','UNRESOLVED_SCHEDULED_EXIT'].includes(issue.reason))unresolved.splice(at,1);
+   }
+  }
+ }
+ function recordUnresolvedDay(date){
+  daily.push({date,cash:null,holdings_value:null,equity_diagnostic:null,positions:positions.size,unresolved:true,stale_marks:null,cash_fraction:null});
+ }
  for(let i=0;i<calendar.length;i++){
   const dt=calendar[i],pending=[...(byday.get(i)||[])].sort(compare),admitted=[],free=prefs.max_positions-positions.size;
   for(const e of pending){
@@ -60,7 +131,23 @@ function replay({calendar,intents,quotes},preferences,{variableShares=false,exit
    else if(admitted.length>=free)row.status='CAPACITY';else admitted.push(row);
    if(row.status)orders.push(row);
   }
-  if(trial&&unresolved.length){daily.push({date:dt,cash:null,holdings_value:null,equity_diagnostic:null,positions:positions.size,unresolved:true,stale_marks:null,cash_fraction:null});continue;}
+  if(trial&&unresolved.length){
+   if(scheduledExits.size){
+    // Orders for this session already used the state known at its open.
+    // Existing positions still have their own fixed settlement dates.
+    for(const [symbol,position] of positions){
+     if(i!==position.exit_i)continue;
+     const quote=quotes.get(symbol,dt);
+     if(valid(quote)){
+      updateShares(symbol,position,quote.close/quote.actual_close,dt);
+      position.last_mark=position.shares*quote.actual_close;
+     }else trouble(dt,symbol,'MISSING_HELD_QUOTE');
+     handleScheduledExit(symbol,position,dt,quote);
+    }
+    resolveObservedExits(dt);
+   }
+   if(unresolved.length){recordUnresolvedDay(dt);continue;}
+  }
   let budget=cash,filledToday=0;
   for(const row of admitted){
    if(trial&&trial.daily_fill_cap!==null&&filledToday>=trial.daily_fill_cap){row.status='DAILY_FILLED_CAP';orders.push(row);continue;}
@@ -77,18 +164,22 @@ function replay({calendar,intents,quotes},preferences,{variableShares=false,exit
    }
    orders.push(row);
   }
-  let holdings=0,stale=0;
+  let holdings=0,stale=0,skippedMark=false;
   for(const [s,p]of [...positions]){
    const r=quotes.get(s,dt);
-   if(!valid(r))trouble(dt,s,'MISSING_HELD_QUOTE');else{const factor=r.close/r.actual_close,ratio=factor/p.factor;if(!near(ratio,1)){const qty=p.shares*ratio;p.actions++;if(Math.abs(qty-Math.round(qty))>1e-6)trouble(dt,s,'FRACTIONAL_ACTION_NO_SETTLEMENT');p.shares=qty;}p.factor=factor;}
-   if(valid(r))p.last_mark=p.shares*r.actual_close;else stale++;
-   if(i===p.exit_i){
-    if(valid(r,true)&&r.high!==r.low){const price=timing==='OPEN'?r.open*r.actual_close/r.close:r.actual_close,proceeds=p.shares*price*(1-prefs.cost_percent/100);cash+=proceeds;trades.push({symbol:s,...p,scheduled_exit_date:calendar[p.exit_i],actual_exit_timing:timing,delay_market_sessions:0,exit_price_nominal:price,exit_date:dt,proceeds,profit:proceeds-p.entry_cost,return:proceeds/p.entry_cost-1,odd_lot_exit:Math.abs(p.shares/100-Math.round(p.shares/100))>1e-8});positions.delete(s);continue;}
-    else trouble(dt,s,'UNRESOLVED_SCHEDULED_EXIT');
+   if(valid(r)){
+    updateShares(s,p,r.close/r.actual_close,dt);
+    p.last_mark=p.shares*r.actual_close;
+   }else{
+    if(supportsSkippedMark&&r===null&&i<p.exit_i&&quotes.decisionSkipped(s,dt)===true)skippedMark=true;
+    else trouble(dt,s,'MISSING_HELD_QUOTE');
+    stale++;
    }
+   if(i===p.exit_i&&handleScheduledExit(s,p,dt,r))continue;
    holdings+=p.last_mark;
   }
   if(cash< -1e-6||positions.size>prefs.max_positions)throw Error('account_invariant');
+  if(skippedMark||scheduledExits.size){recordUnresolvedDay(dt);continue;}
   const equity=cash+holdings;daily.push({date:dt,cash,holdings_value:holdings,equity_diagnostic:equity,positions:positions.size,unresolved:!!unresolved.length,stale_marks:stale,cash_fraction:equity?cash/equity:null});
  }
  const result={daily,orders,trades,unresolved,open_positions:Object.fromEntries(positions),required_cash:prefs.initial_cash_yen-minimum},output={...result,...summarize(result,prefs.initial_cash_yen)};if(trial)output.trial_policy={...trial,purchase_day_is_one:true,timing:'OPEN',execution_status:'ANALYTICS_SIMULATION_ONLY'};else if(prefs.exit_endpoint==='d6_open'&&policy)output.exit_policy=policy;return output;

@@ -3,12 +3,28 @@ import copy,datetime,hashlib,json,re,sqlite3
 from pathlib import Path
 from . import monitor
 
+def _expire_skipped_watches(state, session, observed_at, anchor_index):
+ expired=[]
+ for key,watch in list(state['watches'].items()):
+  deadline=watch['start_index']+20
+  if not anchor_index<deadline<=state['cursor']:continue
+  episode=watch['episode'];symbol=episode['symbol'];episode_id=episode['episode_id']
+  event={'kind':'WATCH_TERMINAL','session':session,'observed_at':observed_at,'symbol':symbol,
+         'episode_id':episode_id,'candidate_date':episode['candidate_date'],'reason':'EXPIRED',
+         'expired_on':state['calendar'][deadline]}
+  event['event_id']=monitor.digest([state['contract'],event['kind'],session,symbol,episode_id])
+  expired.append(event)
+  del state['watches'][key]
+ state['events'].extend(expired)
+ return expired
+
 class Pipeline:
  def __init__(self,db_path,verified_checkpoint,*,allow_live=False):
   self.allow_live=allow_live
   self.private_directory=Path(db_path).resolve().parent
   self.db=sqlite3.connect(db_path);self.db.executescript('CREATE TABLE IF NOT EXISTS symbol_heads(symbol TEXT PRIMARY KEY,state_json TEXT NOT NULL,state_hash TEXT NOT NULL);CREATE TABLE IF NOT EXISTS symbol_days(symbol TEXT NOT NULL,day TEXT NOT NULL,input_hash TEXT NOT NULL,PRIMARY KEY(symbol,day));CREATE TABLE IF NOT EXISTS events(event_id TEXT PRIMARY KEY,event_json TEXT NOT NULL,publication_state TEXT NOT NULL);CREATE TABLE IF NOT EXISTS runs(run_key TEXT PRIMARY KEY,source_hash TEXT NOT NULL,result_json TEXT NOT NULL);CREATE TABLE IF NOT EXISTS held(symbol TEXT PRIMARY KEY,day TEXT NOT NULL,reason TEXT NOT NULL);')
   self.db.execute('CREATE TABLE IF NOT EXISTS observed_quotes(symbol TEXT NOT NULL,day TEXT NOT NULL,row_json TEXT NOT NULL,row_hash TEXT NOT NULL,PRIMARY KEY(symbol,day))')
+  self.db.execute('CREATE TABLE IF NOT EXISTS missing_quote_days(symbol TEXT NOT NULL,day TEXT NOT NULL,PRIMARY KEY(symbol,day))')
   seed=verified_checkpoint
   self.db.execute('CREATE TABLE IF NOT EXISTS checkpoint_identity(id INTEGER PRIMARY KEY CHECK(id=1),seed_hash TEXT NOT NULL)')
   seed_hash=monitor.digest(seed);identity=self.db.execute('SELECT seed_hash FROM checkpoint_identity WHERE id=1').fetchone()
@@ -31,7 +47,10 @@ class Pipeline:
   state=json.loads(row[0])
   if monitor.digest(state)!=row[1]:raise ValueError('corrupt symbol state')
   return state
- def run(self,*,as_of,observed_at,calendar,rows_by_day,source_hash,quality_verified,universe,restrictions=None,dry_run=True,resume_held=False,predecessor_source_hash=None,recovery_reference=None):
+ def missing_quote_days(self):
+  """Confirmed missing sessions, including holds from before the skip policy."""
+  return set(self.db.execute("SELECT symbol,day FROM missing_quote_days UNION SELECT symbol,day FROM held WHERE reason='MISSING_SOURCE'"))
+ def run(self,*,as_of,observed_at,calendar,rows_by_day,source_hash,quality_verified,universe,restrictions=None,dry_run=True,resume_held=False,predecessor_source_hash=None,recovery_reference=None,freeze_missing_quotes=False):
   if quality_verified is not True or not re.fullmatch('[a-f0-9]{64}',source_hash):raise ValueError('verified source receipt required')
   if calendar!=sorted(set(calendar)) or as_of not in calendar:raise ValueError('verified market calendar required')
   obs=datetime.datetime.fromisoformat(observed_at.replace('Z','+00:00'));jst=datetime.timezone(datetime.timedelta(hours=9))
@@ -51,6 +70,7 @@ class Pipeline:
   restrictions=restrictions or {};emitted=[];holds={};processed=0
   with self.db:
    self.db.execute('BEGIN IMMEDIATE')
+   missing_days=self.missing_quote_days() if freeze_missing_quotes else set(self.db.execute('SELECT symbol,day FROM missing_quote_days'))
    previous_run=self.db.execute('SELECT source_hash,result_json FROM runs WHERE run_key LIKE ? ORDER BY rowid DESC LIMIT 1',(as_of+'|%',)).fetchone()
    if previous_run:
     prior_result=json.loads(previous_run[1])
@@ -70,7 +90,7 @@ class Pipeline:
      warmup=rows_by_day.get(calendar[state['cursor']],{}).get(sym) if state['cursor']>=0 else None
      if monitor.valid(warmup,True):state['previous'][sym]=copy.deepcopy(warmup)
     if calendar[:len(state['calendar'])]!=state['calendar']:raise ValueError('calendar prefix changed')
-    state['calendar']=calendar;before=copy.deepcopy(state)
+    state['calendar']=calendar
     for p in state['pending']:
      if p.get('reference_entry_date') is None and p['entry_index']<len(calendar):p['reference_entry_date']=calendar[p['entry_index']]
      if p.get('reference_exit_date') is None and p['reference_exit_index']<len(calendar):p['reference_exit_date']=calendar[p['reference_exit_index']]
@@ -80,9 +100,19 @@ class Pipeline:
      if isinstance(rules,str):rules=[{'start':rules,'reason':'VERIFIED_DELISTED'}]
      restricted=next((v for v in rules if day>=v['start'] and (not v.get('end') or day<v['end'])),None)
      if restricted:holds[sym]={'day':day,'reason':restricted['reason']};break
+     if (sym,day) in missing_days or (freeze_missing_quotes and day in rows_by_day and r is None):
+      self.db.execute('INSERT OR IGNORE INTO missing_quote_days VALUES (?,?)',(sym,day))
+      missing_days.add((sym,day))
+      state['cursor']=idx
+      for p in state['pending']:
+       if p['entry_index']==idx:p['price_status']='UNRESOLVED_OPEN'
+      if day==as_of:holds[sym]={'day':day,'reason':'MISSING_SOURCE'}
+      continue
      if r is None or not monitor.valid(r,True):holds[sym]={'day':day,'reason':'MISSING_SOURCE' if r is None else 'SOURCE_QUARANTINED'};break
      # 従前の観測basisへ合わせる。過去OHLCを上書きせず基準close同一が必須。
-     previous=state['previous'].get(sym);prior=rows_by_day.get(state['calendar'][state['cursor']],{}).get(sym) if state['cursor']>=0 else None
+     anchor_index=state['cursor']
+     while anchor_index>=0 and (sym,calendar[anchor_index]) in missing_days:anchor_index-=1
+     previous=state['previous'].get(sym);prior=rows_by_day.get(calendar[anchor_index],{}).get(sym) if anchor_index>=0 else None
      scaled=copy.deepcopy(r)
      if newly_observed_member and day<as_of:scaled['candidate']=False
      if previous and not monitor.valid(prior,True):holds[sym]={'day':day,'reason':'PRIOR_OBSERVED_ANCHOR_MISSING'};break
@@ -92,17 +122,23 @@ class Pipeline:
       for fld in ['open','high','low','close','low20','high20']:
        if scaled.get(fld) is not None:scaled[fld]*=k
       scaled['volume']/=k;scaled['split_factor']/=k
+     expired=[]
+     if anchor_index<state['cursor']:
+      # A market-session gap counts toward expiry, but its quote cannot act as yesterday's close.
+      expired=_expire_skipped_watches(state,day,observed_at,anchor_index)
+      state['previous'][sym]=None
      # phase-specific timestamp stays actual DRY_RUN observation; no synthetic realtime fills.
      state,events=monitor.advance(state,day,{sym:scaled},observed_at)
      h=monitor.digest({sym:r});existing=self.db.execute('SELECT input_hash FROM symbol_days WHERE symbol=? AND day=?',(sym,day)).fetchone()
      if existing and existing[0]!=h:raise ValueError('conflicting committed day')
      self.db.execute('INSERT OR IGNORE INTO symbol_days VALUES (?,?,?)',(sym,day,h));processed+=1
      self.db.execute('INSERT INTO observed_quotes VALUES (?,?,?,?)',(sym,day,monitor.encode(scaled),monitor.digest(scaled)))
-     for e in events:
+     for e in expired+events:
       live_signal=not dry_run and day==as_of==obs.astimezone(jst).date().isoformat() and e['kind']=='WATCH_STARTED'
       tagged={**e,'observation_kind':'DRY_RUN_HISTORICAL' if dry_run else 'LIVE_OBSERVATION' if day==as_of==obs.astimezone(jst).date().isoformat() else 'CATCHUP_NOT_NEW','is_new_live_signal':live_signal,'publication_state':'LOCAL_ONLY_NOT_SENT' if dry_run else 'PENDING_PUBLISH_NOT_SENT'}
       if delayed and day==as_of:tagged.update(observation_kind=KIND,is_delayed_scheduled_signal=e['kind']=='WATCH_STARTED')
       self.db.execute('INSERT INTO events VALUES (?,?,?)',(e['event_id'],monitor.encode(tagged),tagged['publication_state']));emitted.append(tagged)
+    if sym not in holds and (sym,as_of) in missing_days:holds[sym]={'day':as_of,'reason':'MISSING_SOURCE'}
     self.db.execute('INSERT INTO symbol_heads VALUES (?,?,?) ON CONFLICT(symbol) DO UPDATE SET state_json=excluded.state_json,state_hash=excluded.state_hash',(sym,monitor.encode(state),monitor.digest(state)))
     if sym in holds:self.db.execute('INSERT INTO held VALUES (?,?,?) ON CONFLICT(symbol) DO UPDATE SET day=excluded.day,reason=excluded.reason',(sym,holds[sym]['day'],holds[sym]['reason']))
     else:self.db.execute('DELETE FROM held WHERE symbol=?',(sym,))

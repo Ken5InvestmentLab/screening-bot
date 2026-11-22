@@ -6,6 +6,7 @@ const { spawnSync } = require('node:child_process');
 const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
+const vm = require('node:vm');
 const { DatabaseSync } = require('node:sqlite');
 const { test } = require('node:test');
 
@@ -18,7 +19,7 @@ const day = '2026-11-19';
 const calendar = ['2026-11-17', '2026-11-18', day];
 const sourceVersion = 'a'.repeat(64);
 
-async function fixture(t, { hasMissingMark = true, logical = true, presentations } = {}) {
+async function fixture(t, { hasMissingMark = true, logical = true, presentations, scheduledExit, decisionSkipped } = {}) {
   const base = await fs.realpath(os.tmpdir());
   const root = await fs.mkdtemp(path.join(base, 'new-a-member-projection-'));
   t.after(async () => {
@@ -41,6 +42,15 @@ async function fixture(t, { hasMissingMark = true, logical = true, presentations
     ['123A', calendar[1], [103, 110, 101, 104, 104, true, 1000, 1000]],
     ['123A', day, null],
   ];
+  if (scheduledExit !== undefined || decisionSkipped !== undefined) {
+    const extraFields = [
+      ['scheduled_exit', scheduledExit], ['decision_skipped', decisionSkipped],
+    ].filter(([, value]) => value !== undefined);
+    for (const row of quoteRows) row[2]?.push(...extraFields.map(() => null));
+    const supplemental = [...Array(quoteFields.length).fill(null), ...extraFields.map(([, value]) => value)];
+    quoteRows.push(['9876', calendar[1], supplemental]);
+    quoteFields.push(...extraFields.map(([field]) => field));
+  }
   const manifest = {
     schema: 'A_BROWSER_PRIVATE_INPUT_V1', audience: 'EXISTING_CLOUD_OWNER_ONLY', strategy: 'A_BASE',
     as_of: day, source_version: sourceVersion, live: false,
@@ -75,6 +85,64 @@ async function fixture(t, { hasMissingMark = true, logical = true, presentations
   };
   return { root, input, proof, save };
 }
+
+test('worker and projection keep scheduled exits and skipped decisions separate from ordinary quotes', async t => {
+  const { createQuoteDecoder } = require('../weak-early-beta-gate/scripts/new-a-ui-source/engine/dataset-runtime.cjs');
+  const workerSource = await fs.readFile(path.join(gate, 'scripts/new-a-ui-source/engine/worker-entry.js'), 'utf8');
+  let quotes, response;
+  const context = vm.createContext({
+    AFiniteEngine: require('../weak-early-beta-gate/scripts/new-a-ui-source/engine/finite-engine.cjs'),
+    AFiniteDataset: { createQuoteDecoder, createDatasetRuntime(input, source) { quotes = source; return input; } },
+    TextDecoder,
+    postMessage(message) { response = message; },
+  });
+  vm.runInContext(workerSource, context);
+  function initialize(records, fields = ['open', 'scheduled_exit', 'decision_skipped']) {
+    const chunk = new TextEncoder().encode(JSON.stringify(records));
+    context.onmessage({ data: { kind: 'initialize', id: 1, quoteChunks: [chunk], manifest: {
+      as_of: day, input: { calendar, limits: { completeThrough: day }, source_version: sourceVersion },
+      quote_fields: fields, quotes: [{ bytes: chunk.byteLength, rows: records.length }],
+      expected_quote_keys: records.length,
+    } } });
+  }
+  const exact = { open: 105, factor: 0.5, observed_after: day };
+  initialize([['9876', calendar[0], [null, null, true]], ['9876', calendar[1], [null, exact, true]],
+    ['9876', day, [110, null, null]], ['8888', calendar[1], null]]);
+  assert.equal(response.ready, true);
+  assert.equal(quotes.get('9876', calendar[0]), null);
+  assert.equal(quotes.get('9876', calendar[1]), null);
+  assert.equal(quotes.get('9876', day).open, 110);
+  assert.deepEqual(quotes.scheduledExit('9876', calendar[1]), exact);
+  assert.equal(quotes.scheduledExit('9876', day), null);
+  assert.equal(quotes.scheduledExit('8888', calendar[1]), null);
+  assert.equal(quotes.decisionSkipped('9876', calendar[0]), true);
+  assert.equal(quotes.decisionSkipped('9876', calendar[1]), true);
+  assert.equal(quotes.decisionSkipped('9876', day), false);
+  assert.equal(quotes.decisionSkipped('8888', calendar[1]), false);
+
+  for (const malformed of [
+    [110, exact, null], [null, { ...exact, factor: 0 }, null], [null, { ...exact, observed_after: calendar[1] }, null],
+    [null, { ...exact, observed_after: '2026-11-21' }, null], [null, { ...exact, observed_after: '2026-11-31' }, null],
+    [null, { ...exact, extra: 1 }, null], [110, null, true], [null, null, false], [null, null, 1],
+  ]) {
+    initialize([['9876', calendar[1], malformed]]);
+    assert.equal(response.error, 'simulation_unavailable');
+    context.onmessage({ data: { kind: 'source_version', id: 2 } });
+    assert.equal(response.error, 'simulation_unavailable');
+  }
+  initialize([['9876', calendar[0], null]], ['open']);
+  assert.equal(response.ready, true);
+  assert.equal(quotes.decisionSkipped('9876', calendar[0]), false);
+  assert.equal(quotes.scheduledExit('9876', calendar[0]), null);
+  const f = await fixture(t, { scheduledExit: exact, decisionSkipped: true });
+  const baseline = await fixture(t);
+  const actual = await prepareNewAMemberProjection(f.input);
+  assert.deepEqual(actual.parts, (await prepareNewAMemberProjection(baseline.input)).parts);
+  const rejected = await fixture(t, { scheduledExit: { ...exact, observed_after: calendar[1] } });
+  await assert.rejects(() => prepareNewAMemberProjection(rejected.input), /Invalid scheduled exit quote/);
+  const invalidSkip = await fixture(t, { decisionSkipped: false });
+  await assert.rejects(() => prepareNewAMemberProjection(invalidSkip.input), /Invalid skipped quote decision/);
+});
 
 test('reproduces sanitized common projection from a pinned logical READY generation and keeps unresolved marks empty', async t => {
   const f = await fixture(t);

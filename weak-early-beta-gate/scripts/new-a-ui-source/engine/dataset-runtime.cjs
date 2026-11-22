@@ -1,6 +1,63 @@
 // 同一の検証済み入力を使う純粋なtrial wrapper。通信・ファイル・認証を持たない。
 'use strict';
 const {replay,valid,validatePreferences,validateExitPolicy,trialTerms}=require('./finite-engine.cjs');
+
+function validDay(value) {
+ if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+ const time = Date.parse(value + 'T00:00:00Z');
+ return Number.isFinite(time) && new Date(time).toISOString().slice(0, 10) === value;
+}
+
+function createQuoteDecoder(fields, calendar, asOf) {
+ if (!Array.isArray(fields) || !fields.every(field => typeof field === 'string')
+     || new Set(fields).size !== fields.length) throw Error('Invalid canonical quote fields');
+ const exitIndex = fields.indexOf('scheduled_exit');
+ const skippedIndex = fields.indexOf('decision_skipped');
+ const marketDays = exitIndex === -1 && skippedIndex === -1 ? null : new Set(calendar);
+ const recoveries = new Map();
+ const skipped = new Set();
+ return {
+  normal(symbol, day, values) {
+   if (values === null) return null;
+   if (!Array.isArray(values) || values.length !== fields.length) throw Error('Invalid canonical quote values');
+   const exit = exitIndex === -1 ? null : values[exitIndex];
+   const decisionSkipped = skippedIndex === -1 ? null : values[skippedIndex];
+   if (decisionSkipped !== null && decisionSkipped !== true) throw Error('Invalid skipped quote decision');
+   if (exit !== null || decisionSkipped === true) {
+    if (typeof symbol !== 'string' || !/^[0-9A-Z]{4}$/.test(symbol)
+        || !validDay(day) || !validDay(asOf) || !marketDays.has(day) || !marketDays.has(asOf) || day > asOf
+        || values.some((value, index) => index !== exitIndex && index !== skippedIndex && value !== null)) {
+     throw Error('Invalid missing quote metadata');
+    }
+    const key = symbol + '|' + day;
+    if (exit !== null) {
+     if (!exit || typeof exit !== 'object' || Array.isArray(exit) || Object.keys(exit).length !== 3
+         || !Number.isFinite(exit.open) || exit.open <= 0 || !Number.isFinite(exit.factor) || exit.factor <= 0
+         || !validDay(exit.observed_after) || !marketDays.has(exit.observed_after)
+         || day >= exit.observed_after || exit.observed_after > asOf) {
+      throw Error('Invalid scheduled exit quote');
+     }
+     recoveries.set(key, Object.freeze({ open: exit.open, factor: exit.factor, observed_after: exit.observed_after }));
+    }
+    if (decisionSkipped) skipped.add(key);
+    return null;
+   }
+   if (marketDays && values.every(value => value === null)) return null;
+   const quote = Object.create(null);
+   for (let i = 0; i < fields.length; i++) {
+    if (i !== exitIndex && i !== skippedIndex) quote[fields[i]] = values[i];
+   }
+   return quote;
+  },
+  scheduledExit(symbol, day) {
+   return recoveries.get(symbol + '|' + day) ?? null;
+  },
+  decisionSkipped(symbol, day) {
+   return skipped.has(symbol + '|' + day);
+  },
+ };
+}
+
 function createDatasetRuntime(input,quotes){
  const results=new Map();
  function calculate(preferences,{identityScreen=true,variableShares=false,exitPolicy=null,trialPreset=null}={},firstSession=null){
@@ -54,4 +111,4 @@ function createDatasetRuntime(input,quotes){
  }
  return {source_version:input.source_version,input,quotes,simulate,simulateLatestYear,currentPortfolio};
 }
-module.exports={createDatasetRuntime};
+module.exports={createDatasetRuntime,createQuoteDecoder,validDay};

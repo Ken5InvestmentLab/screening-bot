@@ -2,9 +2,12 @@ let runtime=null;
 let dashboardCloses=null;
 
 function initialize(manifest,quoteChunks){
+ runtime=null;
+ dashboardCloses=null;
  if(!Array.isArray(quoteChunks)||quoteChunks.length!==manifest.quotes.length)throw Error('quote_chunk_count');
- const quoteMap=new Map(),decoder=new TextDecoder(),fields=manifest.quote_fields;
+ const quoteMap=new Map(),decoder=new TextDecoder();
  const asOf=manifest.as_of;
+ const quoteDecoder=AFiniteDataset.createQuoteDecoder(manifest.quote_fields,manifest.input.calendar,asOf);
  const closes={};
  const hasLatestPrices=typeof asOf==='string'&&asOf===manifest.input.calendar.at(-1)&&asOf===manifest.input.limits?.completeThrough;
  for(const [index,chunk] of quoteChunks.entries()){
@@ -15,11 +18,7 @@ function initialize(manifest,quoteChunks){
   for(const [symbol,day,record] of rows){
    const key=symbol+'|'+day;
    if(quoteMap.has(key))throw Error('quote_duplicate_key');
-   let quote=null;
-   if(record!==null){
-    quote=Object.create(null);
-    for(let i=0;i<fields.length;i++)quote[fields[i]]=record[i];
-   }
+   const quote=quoteDecoder.normal(symbol,day,record);
    quoteMap.set(key,quote);
    if(hasLatestPrices&&day===asOf&&/^[0-9][0-9A-Z]{3}$/.test(symbol)&&AFiniteEngine.valid(quote,true))closes[symbol]={date:day,price:quote.actual_close};
   }
@@ -30,7 +29,7 @@ function initialize(manifest,quoteChunks){
   const key=symbol+'|'+day;
   if(!quoteMap.has(key))throw Error('unprepared_quote_key');
   return quoteMap.get(key);
- }});
+ },scheduledExit:quoteDecoder.scheduledExit,decisionSkipped:quoteDecoder.decisionSkipped});
 }
 
 function simulation(message){

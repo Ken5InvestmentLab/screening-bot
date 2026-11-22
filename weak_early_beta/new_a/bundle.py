@@ -5,7 +5,7 @@ from .files import encode,digest,read,atomic_write
 FIELDS=['open','high','low','close','volume','actual_close','actual_volume','split_factor','source_usable']
 def key(row):return f"{row['symbol']}|{row['candidate_date']}|{row['episode_id']}"
 def valid(row):return bool(row) and all(isinstance(row.get(k),(int,float)) and math.isfinite(row[k]) and row[k]>0 for k in ['open','high','low','close','actual_close']) and row.get('source_usable') in [True,1,'true','1'] and row['low']<=min(row['open'],row['close'])<=max(row['open'],row['close'])<=row['high'] and row.get('volume',0)>0 and row.get('actual_volume',0)>0
-def prepare_bundle(files,pipeline,snapshot,full_calendar,folder,company_names=None):
+def prepare_bundle(files,pipeline,snapshot,full_calendar,folder,company_names=None,*,settlement_source=None,restrictions=None):
  old=read(files['history_input']);presentation=read(files['presentation']);frozen_end=old['calendar'][-1];as_of=snapshot['as_of'];calendar=[d for d in full_calendar if d<=as_of]
  if calendar[:len(old['calendar'])]!=old['calendar']:raise ValueError('historical calendar changed')
  episodes={key(e):copy.deepcopy(e) for e in old['episodes']};watches={key(w):copy.deepcopy(w) for w in old['watches']};intents={key(i):copy.deepcopy(i) for i in old['intents']}
@@ -52,6 +52,16 @@ def prepare_bundle(files,pipeline,snapshot,full_calendar,folder,company_names=No
    r=quote(e['symbol'],calendar[j])
    if not valid(r) or r['high']==r['low']:
     for d in calendar[j+1:]:add(e['symbol'],d)
+ settlement={};skipped=set()
+ if settlement_source is not None:
+  from .settlement_recovery import recover_scheduled_exits
+  skipped={k for k in pipeline.missing_quote_days() & needed if k[1]>frozen_end and quote(*k) is None}
+  settlement=recover_scheduled_exits(
+   pipeline,settlement_source,calendar,intents.values(),quote,frozen_end=frozen_end,as_of=as_of,
+   restrictions=restrictions or {},identity_unverified_before=old['limits']['identityUnverifiedBefore'],
+   source_hash=snapshot['source_sha256'],
+  )
+  if not settlement.keys()<=skipped:raise ValueError('scheduled exit is not a recorded price gap')
  rows={r['identity']:copy.deepcopy(r) for r in presentation['rows']};names={**{r['symbol']:r['companyName'] for r in rows.values()},**(company_names or {})}
  for k,e in episodes.items():
   w=watches[k]
@@ -75,7 +85,12 @@ def prepare_bundle(files,pipeline,snapshot,full_calendar,folder,company_names=No
   row['chartAllowed']=not(e['symbol'] in old['limits']['identityUnverifiedBefore'] and e['candidate_date']<old['limits']['identityUnverifiedBefore'][e['symbol']])
  def sort(e):return(e['candidate_date'],-e['priority_score'],e['symbol'],e['episode_id'])
  limits={**old['limits'],'completeThrough':as_of,'latestUnverified':None,'partialSource':bool(snapshot['held_symbols']),'heldSymbols':snapshot['held_symbols'],'nextPlannedSession':next((d for d in full_calendar if d>as_of),None),'nextOpenConfirmed':False}
- source_version=digest({'historySourceVersion':old['source_version'],'sourceSHA256':snapshot['source_sha256'],'dailySnapshotSHA256':snapshot['payload_sha256'],'asOf':as_of})
+ version_inputs={'historySourceVersion':old['source_version'],'sourceSHA256':snapshot['source_sha256'],'dailySnapshotSHA256':snapshot['payload_sha256'],'asOf':as_of}
+ if settlement:
+  version_inputs['scheduledExitEvidenceSHA256']=digest([[*k,v] for k,v in sorted(settlement.items())])
+ if skipped:
+  version_inputs['skippedQuoteKeysSHA256']=digest(sorted(skipped))
+ source_version=digest(version_inputs)
  input_header={k:copy.deepcopy(v) for k,v in old.items() if k not in ['episodes','intents','watches','source_version','calendar','limits']};input_header.update(source_version=source_version,calendar=calendar,limits=limits)
  folder=Path(folder);folder.mkdir(parents=True,exist_ok=True);collections={};all_parts={}
  def parts(kind,values):
@@ -110,12 +125,22 @@ def prepare_bundle(files,pipeline,snapshot,full_calendar,folder,company_names=No
  display_sha=hashlib.sha256(display_raw).hexdigest();fragments=[{'schema':'NEW_A_CURRENT_JSON_FRAGMENT_V1','index':i,'count':count,'display_sha256':display_sha,'bytes_total':len(display_raw),'payload_base64':base64.b64encode(display_raw[i*32768:(i+1)*32768]).decode('ascii')} for i in range(count)]
  for kind,values in [('episodes',sorted(episodes.values(),key=sort)),('intents',sorted(intents.values(),key=sort)),('watches',sorted(watches.values(),key=sort)),('presentation',[rows[key(e)] for e in sorted(episodes.values(),key=sort)]),('current_daily',fragments)]:collections[kind]=parts(kind,values)
  records=[]
+ quote_fields=[*FIELDS]
+ if skipped:quote_fields.append('decision_skipped')
+ if settlement:quote_fields.append('scheduled_exit')
  for sym,day in sorted(needed,key=lambda k:(k[1]>frozen_end,k[0],k[1])):
-  r=quote(sym,day);records.append([sym,day,[r.get(f) for f in FIELDS] if r else None])
+  r=quote(sym,day);exit_receipt=settlement.get((sym,day));skip=(sym,day) in skipped
+  values=[r.get(f) for f in FIELDS] if r else [None]*len(FIELDS) if skip else None
+  if values is not None:
+   if skipped:values.append(True if skip else None)
+   if settlement:values.append(exit_receipt['price'] if exit_receipt else None)
+  records.append([sym,day,values])
  quote_parts=parts('quotes',records);db.close()
- manifest={'schema':'A_BROWSER_PRIVATE_INPUT_V1','audience':'EXISTING_CLOUD_OWNER_ONLY','strategy':'A_BASE','source_version':source_version,'input_header':input_header,'collections':collections,'quote_fields':FIELDS,'quotes':quote_parts,'expected_quote_keys':len(records),'as_of':as_of,'daily_snapshot_sha256':snapshot['payload_sha256'],'live':snapshot['observation_kind']=='LIVE_OBSERVATION'}
+ manifest={'schema':'A_BROWSER_PRIVATE_INPUT_V1','audience':'EXISTING_CLOUD_OWNER_ONLY','strategy':'A_BASE','source_version':source_version,'input_header':input_header,'collections':collections,'quote_fields':quote_fields,'quotes':quote_parts,'expected_quote_keys':len(records),'as_of':as_of,'daily_snapshot_sha256':snapshot['payload_sha256'],'live':snapshot['observation_kind']=='LIVE_OBSERVATION'}
  text=encode(manifest);raw=text.encode();manifest_sha=hashlib.sha256(raw).hexdigest();dataset_id='a-'+manifest_sha[:24];(folder/'manifest.json').write_bytes(raw)
  descriptors=[*quote_parts,*[d for values in collections.values() for d in values]]
  if len(descriptors)>512:raise ValueError('private part count limit')
  receipt={'schema':'NEW_A_PRIVATE_BUNDLE_RECEIPT_V1','dataset_id':dataset_id,'manifest_sha256':manifest_sha,'source_version':source_version,'as_of':as_of,'daily_snapshot_sha256':snapshot['payload_sha256'],'episodes':len(episodes),'intents':len(intents),'presentation':len(rows),'parts':len(descriptors),'bytes':len(raw)+sum(d['bytes'] for d in descriptors),'frozen_history_unchanged':True,'new_live_signals':snapshot['new_live_signals'],'source_revision_pending':snapshot['source_revision_pending'],'published':False}
+ if settlement:
+  receipt.update(scheduled_exit_prices=len(settlement),scheduled_exit_evidence_sha256=version_inputs['scheduledExitEvidenceSHA256'])
  atomic_write(folder/'receipt.json',receipt);return receipt

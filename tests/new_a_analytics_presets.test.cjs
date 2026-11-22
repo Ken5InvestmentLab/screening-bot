@@ -176,6 +176,147 @@ test('unresolved trial stops its account timeline without querying beyond prepar
  assert.equal(r.resolved,false);assert.equal(r.metrics.netProfit,null);assert.equal(r.daily.at(-1).equity_diagnostic,null);assert.equal(r.daily.at(-1).cash,null);assert(!queried.includes('2026-11-30'));
 });
 
+test('late trial settlements use the original fifth or eighth session open and preserve intervening orders',()=>{
+ const days=[...calendar,'2026-12-01','2026-12-02','2026-12-03'];
+ for(const [preset,due,observed] of [
+  ['defensive','2026-11-24','2026-11-26'],
+  ['balanced','2026-11-24','2026-11-26'],
+  ['profit','2026-11-27','2026-12-02'],
+ ]){
+  const dueIndex=days.indexOf(due), observedIndex=days.indexOf(observed);
+  const first=intents(1)[0];
+  const candidates=[due,days[observedIndex-1],observed].map((trigger_date,index)=>({
+   ...first,symbol:String(1101+index),candidate_date:trigger_date,trigger_date,
+  }));
+  const scheduledQueries=[];
+  const params={calendar:days,intents:[first,...candidates],quotes:{
+   get:(symbol,date)=>symbol===first.symbol&&date===due?null:quote(symbol,date),
+   scheduledExit(symbol,date){
+    scheduledQueries.push([symbol,date]);
+    return {open:63,factor:2,observed_after:observed};
+   },
+  }};
+  const settings={...prefs,max_positions:1};
+  const options={trialPreset:preset};
+  const unresolved=engine.replay({...params,quotes:{get:params.quotes.get}},settings,options);
+  const result=engine.replay(params,settings,options);
+  assert.deepEqual(scheduledQueries,[[first.symbol,due]]);
+  assert.deepEqual(result.orders.filter(order=>order.order_date<=observed),
+   unresolved.orders.filter(order=>order.order_date<=observed));
+  assert.equal(result.orders.find(order=>order.order_date===observed).status,'HALTED_UNRESOLVED');
+  assert.equal(result.orders.find(order=>order.order_date===days[observedIndex+1]).status,'FILLED');
+  const trade=result.trades[0];
+  assert.equal(trade.exit_date,due);
+  assert.equal(trade.scheduled_exit_date,due);
+  assert.equal(trade.exit_i,dueIndex);
+  assert.equal(trade.settlement_observed_after,observed);
+  assert.equal(trade.actual_exit_timing,'OPEN');
+  assert.equal(trade.exit_price_nominal,63);
+  assert.equal(trade.shares,200);
+  assert.equal(trade.proceeds,12600);
+  assert.equal(trade.delay_market_sessions,0);
+  assert.equal(result.resolved,true);
+  assert.equal(result.daily[dueIndex].equity_diagnostic,null);
+  assert.equal(result.daily[dueIndex+1].equity_diagnostic,null);
+  assert(result.metrics.maxDrawdown>-1);
+ }
+});
+
+test('overlapping held symbols keep separate scheduled settlement dates and observations',()=>{
+ const first=intents(2),next={...first[0],symbol:'1102',candidate_date:'2026-11-17',trigger_date:'2026-11-17'};
+ const lookup={
+  '1100':{open:90,factor:1,observed_after:'2026-11-26'},
+  '1101':{open:95,factor:1,observed_after:'2026-11-27'},
+ };
+ const requests=[];
+ const quotes={
+  get:(symbol,date)=>Object.hasOwn(lookup,symbol)&&date==='2026-11-24'?null:quote(symbol,date),
+  scheduledExit(symbol,date){
+   requests.push([symbol,date]);
+   return lookup[symbol];
+  },
+ };
+ const result=engine.replay({calendar,intents:[...first,next],quotes},prefs,{trialPreset:'balanced'});
+ assert.deepEqual(requests,[['1100','2026-11-24'],['1101','2026-11-24']]);
+ assert.deepEqual(result.trades.map(({symbol,exit_date,settlement_observed_after})=>[symbol,exit_date,settlement_observed_after]),[
+  ['1102','2026-11-25',undefined],
+  ['1100','2026-11-24','2026-11-26'],
+  ['1101','2026-11-24','2026-11-27'],
+ ]);
+ assert.equal(result.daily.find(day=>day.date==='2026-11-26').unresolved,true);
+ assert.equal(result.daily.find(day=>day.date==='2026-11-27').unresolved,false);
+ assert.equal(result.metrics.open,0);
+});
+
+test('late exit evidence cannot revise a regular quote or clear a different price gap',()=>{
+ const first=intents(1);
+ const prices={calendar,intents:first,quotes:{
+  get:(symbol,date)=>date==='2026-11-24'?null:quote(symbol,date),
+  scheduledExit:()=>{throw Error('non-trial settlement evidence read');},
+ }};
+ assert.equal(engine.replay(prices,prefs,{exitPolicy:policy}).trades.length,0);
+ assert.equal(engine.replay({...prices,quotes:{...prices.quotes,get:quote}},prefs,{trialPreset:'balanced'}).trades.length,1);
+ for(const receipt of [
+  {open:80,factor:1,observed_after:'2026-11-24'},
+  {open:80,factor:1,observed_after:'2026-11-28'},
+  {open:80,factor:0.004,observed_after:'2026-11-25'},
+ ]){
+  const result=engine.replay({...prices,quotes:{...prices.quotes,scheduledExit:()=>receipt}},prefs,{trialPreset:'balanced'});
+  assert.equal(result.trades.length,0);
+  assert.equal(result.resolved,false);
+ }
+ const gap=engine.replay({...prices,quotes:{
+  get:(symbol,date)=>['2026-11-19','2026-11-24'].includes(date)?null:quote(symbol,date),
+  scheduledExit:()=>{throw Error('past non-exit price gap cannot be resolved by this receipt');},
+ }},prefs,{trialPreset:'balanced'});
+ assert.deepEqual(gap.unresolved,[{date:'2026-11-19',symbol:'1100',reason:'MISSING_HELD_QUOTE'}]);
+});
+
+test('a frozen missing intermediate mark leaves only that day unknown and keeps later trial orders',()=>{
+ const missingDay='2026-11-19';
+ const first=intents(1)[0];
+ const later={...first,symbol:'1101',candidate_date:missingDay,trigger_date:missingDay};
+ const prices=(symbol,date)=>{
+  const bar=quote(symbol,date);
+  if(symbol!==first.symbol)return bar;
+  if(date===missingDay)return null;
+  return date>missingDay?{...bar,actual_close:bar.close/2}:bar;
+ };
+ const quotes={get:prices,decisionSkipped:(symbol,date)=>symbol===first.symbol&&date===missingDay};
+ const params={calendar,intents:[first,later],quotes};
+ const options={trialPreset:'balanced'};
+ const result=engine.replay(params,prefs,options);
+ assert.deepEqual(result.unresolved,[]);
+ assert.equal(result.resolved,true);
+ assert.equal(result.daily.find(day=>day.date===missingDay).equity_diagnostic,null);
+ assert.equal(result.daily.find(day=>day.date===missingDay).cash,null);
+ assert.equal(result.daily.find(day=>day.date===missingDay).unresolved,true);
+ assert.equal(result.daily.find(day=>day.date==='2026-11-20').unresolved,false);
+ assert.equal(result.orders.find(order=>order.symbol===later.symbol).status,'FILLED');
+ assert.equal(result.trades.find(trade=>trade.symbol===first.symbol).shares,200);
+ const toMissingDay={...params,calendar:calendar.slice(0,calendar.indexOf(missingDay)+1)};
+ const partial=engine.replay(toMissingDay,prefs,options);
+ assert.equal(partial.resolved,false);
+ assert.equal(partial.metrics.endEquity,null);
+ assert.deepEqual(partial.unresolved,[]);
+ for(const blockedQuotes of [
+  {get:prices},
+  {...quotes,get:(symbol,date)=>prices(symbol,date)??{...quote(symbol,date),source_usable:false}},
+ ]){
+  const blocked=engine.replay({...params,quotes:blockedQuotes},prefs,options);
+  assert.equal(blocked.orders.find(order=>order.symbol===later.symbol).status,'HALTED_UNRESOLVED');
+  assert.deepEqual(blocked.unresolved,[{date:missingDay,symbol:first.symbol,reason:'MISSING_HELD_QUOTE'}]);
+ }
+ const legacy=engine.replay({...params,quotes:{...quotes,decisionSkipped:()=>{throw Error('old model inspected decision skip');}}},prefs,{exitPolicy:policy});
+ assert(legacy.unresolved.some(issue=>issue.reason==='MISSING_HELD_QUOTE'));
+ const due='2026-11-24';
+ const scheduled=engine.replay({...params,quotes:{
+  get:(symbol,date)=>date===due&&symbol===first.symbol?null:quote(symbol,date),
+  decisionSkipped:()=>true,
+ }},prefs,options);
+ assert(scheduled.unresolved.some(issue=>issue.date===due&&issue.reason==='UNRESOLVED_SCHEDULED_EXIT'));
+});
+
 test('actual worker supplies separate model history and each independently calculated trial',()=>{
  const worker=workerFixture(),baseline=worker.simulate();assert.equal(baseline.trial_preset,undefined);
  for(const id of ['defensive','balanced','profit']){

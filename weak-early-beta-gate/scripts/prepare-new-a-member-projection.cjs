@@ -7,7 +7,7 @@ const path = require('node:path');
 const { parseArgs } = require('node:util');
 const { DATASET_ID, validateManifest } = require('../src/new-a-private.ts');
 const { DEFAULTS, OPEN_EXIT_POLICY } = require('../src/new-a-preferences.ts');
-const { createDatasetRuntime } = require('./new-a-ui-source/engine/dataset-runtime.cjs');
+const { createDatasetRuntime, createQuoteDecoder, validDay } = require('./new-a-ui-source/engine/dataset-runtime.cjs');
 
 const digest = raw => createHash('sha256').update(raw).digest('hex');
 const hash = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
@@ -30,12 +30,6 @@ function episodeKey(row) {
   assert(row && typeof row.symbol === 'string' && symbolPattern.test(row.symbol)
     && validDay(row.candidate_date) && Number.isSafeInteger(row.episode_id), 'Invalid history episode identity');
   return [row.symbol, row.candidate_date, row.episode_id].join('|');
-}
-
-function validDay(value) {
-  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const time = Date.parse(value + 'T00:00:00Z');
-  return Number.isFinite(time) && new Date(time).toISOString().slice(0, 10) === value;
 }
 
 async function readBounded(file, limit) {
@@ -137,18 +131,16 @@ async function openVerifiedBundle(bundle, manifest, { includeDisplay = false } =
     && input.calendar.at(-1) === manifest.as_of
     && input.calendar.every((day, i) => validDay(day) && (i === 0 || input.calendar[i - 1] < day)), 'Invalid canonical calendar');
 
-  const fields = manifest.quote_fields;
-  assert(Array.isArray(fields) && fields.length > 0 && fields.every(field => typeof field === 'string')
-    && new Set(fields).size === fields.length, 'Invalid canonical quote fields');
+  assert(Array.isArray(manifest.quote_fields) && manifest.quote_fields.length > 0, 'Invalid canonical quote fields');
+  const quoteDecoder = createQuoteDecoder(manifest.quote_fields, input.calendar, manifest.as_of);
   const quotes = new Map();
   for (const descriptor of manifest.quotes) {
     for (const row of await readPart(descriptor)) {
       assert(Array.isArray(row) && row.length === 3, 'Invalid canonical quote row');
       const [symbol, date, values] = row;
       const key = symbol + '|' + date;
-      assert(typeof symbol === 'string' && /^[0-9A-Z]{4}$/.test(symbol) && validDay(date) && !quotes.has(key)
-        && (values === null || Array.isArray(values) && values.length === fields.length), 'Invalid canonical quote key or values');
-      quotes.set(key, values === null ? null : Object.fromEntries(fields.map((field, index) => [field, values[index]])));
+      assert(typeof symbol === 'string' && symbolPattern.test(symbol) && validDay(date) && !quotes.has(key), 'Invalid canonical quote key');
+      quotes.set(key, quoteDecoder.normal(symbol, date, values));
     }
   }
   assert.equal(quotes.size, manifest.expected_quote_keys, 'Canonical quote key count mismatch');
@@ -179,6 +171,8 @@ async function openVerifiedBundle(bundle, manifest, { includeDisplay = false } =
         assert(quotes.has(key), 'Canonical simulation requires an unavailable quote key');
         return quotes.get(key);
       },
+      scheduledExit: quoteDecoder.scheduledExit,
+      decisionSkipped: quoteDecoder.decisionSkipped,
     }),
   };
 }

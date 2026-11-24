@@ -829,6 +829,21 @@
     }
     const reference = document.getElementById('member-reference-content');
     if (memberAccess !== 'premium' || out.hidden || !reference?.contains(event.target)) return;
+    const sortButton = event.target.closest?.('[data-reference-sort]');
+    if (sortButton) {
+      const group = sortButton.closest('.cloud-reference-events');
+      const grids = group?.querySelectorAll('[data-reference-cards]');
+      const order = sortButton.dataset.referenceSort;
+      if (!grids?.length || !['kind','symbol','name'].includes(order)) return;
+      for (const grid of grids) {
+        const cards=Array.from(grid.children).filter(card=>card.hasAttribute('data-reference-kind'));
+        grid.append(...g.NewAMemberPresentation.sortReferenceCards(cards,order));
+      }
+      for (const option of group.querySelectorAll('[data-reference-sort]')) {
+        option.setAttribute('aria-pressed',String(option===sortButton));
+      }
+      return;
+    }
     const moreWatches = event.target.closest?.('#new-a-current-more');
     if (moreWatches) {
       const hidden = reference.querySelectorAll('[data-current-watch][hidden]');

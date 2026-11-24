@@ -581,6 +581,27 @@ class PresentationSuccessorReviewTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Premium legacy successor differs from the reviewed bytes"):
                 review.review_member_release_source(self.repo, baseline, self.commit("Change recovery"))
 
+    def test_fundamental_retention_and_card_successor_pin_exact_product_and_keep_roles(self):
+        config = json.dumps(self.config, indent=2).encode().replace(
+            b'    "CLOUD_MEMBER_VIEW_ENABLED": "true",\n', review._ROLE_ONLY_CONFIG_LINE + review._TIERED_AUDIENCE_LINE)
+        self.write(review.CONFIG, config)
+        paths = review._FUNDAMENTAL_RETENTION_PRODUCT_PATHS | review._SUCCESSOR_REVIEW_PATHS
+        for path in sorted(paths):
+            self.write(path, b"prior " + path.encode())
+        baseline = self.commit("Approved legacy workflow")
+        for path in sorted(paths):
+            self.write(path, b"reviewed " + path.encode())
+        candidate = self.commit("Retain verified analysis and display cards")
+        product_sha = review._product_digest(self.repo, candidate, review._FUNDAMENTAL_RETENTION_PRODUCT_PATHS)
+        with (patch.object(review, "_FUNDAMENTAL_RETENTION_BASELINE", baseline),
+              patch.object(review, "_FUNDAMENTAL_RETENTION_PRODUCT_SHA256", product_sha)):
+            result = review.review_member_release_source(self.repo, baseline, candidate)
+            self.assertEqual(result["schema"], review.FUNDAMENTAL_RETENTION_REVIEW_SCHEMA)
+            self.assertEqual(result["member_audience"], "tiered")
+            self.write("weak_early_beta/new_a/fundamentals.py", b"unreviewed research")
+            with self.assertRaisesRegex(ValueError, "retention successor differs from the reviewed bytes"):
+                review.review_member_release_source(self.repo, baseline, self.commit("Change research"))
+
     def test_settled_prices_require_exact_bytes_and_preserve_the_existing_tiered_boundary(self):
         config = json.dumps(self.config, indent=2).encode().replace(
             b'    "CLOUD_MEMBER_VIEW_ENABLED": "true",\n', review._ROLE_ONLY_CONFIG_LINE + review._TIERED_AUDIENCE_LINE)

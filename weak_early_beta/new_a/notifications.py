@@ -227,9 +227,39 @@ def _opening_field(openings, attached):
         lines.append(f"全{len(rows)}銘柄は添付CSV")
     return {"name": "終了後に確認した始値（日足始値）", "value": "\n".join(lines)}
 
-def _entry_field(entries, attached):
+def _stock_link(symbol, names):
+    from ..notify import chart_components
+    company = names.get(symbol)
+    company = (company[:60] + "…") if company and len(company) > 60 else company
+    label = symbol + (" " + re.sub(r"([\\`*_{}\[\]()<>|])", r"\\\1", company) if company else "")
+    url = chart_components(symbol)[0]["components"][0]["url"]
+    return f"[{label}]({url})"
+
+
+def _company_names(root, run, snapshot):
+    # Read only the hash-verified, already published presentation; no research.
+    if "bundle_directory" not in run:
+        return {}
+    from .fundamentals import _manifest, _rows
+    base = Path(run["bundle_directory"])
+    manifest, _ = _manifest(base)
+    if manifest["as_of"] != snapshot["as_of"] or manifest["source_version"] != run["source_version"]:
+        raise ValueError("notification company-name generation differs")
+    names = {}
+    for row in _rows(base, manifest):
+        name = row.get("companyName")
+        if (row.get("chartAllowed") is False or row.get("identityStatus") == "PRELISTING_HISTORY_MAPPING_UNVERIFIED"
+                or not isinstance(name, str) or not name.strip() or len(name) > 256):
+            continue
+        previous = names.get(row["symbol"])
+        if previous is None or previous[0] < row["signalDate"]:
+            names[row["symbol"]] = (row["signalDate"], name.strip())
+    return {symbol: value[1] for symbol, value in names.items()}
+
+
+def _entry_field(entries, attached, names=None):
     symbols = entries["symbols"]
-    shown = "・".join(symbols[:12] if attached else symbols)
+    shown = "\n".join(_stock_link(symbol, names or {}) for symbol in (symbols[:3] if attached else symbols))
     if attached:
         shown += f"（全{len(symbols)}銘柄は添付CSV）"
     if "shared_order" in entries:
@@ -277,7 +307,7 @@ def _delivery_sha(batch):
     })
 
 
-def _batch(snapshot, rows, report_url):
+def _batch(snapshot, rows, report_url, company_names=None):
     from ..notify import chart_components
 
     date = snapshot["as_of"]
@@ -292,21 +322,19 @@ def _batch(snapshot, rows, report_url):
         fields.append({"name": "実際の観測日時（日本時間）", "value": observed.strftime("%Y-%m-%d %H:%M:%S")})
     if counts["completion_notifications"]:
         total = len({payload["symbol"] for _, payload, _ in rows if payload.get("kind") != SUMMARY})
-        fields.extend([
-            {"name": "新規検出", "value": f"{total}銘柄", "inline": True},
-            {"name": "判定保留", "value": f"{len(snapshot.get('held_symbols', {}))}銘柄", "inline": True},
-        ])
+        fields.append({"name": "新規検出", "value": f"{total}銘柄", "inline": True})
     embed = {
-        "title": "Cloud 2.0 新A 日次検出" + ("（遅延実行）" if delayed else ""),
+        "title": "天底極致 Cloud 2.0 日次検出" + ("（遅延実行）" if delayed else ""),
         "url": urljoin(report_url, "weak_early_beta_latest.html"),
         "fields": fields,
         "color": 0x5B8DEF,
     }
     summary = next((payload for _, payload, _ in pending if payload.get("kind") == SUMMARY), {})
     entries = summary.get("next_session_entries")
+    entry_field = lambda details, attached: _entry_field(details, attached, company_names)
     openings = summary.get("closing_openings")
     attach_details = False
-    for details, field_builder in ((openings, _opening_field), (entries, _entry_field)):
+    for details, field_builder in ((openings, _opening_field), (entries, entry_field)):
         if details is not None:
             if delayed or details["snapshot_sha256"] != snapshot["payload_sha256"]:
                 raise ValueError("daily notification details differ from the verified live snapshot")
@@ -317,7 +345,7 @@ def _batch(snapshot, rows, report_url):
             fields.append(field)
     attachment = _attachment(date, chart_links, entries, openings) if attach_details else None
     if chart_links:
-        lines = [f"[{symbol}]({url})" for symbol, url in chart_links]
+        lines = [_stock_link(symbol, company_names or {}) for symbol, _ in chart_links]
         heading = f"**検出一覧（{len(symbols)}銘柄）**\n仕込み候補・監視開始（未約定）\n"
         description = heading + " ・ ".join(lines)
         other_chars = len(embed["title"]) + len(FOOTER_PREFIX) + 64 + sum(
@@ -341,7 +369,6 @@ def _batch(snapshot, rows, report_url):
         "payload": payload, "attachment": attachment, **counts,
     }
     batch["batch_id"] = _delivery_sha(batch)
-    embed["footer"] = {"text": FOOTER_PREFIX + batch["batch_id"]}
     return batch
 
 
@@ -388,7 +415,7 @@ def _matches_discord(message, batch, *, webhook_id, channel_id):
     expected = batch["payload"]["embeds"][0]
     actual = embeds[0]
     if (any(actual.get(key) != expected.get(key) for key in ("title", "url", "description", "color"))
-            or actual.get("footer", {}).get("text") != FOOTER_PREFIX + batch["batch_id"]
+            or actual.get("footer", {}).get("text") != expected.get("footer", {}).get("text")
             or _field_values(actual) != _field_values(expected)):
         return False
     if "components" in batch["payload"]:
@@ -549,7 +576,8 @@ def notify_day(root, *, date, dry_run, report_url, transport=None, reconcile_onl
                 raise ValueError("existing Cloud report URL is required before send")
             send = transport or default_transport()
             verify_finite_admission()
-            batch = outbox.claim_batch(date, lambda current: _batch(snapshot, current, report_url))
+            batch = outbox.claim_batch(date, lambda current: _batch(snapshot, current, report_url,
+                _company_names(root, run, snapshot)))
             if batch is not None:
                 receipt = send(batch)
                 if (not isinstance(receipt, dict) or receipt.get("confirmed") is not True

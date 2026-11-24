@@ -12,6 +12,12 @@
 - A model preflight or research failure holds only fundamentals and preserves
   the claim/drafts while the verified detection/publication sequence continues.
   Ownership, immutable input and import-integrity failures still stop the run.
+- Ordinary publication always retains hash-verified historical and forward
+  analyses for the exact presentation episodes, independently of new research.
+  Re-publishing an already completed snapshot may restore this presentation
+  cache; keep its detection snapshot and SENT outbox unchanged, and do not
+  rerun research or notifications. An identical attached report is a no-op;
+  conflicting existing analysis must fail instead of being overwritten.
 
 ## Notifications
 

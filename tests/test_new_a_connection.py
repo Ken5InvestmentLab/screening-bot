@@ -189,6 +189,38 @@ class BatchedDiscord(unittest.TestCase):
         with closing(sqlite3.connect(self.root / "notification-outbox.sqlite")) as db:
             return db.execute("SELECT event_id, status, receipt_json FROM new_a_delivery").fetchall()
 
+    def test_company_names_and_candidate_chart_links_have_no_internal_labels(self):
+        from unittest.mock import patch
+        from weak_early_beta.new_a import notifications
+        self.events(2)
+        self.prepare_next_session(symbols=("2345",), previous="2026-05-29")
+        with patch.object(notifications, "_company_names", return_value={"0000":"監視の会社", "2345":"候補の会社"}):
+            self.assertEqual(self.call()["external_sends"], 1)
+        embed=self.posts[0][0]["embeds"][0]
+        self.assertIn("[0000 監視の会社](https://jp.tradingview.com/chart/",embed["description"])
+        self.assertIn("[2345 候補の会社](https://jp.tradingview.com/chart/",embed["fields"][-1]["value"])
+        self.assertNotIn("footer",embed)
+        self.assertNotIn("新A",embed["title"])
+        self.assertNotIn("判定保留",str(embed))
+        self.assertEqual(self.call()["external_sends"],0)
+
+    def test_old_footer_batches_still_match_exactly_after_new_notification_layout(self):
+        from weak_early_beta.new_a import notifications
+        self.events(1)
+        self.call()
+        message=self.posts[0][0]
+        batch={"payload":{"content":message["content"],"embeds":message["embeds"]},
+               "attachment":None,"batch_id":"a"*64}
+        legacy={"text":notifications.FOOTER_PREFIX+batch["batch_id"]}
+        message["embeds"][0]["footer"]=legacy
+        self.assertTrue(notifications._matches_discord(message,batch,
+            webhook_id=self.webhook_id,channel_id=self.channel_id))
+        message["embeds"][0]["footer"]={"text":"different"}
+        # Keep the saved payload independent of the observed response.
+        batch["payload"]["embeds"]=[dict(message["embeds"][0],footer=legacy)]
+        self.assertFalse(notifications._matches_discord(message,batch,
+            webhook_id=self.webhook_id,channel_id=self.channel_id))
+
     def test_eight_symbols_and_summary_in_one_post_then_no_pending(self):
         self.events(8)
         self.snapshot["held_symbols"] = {"T1": {}, "T2": {}}
@@ -208,7 +240,9 @@ class BatchedDiscord(unittest.TestCase):
             self.assertIn(f"[{event['symbol']}](https://jp.tradingview.com/chart/", embed["description"])
         self.assertEqual([field["value"] for field in embed["fields"]][0], self.day)
         self.assertEqual([field["value"] for field in embed["fields"]][1][0], "8")
-        self.assertEqual([field["value"] for field in embed["fields"]][2][0], "2")
+        self.assertNotIn("判定保留", [field["name"] for field in embed["fields"]])
+        self.assertNotIn("新A", embed["title"])
+        self.assertNotIn("footer", embed)
         self.assertFalse(files)
         receipts = self.receipts()
         self.assertEqual(len(receipts), 9)
@@ -275,7 +309,8 @@ class BatchedDiscord(unittest.TestCase):
         self.assertIn("[1111]", embed["description"])
         next_open = embed["fields"][-1]
         self.assertEqual(next_open["name"], "翌取引日の仮想保有開始候補（2026-06-03）")
-        self.assertIn("2345・417A", next_open["value"])
+        self.assertIn("[2345](https://jp.tradingview.com/chart/", next_open["value"])
+        self.assertIn("[417A](https://jp.tradingview.com/chart/", next_open["value"])
         self.assertIn("注文額の条件：始値5,000円以下（100株・1注文50万円）", next_open["value"])
         self.assertIn("残資金内、同時保有枠（最大10銘柄）に空き", next_open["value"])
         self.assertNotIn("手数料込み", next_open["value"])
@@ -481,7 +516,7 @@ class BatchedDiscord(unittest.TestCase):
             "url": self.report + "weak_early_beta_latest.html",
         })
 
-    def test_near_limit_chart_inline_text_moves_to_shared_csv_when_daily_embed_would_overflow(self):
+    def test_many_candidate_links_move_to_shared_csv_without_overflowing_daily_embed(self):
         import csv
         import io
         from weak_early_beta.notify import chart_components
@@ -507,8 +542,7 @@ class BatchedDiscord(unittest.TestCase):
         other_chars = len(embed["title"]) + len(FOOTER_PREFIX) + 64 + sum(
             len(field["name"]) + len(field["value"]) for field in embed["fields"]
         )
-        unabridged = f"**検出一覧（{len(lines)}銘柄）**\n仕込み候補・監視開始（未約定）\n" + " ・ ".join(lines)
-        self.assertGreater(len(unabridged) + other_chars, 6000)
+        self.assertLessEqual(len(embed["fields"][-1]["value"]), 1024)
         self.assertLessEqual(len(embed["description"]) + other_chars, 6000)
         self.assertTrue(all(len(field["value"]) <= 1024 for field in embed["fields"]))
         self.assertEqual(list(files), ["files[0]"])

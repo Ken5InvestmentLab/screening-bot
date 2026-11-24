@@ -283,16 +283,23 @@ def _historical_history(root, sha, rows, forward, day):
 
 def _bundle(base, manifest, receipt, target, rows, analyses):
     matched = set()
+    changed = False
     for row in rows:
         value = analyses.get(row["identity"])
         if value is None:
             continue
-        _check(row["symbol"] == value["symbol"] and row["signalDate"] == value["signalDate"]
-               and row.get("fundamental") is None, "analysis would overwrite other presentation evidence")
+        _check(row["symbol"] == value["symbol"] and row["signalDate"] == value["signalDate"],
+               "analysis would overwrite other presentation evidence")
+        if row.get("fundamental") is not None:
+            _check(row["fundamental"] == value and row.get("analysisCutoff") == value["analysisCutoff"],
+                   "analysis would overwrite other presentation evidence")
+            matched.add(row["identity"])
+            continue
         row.update(analysisCutoff=value["analysisCutoff"], fundamental=value)
         matched.add(row["identity"])
+        changed = True
     _check(matched == set(analyses), "analysis receipt no longer matches an exact owner presentation row")
-    if not matched:
+    if not changed:
         return base, manifest["source_version"]
     source_version = digest([manifest["source_version"], analyses])
     output = target / ("bundle-fundamental-" + source_version)
@@ -346,6 +353,59 @@ def _bundle(base, manifest, receipt, target, rows, analyses):
         else:
             os.rename(staged, output)
     return output, source_version
+
+
+def retain_verified_for_publication(root, run):
+    """Attach proven earlier analyses even when today's research was held.
+
+    This is a presentation-only publication step. It never reads a pending
+    claim, creates an analysis receipt, runs detection, or sends notifications.
+    """
+    root = Path(root).resolve()
+    historical_sha = _historical_sha(root / "fundamentals" / "historical" / "latest.json")
+    if historical_sha is None and not any((root / "fundamentals" / "verified").glob("*.json")):
+        return run
+    forward = _history(root, run["latest_session"])
+    if historical_sha is None and not forward:
+        return run
+    day = run["latest_session"]
+    _check(run.get("identity") == "NEW_A_CLOUD_DAILY_V1" and run.get("strategy") == "A_BASE"
+           and run.get("detection_executed") is True and run.get("dry_run") is False
+           and not run.get("delayed_recovery") and dt.date.fromisoformat(day).isoformat() == day
+           and HEX.fullmatch(run.get("source_sha256", "")),
+           "cached analyses require the exact completed ordinary detection")
+    target = root / "runs" / day / run["source_sha256"] / "live"
+    base = Path(run["bundle_directory"])
+    _check(root.name == "new-a-private" and target.resolve() == target and base.resolve() == base
+           and base.parent == target and (base.name == "bundle"
+               or re.fullmatch(r"bundle-fundamental-[0-9a-f]{64}", base.name))
+           and Path(run["snapshot_file"]) == target / "snapshot.json",
+           "cached analysis source escaped its immutable daily workspace")
+    snapshot = validate_for_owner_read(read(target / "snapshot.json"),
+                                       {"owner": True, "role_authorized": True, "current": True})
+    manifest, receipt = _manifest(base)
+    _check(snapshot["payload_sha256"] == run["snapshot_sha256"]
+           and snapshot["source_sha256"] == run["source_sha256"] and snapshot["as_of"] == day
+           and manifest["daily_snapshot_sha256"] == snapshot["payload_sha256"]
+           and manifest["source_version"] == run["source_version"] and manifest["as_of"] == day,
+           "cached analysis publication differs from the frozen detection")
+    rows = _rows(base, manifest)
+    historical, counts = _historical_history(root, historical_sha, rows, forward, day)
+    output, source = _bundle(base, manifest, receipt, target, rows, {**historical, **forward})
+    retained = {
+        "historicalLedgerSha256": historical_sha,
+        "historicalAvailable": counts["available"] if counts else 0,
+        "forwardVerified": len(forward), "verifiedForwardSha256": digest(forward),
+        "visible": sum(row.get("fundamental") is not None for row in rows),
+        "newResearch": False,
+    }
+    latest = root / "latest-run.json"
+    _check(read(latest) == run, "detection changed during cached analysis publication")
+    result = {**run, "source_version": source, "bundle_directory": str(output),
+              "retained_fundamentals": retained}
+    if result != run:
+        atomic_write(latest, result)
+    return result
 
 
 def stage(repo, runtime, day, started_at, action, analysis_started=None, reports_sha256=None):

@@ -2,10 +2,12 @@
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 import unittest
 
 from weak_early_beta.new_a.files import atomic_write, digest, encode, file_sha, private_root, read
-from weak_early_beta.new_a.fundamentals import HISTORICAL_SCHEMA, stage
+from weak_early_beta.new_a.fundamentals import HISTORICAL_SCHEMA, retain_verified_for_publication, stage
+from weak_early_beta.new_a.cli import publish
 from weak_early_beta.new_a.publisher import LocalD1, publish_bundle, verify_dataset
 from weak_early_beta.historical_fundamentals import FIELD_ORDER
 
@@ -73,6 +75,7 @@ class NewAFundamentalTests(unittest.TestCase):
             "identity": "NEW_A_CLOUD_DAILY_V1", "strategy": "A_BASE", "detection_executed": True,
             "dry_run": False, "source_sha256": self.source, "latest_session": day,
             "snapshot_file": str(self.target / "snapshot.json"), "bundle_directory": str(self.base),
+            "source_version": "c" * 64,
             "snapshot_sha256": snapshot["payload_sha256"], "delayed_recovery": {"test": True} if delayed else None,
         })
         self.target_day = day
@@ -225,6 +228,104 @@ class NewAFundamentalTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "same-day ordinary"):
             self.prepare()
         self.assertFalse((self.target / "fundamental-analysis").exists())
+
+    def replace_presentation(self, folder, rows):
+        manifest = read(folder / "manifest.json")
+        content = encode(rows)
+        part = folder / "presentation-000.json"
+        part.write_text(content, encoding="utf-8")
+        manifest["collections"]["presentation"] = [{
+            "name": part.name, "sha256": file_sha(part), "rows": len(rows),
+            "bytes": len(content.encode()),
+        }]
+        atomic_write(folder / "manifest.json", manifest)
+        receipt = read(folder / "receipt.json")
+        atomic_write(folder / "receipt.json", {**receipt, "manifest_sha256": file_sha(folder / "manifest.json")})
+
+    def local_owner(self):
+        schema = Path(__file__).resolve().parents[1] / "weak-early-beta-gate/schema/new-a-private.sql"
+        db = LocalD1(self.repo / "owner.sqlite", schema)
+        self.addCleanup(db.close)
+        return db
+
+    def test_publication_retains_old_analysis_when_new_research_is_held(self):
+        self.row["identity"] = f"3133|{self.day}|1"
+        new_day = "2026-11-19"
+        new_event = {**self.event, "symbol": "9999", "session": new_day,
+                     "candidate_date": new_day, "episode_id": "new-episode", "event_id": "d" * 64}
+        self.build(new_day, [new_event])
+        new_row = {**self.row, "identity": f"9999|{new_day}|new-episode", "symbol": "9999",
+                   "signalDate": new_day, "companyName": "新しいテスト社"}
+        self.replace_presentation(self.base, [self.row, new_row])
+        cutoff = self.day + "T16:15:00+09:00"
+        old_report = {"identity": self.day + "|3133", "signalDate": self.day, "symbol": "3133",
+                      "analysisCutoff": cutoff, "auditStatus": "pass",
+                      "fields": [{"label": name, "text": "以前の検証済み本文"} for name in FIELD_ORDER]}
+        self.store_historical_ledger({self.row["identity"]: {
+            "presentation": old_report, "company_name": "テスト社", "cutoff": cutoff,
+            "report_sha256": "1" * 64, "validation_sha256": "2" * 64, "validator_sha256": "3" * 64,
+        }})
+        prepared = self.prepare()
+        self.assertEqual(prepared["claimed"], 1)
+        claim_sha = file_sha(prepared["claimPath"])
+        snapshot_sha = file_sha(self.target / "snapshot.json")
+        base_sha = file_sha(self.base / "manifest.json")
+        (self.runtime / "daily.lock").unlink()
+        before = read(self.root / "latest-run.json")
+        with patch("weak_early_beta.new_a.fundamentals.stage", side_effect=AssertionError("No new research")):
+            receipt = publish(self.root, self.local_owner())
+        applied = read(self.root / "latest-run.json")
+        output = Path(applied["bundle_directory"])
+        actual = read(output / "presentation-000.json")
+        self.assertEqual(actual[0]["fundamental"], old_report)
+        self.assertIsNone(actual[1]["fundamental"])
+        self.assertEqual(actual[1], new_row)
+        self.assertEqual({k: v for k, v in actual[0].items() if k not in {"fundamental", "analysisCutoff"}},
+                         {k: v for k, v in self.row.items() if k not in {"fundamental", "analysisCutoff"}})
+        self.assertEqual(applied["retained_fundamentals"]["visible"], 1)
+        self.assertFalse(applied["retained_fundamentals"]["newResearch"])
+        self.assertEqual(receipt["snapshot_sha256"], before["snapshot_sha256"])
+        self.assertEqual(file_sha(prepared["claimPath"]), claim_sha)
+        self.assertEqual(file_sha(self.target / "snapshot.json"), snapshot_sha)
+        self.assertEqual(file_sha(self.base / "manifest.json"), base_sha)
+        self.assertFalse((self.root / "fundamentals/verified").exists())
+        self.assertFalse((self.root / "notification-outbox.sqlite").exists())
+
+    def test_successful_analysis_publication_and_republication_do_not_change_its_generation(self):
+        prepared = self.prepare()
+        sha = self.emit_reports(prepared, [self.report(read(prepared["claimPath"])["alerts"][0])])
+        self.finish(sha)
+        before = read(self.root / "latest-run.json")
+        db = self.local_owner()
+        initial = publish(self.root, db)
+        first_run = read(self.root / "latest-run.json")
+        again = publish(self.root, db)
+        self.assertEqual(first_run, read(self.root / "latest-run.json"))
+        self.assertEqual(first_run["bundle_directory"], before["bundle_directory"])
+        self.assertEqual(first_run["source_version"], before["source_version"])
+        self.assertEqual(initial["revision"], again["revision"])
+        self.assertTrue(again["same_dataset_replay"])
+
+    def test_conflicting_attached_analysis_is_not_overwritten_by_a_cache(self):
+        prepared = self.prepare()
+        self.finish(self.emit_reports(prepared, [self.report(read(prepared["claimPath"])["alerts"][0])]))
+        run = read(self.root / "latest-run.json")
+        folder = Path(run["bundle_directory"])
+        rows = read(folder / "presentation-000.json")
+        rows[0]["fundamental"]["fields"][0]["text"] = "矛盾する別の本文"
+        self.replace_presentation(folder, rows)
+        with self.assertRaisesRegex(ValueError, "overwrite other presentation evidence"):
+            retain_verified_for_publication(self.root, run)
+        self.assertEqual(run, read(self.root / "latest-run.json"))
+
+    def test_invalid_retained_history_blocks_publication_without_erasing_previous_data(self):
+        sha = self.store_historical_ledger({})
+        (self.root / "fundamentals/historical" / (sha + ".json")).write_text("{}", encoding="utf-8")
+        run = read(self.root / "latest-run.json")
+        with self.assertRaisesRegex(ValueError, "historical fundamental ledger changed"):
+            publish(self.root, self.local_owner())
+        self.assertEqual(run, read(self.root / "latest-run.json"))
+        self.assertFalse((self.root / "latest-publication.json").exists())
 
 
 if __name__ == "__main__":

@@ -36,6 +36,40 @@ const snapshot = {
 const closed = { ...key, entry_date: '2026-11-17', entry_price_nominal: 1000,
   exit_date: date, profit: 9320, return: 0.0932 };
 
+test('all candidate and reset records are cards, initially candidate first, with order controls', () => {
+  const events=Array.from({length:120},(_,i)=>({...key,symbol:String(1000+i),session:date,
+    kind:i%2?'ENTRY_CANDIDATE':'MONITOR_RESET'}));
+  const html=currentMarkup([{...snapshot,events}],[],{model:{resolved:true,trades:[],open_positions:{}}});
+  const section=html.split('<h3>仮想保有開始候補・終了銘柄</h3>')[1].split('</section>')[0];
+  assert.equal((section.match(/<article data-reference-kind=/g)||[]).length,120);
+  assert.doesNotMatch(section,/<table/);
+  assert.equal((section.match(/data-reference-sort=/g)||[]).length,3);
+  assert.ok(section.indexOf('data-reference-symbol="1001"')<section.indexOf('data-reference-symbol="1000"'));
+  assert.match(section,/次の営業日の始値で100株50万円以内/);
+});
+
+test('expensive candidate is a reference with the price condition, never a fabricated fill', () => {
+  const html=currentMarkup([{...snapshot,events:[{...key,session:date,kind:'ENTRY_CANDIDATE'}],
+    latest_closes:{1234:{date,price:10210}}}],[row],{adapter,
+    model:{resolved:true,trades:[],open_positions:{},orders:[]}});
+  assert.match(html,/現在の株価では注文上限超過/);
+  assert.match(html,/10,210円/);
+  assert.doesNotMatch(html,/data-daily-change=/);
+});
+
+test('only entry candidates and settled positions are visible before other daily cards are expanded',()=>{
+ const events=['WATCH_STARTED','ENTRY_CANDIDATE','MONITOR_RESET'].map(kind=>({...key,kind,session:date}));
+ const html=currentMarkup([{...snapshot,events}],[row],{adapter,
+  model:{resolved:true,period:[key.candidate_date,date],trades:[closed],open_positions:{}}});
+ const [visible,folded]=html.split('<details class="cloud-table-details cloud-other-events">');
+ assert.ok(folded);
+ assert.match(visible,/<article[^>]*data-reference-kind="ENTRY_CANDIDATE"/);
+ assert.match(visible,/<article[^>]*data-reference-kind="HOLD_ENDED"/);
+ assert.match(folded,/<article[^>]*data-reference-kind="MONITOR_RESET"/);
+ assert.doesNotMatch(visible,/<article[^>]*data-reference-kind="MONITOR_RESET"/);
+ assert.doesNotMatch(folded,/^\s*open[ >]/);
+});
+
 test('owner monitoring previews the eight most recent watches and retains every watch', () => {
   const watchSelection = Array.from({ length: 10 }, (_, i) => ({
     symbol: String(1800 + i), candidate_date: '2026-11-' + String(i + 1).padStart(2, '0'),
@@ -185,8 +219,8 @@ test('target-day transitions have separate labels, totals and one card per episo
   assert.match(html, /cloud-transition--hold-start">仮想保有開始 <b>2件/);
   assert.match(html, /cloud-transition--hold-end">仮想保有終了 <b>1件/);
   assert.match(html, /監視終了<\/span><small>支持反発/);
-  assert.match(html, /買付候補・その他の記録/);
-  const cards = [...html.matchAll(/<article data-daily-change="([^"]+)">/g)].map(match => match[1]);
+  assert.match(html, /仮想保有開始候補・終了銘柄/);
+  const cards = [...html.matchAll(/<article data-daily-change="([^"]+)"[^>]*>/g)].map(match => match[1]);
   assert.deepEqual(cards, ['1234|2026-11-17|1', '1234|2026-11-17|2', '5678|2026-11-18|1']);
 });
 
@@ -247,7 +281,7 @@ test('completed holdings show exact settled gains or losses before stock details
   ];
   for (const [trade, expected] of scenarios) {
     const html = currentMarkup([daily], [row], { adapter, model: { resolved: true, period, trades: [trade] } });
-    const card = html.split(/<article data-daily-change="[^"]+">/)[1].split('<details')[0];
+    const card = html.split(/<article data-daily-change="[^"]+"[^>]*>/)[1].split('<details')[0];
     assert.match(card, /仮想保有終了/);
     assert.match(card, /確定損益/);
     assert.match(card, expected);
@@ -311,7 +345,7 @@ test('the dashboard hides the opening table while retaining the original holding
     open_positions: { 1234: position }, orders: [{ ...key, order_date: date, status: 'FILLED' }] }]) {
     const html = currentMarkup([today], [published], { adapter, model });
     assert.doesNotMatch(html, /日足始値と仮想保有の結果|new-a-daily-opening-heading|data-daily-opening/);
-    assert.match(html, /買付候補・その他の記録|買付候補/);
+    assert.match(html, /仮想保有開始候補・終了銘柄/);
     if (model) assert.match(html, /仮想保有開始/);
   }
 });

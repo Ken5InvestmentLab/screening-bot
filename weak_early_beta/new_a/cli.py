@@ -15,6 +15,9 @@ def publish(root,db,*,owner_verified=False,operational_verified=False):
  from .operational_admission import action_context
  admission=action_context(Path(root).resolve().parents[2],date=run.get('latest_session'),run=run,snapshot=read(run['snapshot_file']),required=True) if operational_verified else None
  if run.get('strategy')!='A_BASE' or not run.get('detection_executed'):raise ValueError('completed New A detection required')
+ if not operational_verified and not run.get('delayed_recovery'):
+  from .fundamentals import retain_verified_for_publication
+  run=retain_verified_for_publication(Path(root),run)
  context=None
  if run.get('delayed_recovery'):
   from . import delayed_recovery as delayed

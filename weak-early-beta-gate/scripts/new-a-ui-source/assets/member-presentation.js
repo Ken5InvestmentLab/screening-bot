@@ -138,6 +138,15 @@ function matchingHistory(index, { symbol, from, through, order }) {
   if (order === 'symbol') matches.sort((left,right) => index.rows[left][1].localeCompare(index.rows[right][1]));
   return matches;
 }
+function sortReferenceCards(cards, order) {
+  const compare=(a,b)=>String(a??'').localeCompare(String(b??''),'ja',{numeric:true});
+  return [...cards].sort((a,b)=>{
+    const left=a.dataset,right=b.dataset;
+    const primary=order==='name'?compare(left.referenceName,right.referenceName)
+      :order==='symbol'?0:(left.referenceKind==='ENTRY_CANDIDATE'?0:1)-(right.referenceKind==='ENTRY_CANDIDATE'?0:1);
+    return primary||compare(left.referenceSymbol,right.referenceSymbol)||compare(left.referenceKind,right.referenceKind);
+  });
+}
 function fundamentalImpactClass(fields) {
   const impact = fields.find(field => field?.label === '材料インパクト')?.text;
   if (typeof impact !== 'string') return '';
@@ -381,7 +390,7 @@ function view({mode,access,asOf,presets,selected,rows,chartRows,personal,dashboa
   +(personal?metrics(personal):'<p role="status">保存した条件による試算結果を準備中です。</p>')+'</section>';
 }
 g.NewAMemberPresentation={metrics,chart,history,view,lockedPage,freeHome,freeHistoryRows,operatingLevel,wholeYen,referencePayload,referenceHistory,
-  referenceHistoryIndex,matchingHistory,referenceHistoryTable,historyContent,
+  referenceHistoryIndex,matchingHistory,referenceHistoryTable,historyContent,sortReferenceCards,
   fundamentalItem,fundamentalSelector,fundamentalMarkup};
 if(typeof module!=='undefined')module.exports=g.NewAMemberPresentation;
 })(globalThis);

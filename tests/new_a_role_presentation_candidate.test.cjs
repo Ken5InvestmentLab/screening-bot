@@ -15,6 +15,15 @@ const premiumHome = {
   watching:[{date:'2026-11-18',symbol:'345A',state:'WATCHING'}],
  },
 };
+test('record card sorting keeps every item and uses deterministic kind, code and Japanese name order',()=>{
+ const cards=[['MONITOR_RESET','3000','あさ'],['ENTRY_CANDIDATE','2000','かさ'],['ENTRY_CANDIDATE','1000','さけ']]
+  .map(([referenceKind,referenceSymbol,referenceName])=>({dataset:{referenceKind,referenceSymbol,referenceName}}));
+ const codes=order=>ui.sortReferenceCards(cards,order).map(card=>card.dataset.referenceSymbol);
+ a.deepEqual(Array.from(codes('kind')),['1000','2000','3000']);
+ a.deepEqual(Array.from(codes('symbol')),['1000','2000','3000']);
+ a.deepEqual(Array.from(codes('name')),['3000','2000','1000']);
+ a.equal(cards[0].dataset.referenceSymbol,'3000');
+});
 test('shared dashboard follows the prior owner heading, daily cards, holdings, watch and history order',()=>{
  const html=ui.view({...premiumHome,chartRows:[{date:premiumHome.asOf,equity_yen:9500,holding_count:2}]});
  const order=['データ更新日','ダッシュボード','運用レベル','対象日の動き',

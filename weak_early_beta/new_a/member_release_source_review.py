@@ -8,6 +8,7 @@ import re
 import subprocess
 
 from . import continuing_acceptance as acceptance
+from .approval_git import approval_git
 
 
 CONFIG = "weak-early-beta-gate/wrangler.jsonc"
@@ -32,7 +33,10 @@ ENTRY_NOTICE_REVIEW_SCHEMA = "NEW_A_MEMBER_ENTRY_NOTICE_SUCCESSOR_SOURCE_REVIEW_
 FIXED_TRIAL_FEE_REVIEW_SCHEMA = "NEW_A_MEMBER_FIXED_TRIAL_FEE_SUCCESSOR_SOURCE_REVIEW_V1"
 FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA = "NEW_A_MEMBER_FREE_COMPLETED_ANALYTICS_SUCCESSOR_SOURCE_REVIEW_V1"
 SETTLED_PRICE_REVIEW_SCHEMA = "NEW_A_MEMBER_SETTLED_PRICE_SUCCESSOR_SOURCE_REVIEW_V1"
-TIERED_SUCCESSOR_SCHEMAS = frozenset({FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA, SETTLED_PRICE_REVIEW_SCHEMA})
+APPROVAL_TIMEOUT_REVIEW_SCHEMA = "NEW_A_MEMBER_APPROVAL_TIMEOUT_SUCCESSOR_SOURCE_REVIEW_V1"
+TIERED_SUCCESSOR_SCHEMAS = frozenset({
+    FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA, SETTLED_PRICE_REVIEW_SCHEMA, APPROVAL_TIMEOUT_REVIEW_SCHEMA,
+})
 _PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumのアクセス権を購入する</a>'.encode()
 _NEW_PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumアクセス権を購入する</a>'.encode()
 _SUCCESSOR_REVIEW_PATHS = frozenset({
@@ -372,6 +376,21 @@ _SETTLED_PRICE_PRODUCT_PATHS = _SETTLED_PRICE_ADDITIONS | {
     "weak_early_beta/new_a/run.py",
 }
 _SETTLED_PRICE_PRODUCT_SHA256 = "5d8c394367851f43b35dfc8818ee221843c518a8e94a5ac0cbcd535546807b42"
+_APPROVAL_TIMEOUT_BASELINE = "0b756dba967e3a9b96543268a91013d8bcc5f9ff"
+_APPROVAL_TIMEOUT_ADDITIONS = frozenset({
+    "tests/test_new_a_approval_git.py",
+    "weak_early_beta/new_a/approval_git.py",
+})
+_APPROVAL_TIMEOUT_PRODUCT_PATHS = _APPROVAL_TIMEOUT_ADDITIONS | {
+    "scripts/windows/preflight-reconciliation.mjs",
+    "scripts/windows/test-new-a-runner.mjs",
+    "scripts/windows/test-preflight-reconciliation.mjs",
+    "scripts/windows/weak-early-beta-daily-runner.mjs",
+    "weak_early_beta/new_a/continuing_acceptance.py",
+    "weak_early_beta/new_a/continuing_transition.py",
+    "weak_early_beta/new_a/execution_identity.py",
+}
+_APPROVAL_TIMEOUT_PRODUCT_SHA256 = "f878497f098e58f0d72e32d77c46a09b8a7b59dd953ddeda2036fbe78789b2a9"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
     CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
     FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA, UNIFIED_MEMBER_UI_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA,
@@ -388,7 +407,7 @@ MEMBER_BINDING = {
 
 
 def git(repo, *args):
-    return subprocess.check_output(["git", "--no-optional-locks", *args], cwd=repo)
+    return approval_git(repo, *args)
 
 
 def unique_replace(data, old, new):
@@ -469,7 +488,14 @@ def _check_role_only_successor(repo, candidate, paths):
 
 
 def _member_successor(repo, baseline, candidate):
-    if baseline == _SETTLED_PRICE_BASELINE:
+    if baseline == _APPROVAL_TIMEOUT_BASELINE:
+        paths = _successor_paths(repo, baseline, candidate, allowed_additions=_APPROVAL_TIMEOUT_ADDITIONS)
+        if paths != _APPROVAL_TIMEOUT_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
+            raise ValueError("Cloud approval-timeout successor differs from the exact reviewed source scope")
+        if _product_digest(repo, candidate, _APPROVAL_TIMEOUT_PRODUCT_PATHS) != _APPROVAL_TIMEOUT_PRODUCT_SHA256:
+            raise ValueError("Cloud approval-timeout successor differs from the reviewed bytes")
+        schema = APPROVAL_TIMEOUT_REVIEW_SCHEMA
+    elif baseline == _SETTLED_PRICE_BASELINE:
         paths = _successor_paths(repo, baseline, candidate, allowed_additions=_SETTLED_PRICE_ADDITIONS)
         if paths != _SETTLED_PRICE_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
             raise ValueError("Cloud settled-price successor differs from the exact reviewed source scope")
@@ -645,8 +671,9 @@ def review_member_release_source(repo, baseline, candidate):
                          _SHARED_DEFAULTS_BASELINE, _ENTRY_NOTICE_BASELINE}
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "role_only"):
             raise ValueError("Version-bound member successor requires the existing role-only audience")
-        if baseline == _SETTLED_PRICE_BASELINE and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "tiered":
-            raise ValueError("Cloud settled-price successor requires the existing tiered audience")
+        if (baseline in {_SETTLED_PRICE_BASELINE, _APPROVAL_TIMEOUT_BASELINE}
+                and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "tiered"):
+            raise ValueError("Cloud successor requires the existing tiered audience")
         return _member_successor(repo, baseline, candidate)
 
     if changed != [ENTRY]:

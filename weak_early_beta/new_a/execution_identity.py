@@ -14,6 +14,7 @@ import subprocess
 from pathlib import Path
 
 from .files import digest
+from .approval_git import approval_git
 
 SCHEMA = 'NEW_A_STABLE_EXECUTION_IDENTITY_V1'
 RECEIPTS = 'weak_early_beta/state/detections.csv'
@@ -39,7 +40,7 @@ def require(value, reason):
 
 
 def git(repo, *args):
-    return subprocess.check_output(['git', '--no-optional-locks', *args], cwd=repo)
+    return approval_git(repo, *args)
 
 
 def time(value):

@@ -15,6 +15,7 @@ import sys
 from . import continuing_acceptance as ca
 from . import operational_admission as finite
 from . import release_acceptance as release
+from .approval_git import approval_blobs
 from .files import atomic_write, digest, encode, file_sha, private_root, read
 
 
@@ -453,4 +454,6 @@ def ordinary_runtime_release(repo):
 if __name__ == '__main__':
     if sys.argv[1:] != ['inspect-worker']:
         raise SystemExit('usage: python -m weak_early_beta.new_a.continuing_transition inspect-worker')
-    print(encode(ordinary_runtime_release(Path.cwd())))
+    with approval_blobs(Path.cwd()):
+        result = ordinary_runtime_release(Path.cwd())
+    print(encode(result))

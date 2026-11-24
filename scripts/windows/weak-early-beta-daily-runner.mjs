@@ -543,10 +543,12 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
   atomicJson(path.join(runDir, 'invoked.json'), { ...result, identity: 'CLOUD_RUNNER_INVOKED_V1' });
   const python = config.pythonPath;
   const activationFile = path.join(repo, '.cache/weak_early_beta/new-a-private/activation.json');
+  // The local inspector walks the retained approval chain before contacting the Worker.
+  const approvedReleaseInspectionTimeoutMs = 300_000;
   const inspectApprovedRelease = async (label) => {
     try {
       const inspection = await requireOk(python, ['-B', '-m', 'weak_early_beta.new_a.continuing_transition', 'inspect-worker'],
-        { cwd: repo, env, log: path.join(runDir, label), capture: true, timeoutMs: 60_000 });
+        { cwd: repo, env, log: path.join(runDir, label), capture: true, timeoutMs: approvedReleaseInspectionTimeoutMs });
       return JSON.parse(inspection.stdout.trim());
     } catch (error) {
       approvedWorkerReadbackFailed = true;

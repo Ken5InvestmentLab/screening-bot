@@ -417,8 +417,17 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
                          FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA)
         self.assertEqual(member.MEMBER_SUCCESSORS[FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA],
                          member.SETTLED_PRICE_REVIEW_SCHEMA)
+        self.assertEqual(member.MEMBER_SUCCESSORS[member.SETTLED_PRICE_REVIEW_SCHEMA],
+                         member.APPROVAL_TIMEOUT_REVIEW_SCHEMA)
+        with self.assertRaisesRegex(ValueError, "successor deployment"):
+            member._effective_off(effective_off, MEMBER_BINDING['database_id'], deployment, handover,
+                                  source_review_schema=member.APPROVAL_TIMEOUT_REVIEW_SCHEMA)
+        same_build = {**deployment, 'build_input_sha256': previous['build_input_sha256']}
+        self.assertEqual(member._effective_off(effective_off, MEMBER_BINDING['database_id'], same_build, handover,
+                                               source_review_schema=member.APPROVAL_TIMEOUT_REVIEW_SCHEMA), row)
         tiered_plan = {**self.plan, 'predecessor_member_policy': incumbent}
-        for tiered_schema in (FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA, member.SETTLED_PRICE_REVIEW_SCHEMA):
+        for tiered_schema in (FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA, member.SETTLED_PRICE_REVIEW_SCHEMA,
+                              member.APPROVAL_TIMEOUT_REVIEW_SCHEMA):
             with self.subTest(tiered_schema=tiered_schema):
                 tiered = {**source_review, 'schema': tiered_schema, 'member_audience': 'tiered'}
                 tiered_review = member._review(tiered_plan, self.old, tiered, deployment, row, None)

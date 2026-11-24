@@ -12,6 +12,7 @@ import re
 from pathlib import Path
 import subprocess
 from .files import atomic_write, digest, encode, file_sha, private_root, read
+from .approval_git import approval_git
 
 SCHEMA = 'NEW_A_CONTINUING_OWNER_ACCEPTANCE_V1'
 STABLE_SCHEMA = 'NEW_A_CONTINUING_OWNER_ACCEPTANCE_V2'
@@ -174,7 +175,7 @@ def _verify_historical_auth_sources(repo, source, pins):
     require(re.fullmatch(r'[a-f0-9]{40}', str(source)) and set(pins) == AUTH_FILES,
             'historical authentication source identity differs')
     for name, pin in pins.items():
-        blob = subprocess.check_output(['git', '--no-optional-locks', 'show', f'{source}:{name}'], cwd=repo)
+        blob = approval_git(repo, 'show', f'{source}:{name}')
         windows_checkout = blob.replace(b'\r\n', b'\n').replace(b'\n', b'\r\n')
         require(any(hashlib.sha256(raw).hexdigest() == pin for raw in (blob, windows_checkout)),
                 'historical authentication source bytes cannot reproduce the exact pin')

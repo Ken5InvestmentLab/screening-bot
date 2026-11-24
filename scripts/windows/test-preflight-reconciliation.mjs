@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {createHash} from 'node:crypto';import{EventEmitter}from'node:events';
-import{inspectPreflightFailure,issuePreflightReconciliation,verifyPreflightReconciliation,claimPreflightReconciliation,consumePreflightReconciliation}from'./preflight-reconciliation.mjs';
+import{inspectApprovalTimeout,inspectPreflightFailure,issuePreflightReconciliation,verifyPreflightReconciliation,claimPreflightReconciliation,consumePreflightReconciliation}from'./preflight-reconciliation.mjs';
 import{taskEntry}from'./weak-early-beta-task-entry.mjs';import{jstDay,recoveryPlan}from'./weak-early-beta-run-journal.mjs';import vm from'node:vm';import taskRoute from'./new-a-task-route.cjs';
 const sha=v=>createHash('sha256').update(v).digest('hex');
 const RealDate=Date;
@@ -60,4 +60,126 @@ test('Nov17 is a fresh normal day and never consumes the old Nov16 reconciliatio
 test('ordinary same-day completion stays complete while the next day starts normally',()=>{
  const receipt={identity:'WEAK_EARLY_CLOUD_DAILY_V1',date:'2026-11-16',ok:true,completedAt:'2026-11-16T13:00:00Z',new_a:{entry:'new-a-verified-daily-v1',strategy:'A_BASE',snapshot_sha256:'a'.repeat(64),owner_publication_verified:true}};
  assert.equal(taskRoute.newATaskPlan('cloud-3','2026-11-16',receipt,recoveryPlan).action,'complete');assert.equal(taskRoute.newATaskPlan('cloud-3','2026-11-17',receipt,recoveryPlan).action,'none');
+});
+
+function timeoutFixture(t) {
+  class TimeoutDate extends RealDate {
+    constructor(...args) { super(...(args.length ? args : ['2026-11-24T10:00:00Z'])); }
+    static now() { return RealDate.parse('2026-11-24T10:00:00Z'); }
+  }
+  globalThis.Date = TimeoutDate;
+  t.after(() => { globalThis.Date = RealDate; });
+  const repo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'cloud-approval-timeout-')));
+  t.after(() => fs.rmSync(repo, {recursive:true, force:true}));
+  const date = '2026-11-24', head = 'b'.repeat(40), originalHead = 'a'.repeat(40);
+  const runtime = path.join(repo, '.cache/weak_early_beta/daily_runtime');
+  const startedAt = '2026-11-24T07:46:43.195Z', completedAt = '2026-11-24T07:47:58.714Z';
+  const folder = path.join(runtime, 'daily-' + startedAt.replace(/[:.]/g, '-'));
+  fs.mkdirSync(folder, {recursive:true});
+  const write = (name, bytes) => fs.writeFileSync(path.join(folder, name), bytes);
+  const previous = {headSha:originalHead, status:'completed', conclusion:'success', databaseId:10};
+  const prior = {identity:'WEAK_EARLY_CLOUD_DAILY_V1', startedAt, completedAt, date, pid:76792, stage:'preflight', ok:false,
+    error:'timeout: approved-release-before-detection', businessDay:true, startCommit:originalHead,
+    progressAt:'2026-11-24T07:46:54.459Z', networkPreflight:{blocked:false,groups:[],waitedMs:855}, previousSuccessfulDeployment:previous,
+    fundamentals:[], fundamental:{ok:true,status:'NOT_REQUESTED',imported:0,posted:0}};
+  const latest = path.join(runtime, 'daily-latest.json'), original = JSON.stringify(prior) + '\n';
+  fs.writeFileSync(latest, original);
+  write('result.json', original);
+  write('invoked.json', JSON.stringify({identity:'CLOUD_RUNNER_INVOKED_V1',startedAt,pid:prior.pid,ok:false,date}));
+  write('progress.jsonl', JSON.stringify({stage:'branch', at:startedAt}) + '\n'
+    + JSON.stringify({stage:'network-preflight',at:'2026-11-24T07:46:54.448Z',
+      networkPreflight:{blocked:false,groups:[],elapsedMs:855,status:'ready'}}) + '\n'
+    + JSON.stringify({stage:'preflight',at:prior.progressAt}) + '\n');
+  const children = {'business-day':'{"business_day":true}', 'process-preflight':'', 'gh-preflight':'synthetic valid auth',
+    'previous-release':JSON.stringify([previous]), 'git-1-branch':'research/weak-early-beta', 'git-2-status':'',
+    'git-3-remote':'https://github.com/Ken5InvestmentLab/screening-bot', 'git-4-rev-parse':originalHead,
+    'git-5-ls-remote':originalHead+'\trefs/heads/research/weak-early-beta', 'approved-release-before-detection':''};
+  for (const [index, [name, stdout]] of Object.entries(children).entries()) {
+    const timeout = name === 'approved-release-before-detection';
+    write(name+'.stdout', stdout);
+    write(name+'.stderr', '');
+    write(name+'.process.json', JSON.stringify({identity:'CLOUD_CHILD_PROCESS_V1',pid:200+index,status:'exited',code:timeout?1:0,
+      completedAt:timeout?'2026-11-24T07:47:58.710Z':'2026-11-24T07:46:58.148Z'}));
+  }
+
+  const root = path.join(repo, '.cache/weak_early_beta/new-a-private'), application = 'c'.repeat(64);
+  const archive = path.join(root, 'continuing-acceptance', 'applications', application);
+  fs.mkdirSync(archive, {recursive:true});
+  const activation = path.join(root, 'activation.json');
+  fs.writeFileSync(activation, JSON.stringify({schema:'NEW_A_OWNER_ACTIVATION_V1',strategy:'A_BASE',active:true,
+    external_actions_approved:true, owner_acceptance:{application_id:application}}));
+  const approved = {schema:'NEW_A_ORDINARY_RUNTIME_RELEASE_V1',source_commit:head,worker:'tentei-kyokuchi-cloud',
+    database:'tentei-cloud-settings',version_id:'00000000-0000-4000-8000-000000000002',activation_sha256:sha(fs.readFileSync(activation)),
+    build_input_sha256:'d'.repeat(64),policy_sha256:'e'.repeat(64),ci_run_id:11,tag:'cloud-deploy-approval-timeout-fixture'};
+  const audited = JSON.stringify({deployment:approved,predecessor:{source_commit:originalHead,version_id:'00000000-0000-4000-8000-000000000001'}});
+  fs.writeFileSync(path.join(archive, 'member-ordinary.json'), audited);
+  fs.writeFileSync(path.join(archive, 'completed.json'), JSON.stringify({schema:'NEW_A_MEMBER_ORDINARY_APPLICATION_V1',
+    source_commit:head,after_sha256:approved.activation_sha256,member_ordinary_sha256:sha(audited)}));
+  const effects = {schema:'CLOUD_APPROVAL_TIMEOUT_NO_EFFECTS_V1',date,original_started_at:startedAt,source_commit:head,
+    worker_version_id:approved.version_id,observed_at:'2026-11-24T09:59:00Z',read_only:true,receipt_sha256:'f'.repeat(64),
+    target_owner_datasets:0,target_member_datasets:0,target_outbox_entries:0,target_discord_results:0};
+  const text = 'Synthetic same-day approval after failure', binding = {message_id:'synthetic-timeout', room_id:'synthetic-room',
+    author_id:'synthetic-owner',text_sha256:sha(JSON.stringify(text))};
+  const receipt = {partial:false,room_id:binding.room_id,message:{message_id:binding.message_id,author:'user',channel:'chatgpt',
+    author_id:binding.author_id,content:{text},sent_at:'2026-11-24T09:57:00Z'}};
+  const args = {repo,runtime,date,head,prior,binding,authority:binding,reader:async()=>receipt,expiresAt:'2026-11-24T10:30:00Z',
+    approvedReleaseReader:async scope=>{assert.equal(scope.original_sha256,sha(original));return approved;},
+    sideEffectReader:async scope=>{assert.equal(scope.worker_version_id,approved.version_id);return effects;}};
+  return {repo,runtime,folder,write,date,head,prior,latest,original,activation,approved,effects,args,
+    inspect:()=>inspectApprovalTimeout(runtime,prior,date), issue:overrides=>issuePreflightReconciliation({...args,...overrides}),
+    verify:file=>verifyPreflightReconciliation({...args,file})};
+}
+
+test('approval timeout resumes exactly once through task-entry with immutable original and approved successor', async t => {
+  const f = timeoutFixture(t), issued = await f.issue(), verified = f.verify(issued.file);
+  assert.equal(verified.record.schema, 'CLOUD_APPROVAL_TIMEOUT_RECONCILIATION_V1');
+  assert.equal(verified.record.original_source_commit, f.prior.startCommit);
+  assert.equal(verified.record.original_started_at, f.prior.startedAt);
+  assert.equal(fs.readFileSync(path.join(path.dirname(issued.file), 'original.json'), 'utf8'), f.original);
+  let launches = 0, args;
+  const options = {task:'cloud-3', reconciliationFile:issued.file, auditDirectory:path.join(f.repo,'audit'),
+    load:()=>({repoPath:f.repo,runtimeDir:f.runtime,nodePath:process.execPath}), check:async()=>({ok:true,head:f.head}),
+    launch:(_exe,argv)=>{launches++;args=argv;const child=new EventEmitter();child.pid=10;child.unref=()=>{};
+      queueMicrotask(()=>child.emit('spawn'));return child;}};
+  assert.equal((await taskEntry('synthetic',options)).status,'ready');
+  assert.equal(launches,0);
+  const result = await taskEntry('synthetic',{...options,start:true});
+  assert.equal(result.status,'launched');
+  assert.equal((await taskEntry('synthetic',{...options,start:true})).status,'recovery-required');
+  assert.equal(launches,1);
+  assert.equal(args[args.indexOf('--reconcile-preflight')+1], issued.file);
+  const consumed = consumePreflightReconciliation(f.runtime,verified,result.id,'synthetic-run');
+  assert.equal(consumed.originalRunId,f.prior.startedAt);
+  assert.throws(()=>consumePreflightReconciliation(f.runtime,verified,result.id,'another'),/EEXIST/);
+  assert.equal(fs.readFileSync(f.latest,'utf8'), f.original);
+});
+
+test('approval timeout refuses downstream, missing, or ambiguous original artifacts', async t => {
+  const f = timeoutFixture(t), issued = await f.issue();
+  const stdout = 'approved-release-before-detection.stdout';
+  f.write(stdout, '{}');
+  assert.throws(()=>f.verify(issued.file),/child output/);
+  f.write(stdout, '');
+  const detected = 'detect-1.stdout';
+  f.write(detected, 'started');
+  assert.throws(f.inspect,/artifact inventory/);
+  fs.unlinkSync(path.join(f.folder,detected));
+  fs.unlinkSync(path.join(f.folder,'approved-release-before-detection.process.json'));
+  assert.throws(f.inspect,/artifact inventory/);
+  f.prior.deployment = {};
+  assert.throws(f.inspect,/only original approval preflight timeout/);
+});
+
+test('approval timeout binds host evidence, owner day, and immutable successor approval', async t => {
+  const f = timeoutFixture(t);
+  await assert.rejects(()=>f.issue({sideEffectReader:null}),/independent timeout evidence readers/);
+  await assert.rejects(()=>f.issue({approvedReleaseReader:async()=>({...f.approved,source_commit:f.prior.startCommit})}),/approved successor release/);
+  for (const field of ['target_owner_datasets','target_member_datasets','target_outbox_entries','target_discord_results']) {
+    await assert.rejects(()=>f.issue({sideEffectReader:async()=>({...f.effects,[field]:1})}),/no-effect evidence/);
+  }
+  await assert.rejects(()=>f.issue({sideEffectReader:async()=>({...f.effects,observed_at:'2026-11-24T09:54:00Z'})}),/no-effect evidence/);
+  await assert.rejects(()=>f.issue({expiresAt:'2026-11-25T00:00:01+09:00'}),/same JST day/);
+  const issued=await f.issue();
+  fs.appendFileSync(f.activation,'\n');
+  assert.throws(()=>f.verify(issued.file),/successor activation changed/);
 });

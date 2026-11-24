@@ -66,7 +66,7 @@ export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nati
   RESEARCH_BRANCH:'research/weak-early-beta',GITHUB_REPOSITORY:'Ken5InvestmentLab/screening-bot',DEPLOY_WORKFLOW:'weak-early-beta-report-deploy.yml',
   run:async(...args)=>context.requireOk(...args),
   requireOk:async(exe,args,options)=>{
-   calls.push({exe,args:[...args],pythonFaulthandler:options?.env?.PYTHONFAULTHANDLER});
+   calls.push({exe,args:[...args],pythonFaulthandler:options?.env?.PYTHONFAULTHANDLER,timeoutMs:options?.timeoutMs});
    if(exe==='git'){
     assert(!['add','commit'].includes(args[0]),'No generated files may be committed');
     if(args[0]==='push')assert(/^refs\/tags\/cloud-deploy-daily-/.test(args[2]),'Only the existing code deploy tag is planned');
@@ -164,6 +164,9 @@ test('Transition-approved daily work reuses the exact checked Worker before publ
  const firstStarted=f.calls.findIndex(({args})=>args.includes('system-log')&&args.includes('started'));
  const publish=f.calls.findIndex(({args})=>args.includes('publish'));
  const sent=f.calls.findIndex(({args})=>args.includes('notify')&&!args.includes('--dry-run'));
+ const inspections=f.calls.filter(({args})=>args.includes('inspect-worker'));
+ assert.equal(inspections.length,4);
+ assert(inspections.every(({timeoutMs})=>timeoutMs===300_000));
  assert.equal(probes.length,4);
  assert(probes[0]<firstStarted&&probes[2]<publish&&publish<probes[3]&&probes[3]<sent);
 });

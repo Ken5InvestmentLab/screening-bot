@@ -217,21 +217,26 @@ def _format_opening_price(price):
     return f"{price:,.2f}".rstrip("0").rstrip(".")
 
 
-def _opening_field(openings, attached):
+def _opening_field(openings, attached, names=None):
     rows = openings["rows"]
     lines = [
-        f"{symbol}　{_format_opening_price(price)}円" if price is not None else f"{symbol}　始値保留"
-        for symbol, price in (rows[:10] if attached else rows)
+        f"{_stock_label(symbol,names or {})}　{_format_opening_price(price)}円" if price is not None
+        else f"{_stock_label(symbol,names or {})}　始値保留"
+        for symbol, price in (rows[:5] if attached else rows)
     ]
     if attached:
         lines.append(f"全{len(rows)}銘柄は添付CSV")
     return {"name": "終了後に確認した始値（日足始値）", "value": "\n".join(lines)}
 
-def _stock_link(symbol, names):
-    from ..notify import chart_components
+def _stock_label(symbol, names):
     company = names.get(symbol)
     company = (company[:60] + "…") if company and len(company) > 60 else company
-    label = symbol + (" " + re.sub(r"([\\`*_{}\[\]()<>|])", r"\\\1", company) if company else "")
+    return symbol + (" " + re.sub(r"([\\`*_{}\[\]()<>|])", r"\\\1", company) if company else "")
+
+
+def _stock_link(symbol, names):
+    from ..notify import chart_components
+    label = _stock_label(symbol, names)
     url = chart_components(symbol)[0]["components"][0]["url"]
     return f"[{label}]({url})"
 
@@ -332,9 +337,10 @@ def _batch(snapshot, rows, report_url, company_names=None):
     summary = next((payload for _, payload, _ in pending if payload.get("kind") == SUMMARY), {})
     entries = summary.get("next_session_entries")
     entry_field = lambda details, attached: _entry_field(details, attached, company_names)
+    opening_field = lambda details, attached: _opening_field(details, attached, company_names)
     openings = summary.get("closing_openings")
     attach_details = False
-    for details, field_builder in ((openings, _opening_field), (entries, entry_field)):
+    for details, field_builder in ((openings, opening_field), (entries, entry_field)):
         if details is not None:
             if delayed or details["snapshot_sha256"] != snapshot["payload_sha256"]:
                 raise ValueError("daily notification details differ from the verified live snapshot")

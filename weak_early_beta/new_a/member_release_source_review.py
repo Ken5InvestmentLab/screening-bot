@@ -466,8 +466,9 @@ _PREMIUM_RUNTIME_ADDITIONS = frozenset({
 _PREMIUM_RUNTIME_PRODUCT_PATHS = _PREMIUM_RUNTIME_ADDITIONS | {
     "scripts/windows/new-a-fundamental-stage.mjs", "scripts/windows/test-new-a-fundamental-stage.mjs",
     "weak_early_beta/new_a/fundamentals.py", "tests/test_new_a_fundamentals.py", "weak_early_beta/new_a/AGENTS.md",
+    "weak_early_beta/new_a/notifications.py", "tests/test_new_a_connection.py",
 }
-_PREMIUM_RUNTIME_PRODUCT_SHA256 = "f41f26faeda66306d9a54ab7a52b36638684d551b983600759a1c04b8ba8a71a"
+_PREMIUM_RUNTIME_PRODUCT_SHA256 = "a2c44b57b7f2f40ed1dcec834598206f9f0d8b6758a245834328154a3e1068ee"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
     CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
     FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA, UNIFIED_MEMBER_UI_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA,

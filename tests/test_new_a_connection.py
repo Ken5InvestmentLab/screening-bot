@@ -194,11 +194,13 @@ class BatchedDiscord(unittest.TestCase):
         from weak_early_beta.new_a import notifications
         self.events(2)
         self.prepare_next_session(symbols=("2345",), previous="2026-05-29")
-        with patch.object(notifications, "_company_names", return_value={"0000":"監視の会社", "2345":"候補の会社"}):
+        self.add_closing_opening('5000',1234.5)
+        with patch.object(notifications, "_company_names", return_value={"0000":"監視の会社", "2345":"候補の会社",'5000':'決済の会社'}):
             self.assertEqual(self.call()["external_sends"], 1)
         embed=self.posts[0][0]["embeds"][0]
         self.assertIn("[0000 監視の会社](https://jp.tradingview.com/chart/",embed["description"])
         self.assertIn("[2345 候補の会社](https://jp.tradingview.com/chart/",embed["fields"][-1]["value"])
+        self.assertIn('5000 決済の会社　1,234.5円','\n'.join(field['value'] for field in embed['fields']))
         self.assertNotIn("footer",embed)
         self.assertNotIn("新A",embed["title"])
         self.assertNotIn("判定保留",str(embed))

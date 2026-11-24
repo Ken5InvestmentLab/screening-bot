@@ -5,6 +5,12 @@ These files snapshot the Premium runtime that completed 36 reports on
 `FUNDAMENTAL_EXAMPLES.md` come byte-for-byte from Premium commit `1fa6d89`.
 The saved PM task is the version used for that completed run.
 
+The immutable legacy snapshot remains unchanged. The Cloud copy
+`PREMIUM_CLOUD_WORKER.mjs` retains it as the base and adds only the reviewed
+issuer-companion checks in `SOURCE_COMPANION_REVIEW.md`. Preserve that explicit
+provenance, date precision and dated/current-balance distinction. An annual
+filing alone and guessed publication times remain invalid.
+
 Use its sequence: official listings and selected originals, all initial
 drafts, validator-named repairs, direct URL checks and the full legacy dry-run.
 Do not add the later disclosure inventory or research checkpoint gates.

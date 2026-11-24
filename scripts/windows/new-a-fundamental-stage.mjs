@@ -12,6 +12,8 @@ const REFERENCE_FILES = {
   'AUTOMATION_PROMPT.md': 'cf2ed83da7948826c319e375119c3d3072275552fc33acc30de4337353bf831d',
   'FUNDAMENTAL_EXAMPLES.md': 'c49243cc7ee6685d3dedf2789fc452ce4d610f463edcc54b48001487a39d77fb',
   'PREMIUM_LEGACY_WORKER.mjs': '98edbc6921dfcad6b853660a1d1bc6e508ef684f71d29732960330a53cb80dc3',
+  'PREMIUM_CLOUD_WORKER.mjs': '4a90e1c0c5687aa0e9f86f284bad86f9b182acefef7e598e9cc6d3fbf80870d3',
+  'SOURCE_COMPANION_REVIEW.md': '1720b0f5b1f36b224ee20878d60985cadfb666acbad316a426694b318937c991',
   'PREMIUM_NO_SEND_PRELOAD.mjs': '2121ad3d3301524762efe3e10970006ce1e2fa792c7caa47ba0f61aa1b2ee5e0',
   'report_quality.md': '6df031fabe3d309b0f2c7c317734920ba1450926c344987491e0fc14b5c7a6fb',
 };
@@ -214,6 +216,7 @@ export async function runPremiumResearch({ claim, claimPath, reportPath, config,
     'Cloud 2.0が既に取得した不変claimだけを使用します。claimの読み取り元: ' + claimPath,
     '11/24に36件完走した11/2版Premiumの保存済みタスク、手順書、見本、品質チェックの次の固定資料を最初に読んでください:\n' + references.join('\n'),
     '照合、調査、初稿、指名された修正、全件再検証の手順と品質を適用してください。Cloudが所有権、時刻、HTML保存を管理します。Premium資料で言及される収集、スケジュール、GAS、Discord、実送信、状態変更、fail処理、Git操作は実行しないでください。例示用の銘柄、リンク、JSON識別子は実データとして使わないでください。',
+    '元のPREMIUM_LEGACY_WORKER.mjsは不変のコピー元です。全件検証には、そのコピーに確認済み資料の扱いだけを補正したPREMIUM_CLOUD_WORKER.mjsを使います。SOURCE_COMPANION_REVIEW.mdを読み、該当する資料の掲載日精度と過去の資本状況・現在未確認の区別を保持してください。時刻や残高を推測して埋めず、根拠資料や引用を検証回避のために削除しないでください。',
     '実際の公式IR/ニュース、IRBANKとTDnet/JPX相当一覧を会社ごとに照合します。最新の開示は定型の題名でも原本を見て重要性を確認し、最も新しい重要開示と同時公表の関連資料をまとめます。資料本文を読み、一次資料に基づく具体的なKPI、材料、リスクを日本語で記載します。',
     'analysisCutoffはCloudの実着手時刻で固定します。これを過ぎた公表と、公表時刻未確認の当日資料は採用しません。増資、ワラント、CB、MSワラント、行使・失効・潜在株式数と確定できない残高も追跡します。',
   ];
@@ -302,7 +305,7 @@ export async function runPremiumResearch({ claim, claimPath, reportPath, config,
           [path.join(claimDir, '.env'), path.join(legacyDirectory, '.env')].some(file => fs.existsSync(file))) {
         throw new Error('Legacy dry-run directory must be isolated from environment files');
       }
-      fs.copyFileSync(references.find(file => file.endsWith('PREMIUM_LEGACY_WORKER.mjs')), legacyWorker);
+      fs.copyFileSync(references.find(file => file.endsWith('PREMIUM_CLOUD_WORKER.mjs')), legacyWorker);
       const legacyStateHash = sha256(readOwnedBytes(state));
       const legacyEnv = { ...childEnv, PREMIUM_STATE_PATH: state };
       const checkLegacy = async (input, alerts, suffix) => {

@@ -462,13 +462,16 @@ _PREMIUM_RUNTIME_BASELINE = "ba88d386c111422ae09e203e4f3a6f53dd8806c1"
 _PREMIUM_RUNTIME_ADDITIONS = frozenset({
     "scripts/windows/new-a-completed-fundamental-recovery.mjs",
     "scripts/windows/test-new-a-completed-fundamental-recovery.mjs",
+    "scripts/windows/cloud-premium-references/PREMIUM_CLOUD_WORKER.mjs",
+    "scripts/windows/cloud-premium-references/SOURCE_COMPANION_REVIEW.md",
 })
 _PREMIUM_RUNTIME_PRODUCT_PATHS = _PREMIUM_RUNTIME_ADDITIONS | {
     "scripts/windows/new-a-fundamental-stage.mjs", "scripts/windows/test-new-a-fundamental-stage.mjs",
     "weak_early_beta/new_a/fundamentals.py", "tests/test_new_a_fundamentals.py", "weak_early_beta/new_a/AGENTS.md",
     "weak_early_beta/new_a/notifications.py", "tests/test_new_a_connection.py",
+    "scripts/windows/cloud-premium-references/AGENTS.md",
 }
-_PREMIUM_RUNTIME_PRODUCT_SHA256 = "14b3b73315348cbeba60a157c685b83f48fdacee47001cbdfacf66c130e52def"
+_PREMIUM_RUNTIME_PRODUCT_SHA256 = "deeb6ebf5181f49948917450a2d24dc854408a176f05e62896eb71268c03f646"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
     CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
     FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA, UNIFIED_MEMBER_UI_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA,

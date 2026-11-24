@@ -73,7 +73,7 @@ test('Cloud copies the completed legacy workflow, repairs named reports, validat
         assert(args.includes('--dry-run') && !args.includes('--save-only') && args[0] === '--import');
         assert(options.env.DISCORD_PREMIUM_WEBHOOK_URL === undefined);
         assert.equal(createHash('sha256').update(fs.readFileSync(args[2])).digest('hex'),
-          '98edbc6921dfcad6b853660a1d1bc6e508ef684f71d29732960330a53cb80dc3');
+          '4a90e1c0c5687aa0e9f86f284bad86f9b182acefef7e598e9cc6d3fbf80870d3');
         const input = JSON.parse(fs.readFileSync(args[args.indexOf('--input') + 1]));
         calls.push('legacy:' + input.reports.map(r => r.symbolCode).join(','));
         if (input.reports.some(r => r.alertId === secondAlert.alertId && !repaired)) throw Error('company-specific KPI is missing');

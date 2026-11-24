@@ -378,19 +378,47 @@ _SETTLED_PRICE_PRODUCT_PATHS = _SETTLED_PRICE_ADDITIONS | {
 _SETTLED_PRICE_PRODUCT_SHA256 = "5d8c394367851f43b35dfc8818ee221843c518a8e94a5ac0cbcd535546807b42"
 _APPROVAL_TIMEOUT_BASELINE = "0b756dba967e3a9b96543268a91013d8bcc5f9ff"
 _APPROVAL_TIMEOUT_ADDITIONS = frozenset({
+    "scripts/windows/cloud-premium-disclosure-audit.mjs",
+    "scripts/windows/cloud-premium-references/.gitattributes",
+    "scripts/windows/cloud-premium-references/AUTOMATION_PROMPT.md",
+    "scripts/windows/cloud-premium-references/DISCLOSURE_AUDIT.md",
+    "scripts/windows/cloud-premium-references/FUNDAMENTAL_EXAMPLES.md",
+    "scripts/windows/cloud-premium-references/PREMIUM_PM_SAVED_PROMPT.txt",
+    "scripts/windows/cloud-premium-references/report_quality.md",
+    "scripts/windows/premium-disclosure-research/atomic-json.mjs",
+    "scripts/windows/premium-disclosure-research/disclosure-audit.mjs",
+    "scripts/windows/premium-disclosure-research/disclosure-title.mjs",
+    "scripts/windows/premium-disclosure-research/evidence-cache.mjs",
+    "scripts/windows/premium-disclosure-research/http-pdf-content-compare.py",
+    "scripts/windows/premium-disclosure-research/http-pdf-content-review.mjs",
+    "scripts/windows/premium-disclosure-research/issuer-beat-releases.mjs",
+    "scripts/windows/premium-disclosure-research/issuer-feed-rows.mjs",
+    "scripts/windows/premium-disclosure-research/issuer-http-discovery.mjs",
+    "scripts/windows/premium-disclosure-research/issuer-intrance-archive.mjs",
+    "scripts/windows/premium-disclosure-research/issuer-ir-record.mjs",
+    "scripts/windows/premium-disclosure-research/issuer-nakabayashi-list.mjs",
+    "scripts/windows/premium-disclosure-research/issuer-paginated-archives.mjs",
+    "scripts/windows/premium-disclosure-research/issuer-softbank-list.mjs",
+    "scripts/windows/premium-disclosure-research/pdf-evidence.py",
+    "scripts/windows/premium-disclosure-research/research-document.mjs",
+    "scripts/windows/test-cloud-premium-disclosure-audit.mjs",
     "tests/test_new_a_approval_git.py",
     "weak_early_beta/new_a/approval_git.py",
 })
 _APPROVAL_TIMEOUT_PRODUCT_PATHS = _APPROVAL_TIMEOUT_ADDITIONS | {
+    "scripts/windows/new-a-fundamental-stage.mjs",
     "scripts/windows/preflight-reconciliation.mjs",
+    "scripts/windows/test-new-a-fundamental-stage.mjs",
     "scripts/windows/test-new-a-runner.mjs",
     "scripts/windows/test-preflight-reconciliation.mjs",
+    "scripts/windows/test-weak-early-beta-point-in-time-post.mjs",
     "scripts/windows/weak-early-beta-daily-runner.mjs",
     "weak_early_beta/new_a/continuing_acceptance.py",
     "weak_early_beta/new_a/continuing_transition.py",
     "weak_early_beta/new_a/execution_identity.py",
+    "weak_early_beta/scripts/post_historical_snapshot.mjs",
 }
-_APPROVAL_TIMEOUT_PRODUCT_SHA256 = "f878497f098e58f0d72e32d77c46a09b8a7b59dd953ddeda2036fbe78789b2a9"
+_APPROVAL_TIMEOUT_PRODUCT_SHA256 = "557a13502c3d74831c4d47c20bd51a597f3100e276a14daa5d387383ff8277b5"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
     CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
     FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA, UNIFIED_MEMBER_UI_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA,

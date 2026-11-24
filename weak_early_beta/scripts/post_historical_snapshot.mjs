@@ -17,9 +17,8 @@ const GUILD_ID = '1479418833352785944';
 const FUNDAMENTAL_CHANNEL_ID = '1550876675884060702';
 const REQUIRED_FIELDS = ['材料インパクト', '事業概要', '足元材料', 'ファンダ要点', '注意点', '開示リンク', 'Sources'];
 
-const env = { ...readDotEnv(envPath), ...process.env };
-const webhook = String(env.WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL || '').trim();
 const saveOnly = process.argv.includes('--save-only');
+const VERIFIED_ZERO_LINK_FIELD = '対象時点までの該当する開示はありません。';
 
 const reportData = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
 const reports = Array.isArray(reportData) ? reportData : reportData.reports;
@@ -84,7 +83,12 @@ if (!/^(?:ポジティブ材料|ネガティブ材料|様子見|混在\/要確�
 }
 if (!fields.get('Sources').includes('https://')) throw new Error('Sources must contain a URL');
 if (cutoff === claimCutoff) {
-  const disclosureLines = fields.get('開示リンク').split(/\r?\n/).filter(line => line.trim());
+  const disclosureField = fields.get('開示リンク');
+  const verifiedZero = forwardAnalysis && saveOnly && claim.officialInventoryVerifiedZero === true &&
+    disclosureField === VERIFIED_ZERO_LINK_FIELD && Array.isArray(report.disclosures) && report.disclosures.length === 0 &&
+    Array.isArray(report.disclosureEvidence) && report.disclosureEvidence.length === 0 &&
+    typeof report.noMaterialDisclosureReason === 'string' && Boolean(report.noMaterialDisclosureReason.trim());
+  const disclosureLines = verifiedZero ? [] : disclosureField.split(/\r?\n/).filter(line => line.trim());
   const disclosureUrls = new Set();
   const publicationReceipts = new Map();
   if (forwardAnalysis) {
@@ -186,6 +190,8 @@ if (saveOnly) {
   process.exit(0);
 }
 
+const env = { ...readDotEnv(envPath), ...process.env };
+const webhook = String(env.WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL || '').trim();
 if (!webhook) throw new Error('WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL is missing');
 const postUrl = new URL(webhook);
 postUrl.searchParams.set('wait', 'true');

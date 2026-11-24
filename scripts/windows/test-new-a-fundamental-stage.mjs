@@ -6,7 +6,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { runNewAFundamentalStage } from './new-a-fundamental-stage.mjs';
 
-test('same-login xhigh model, exact owned report bytes and HTML-only dry-run are wired', async t => {
+test('Cloud uses Premium research before drafting, repairs only named reports, then checks all reports again', async t => {
   const repo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'new-a-fundamental-stage-')));
   t.after(() => fs.rmSync(repo, { recursive: true, force: true }));
   const today = '2026-11-18';
@@ -23,13 +23,17 @@ test('same-login xhigh model, exact owned report bytes and HTML-only dry-run are
   fs.writeFileSync(configPath, JSON.stringify({ repoPath: repo, premiumWorkerRepoPath: repo, codexHome: repo,
     nodePath: process.execPath, codexExecutable: modelPath }));
   const alert = {
-    alertId: 'test-owned-event', analysisCutoff: cutoff, signalType: 'WEAK_EARLY_BETA',
+    alertId: 'test-owned-event', symbolCode: '1234', symbolName: '試験企業', signalDate: today,
+    receivedAt: today + 'T08:09:00.000Z', analysisCutoff: cutoff, signalType: 'WEAK_EARLY_BETA',
     capitalRiskReviewVersion: 1, longTermMaterialReviewVersion: 1,
   };
-  fs.writeFileSync(claimPath, JSON.stringify({
-    alerts: [alert], claimedCount: 1, capitalRiskReviewVersion: 1, longTermMaterialReviewVersion: 1,
+  const secondAlert = { ...alert, alertId: 'second-owned-event', symbolCode: '2345' };
+  const claimId = 'a'.repeat(64);
+  const claim = {
+    claimId, alerts: [alert, secondAlert], claimedCount: 2, capitalRiskReviewVersion: 1, longTermMaterialReviewVersion: 1,
     rules: { model: 'gpt-6.1-sol', reasoningEffort: 'xhigh', destination: 'html' },
-  }));
+  };
+  fs.writeFileSync(claimPath, JSON.stringify(claim));
   fs.writeFileSync(path.join(repo, '.env'), 'DISCORD_TEST_TOKEN=FIXTURE_SECRET_VALUE\n');
   const report = {
     ...alert,
@@ -40,38 +44,104 @@ test('same-login xhigh model, exact owned report bytes and HTML-only dry-run are
       items: [], reviewedCategories: [], documents: [], reviewScopeNote: '部分照合', riskNote: '長期材料',
       unresolvedReason: '情報不足' },
   };
+  const secondReport = { ...report, ...secondAlert };
   const calls = [];
-  const received = await runNewAFundamentalStage({
+  const options = {
     config: { pythonPath: 'synthetic-python', nodePath: 'synthetic-node', fundamentalConfigPath: configPath },
-    repo, runtime, today, startedAt: today + 'T08:00:00Z', runDir, env: {}, expectedCount: 1,
+    repo, runtime, today, startedAt: today + 'T08:00:00Z', runDir, env: { TEST_API_TOKEN: 'PARENT_SECRET_FIXTURE' }, expectedCount: 2,
     async runStep(_exe, args) {
       if (args.includes('prepare')) {
         calls.push('prepare');
-        return { stdout: JSON.stringify({ claimed: 1, claimPath, reportsPath }) };
+        return { stdout: JSON.stringify({ claimed: 2, claimPath, reportsPath }) };
       }
       if (args.includes('finish')) {
         calls.push('finish');
         assert.equal(args[args.indexOf('--reports-sha256') + 1],
           createHash('sha256').update(fs.readFileSync(reportsPath)).digest('hex'));
-        return { stdout: JSON.stringify({ ok: true, imported: 1, posted: 0, status: 'COMPLETE' }) };
+        assert.deepEqual(JSON.parse(fs.readFileSync(reportsPath, 'utf8')),
+          { claimId, reports: [report, { ...secondReport, repaired: true }] });
+        return { stdout: JSON.stringify({ ok: true, imported: 2, posted: 0, status: 'COMPLETE' }) };
+      }
+      if (args.includes('-c')) {
+        assert.equal(args.at(-2), claimPath);
+        assert.equal(path.basename(args.at(-1)), 'pending-reports.json');
+        calls.push('python-check-all');
+        return { stdout: '{}' };
       }
       assert(args.includes('--dry-run') && args.includes('--save-only'));
       const state = JSON.parse(fs.readFileSync(args[args.indexOf('--state') + 1], 'utf8'));
-      assert.deepEqual(state.claims[alert.alertId], alert);
-      calls.push('audited-html-only');
-      return { stdout: '' };
+      const [alertId] = Object.keys(state.claims);
+      assert.deepEqual(state.claims[alertId], alertId === alert.alertId ? alert : secondAlert);
+      calls.push('audited-html-only:' + state.claims[alertId].symbolCode);
+      return { stdout: JSON.stringify({ ok: true, dryRun: true, alertId, analysisCutoff: cutoff }) };
     },
     async invokeAnalysis(exe, args, options) {
-      calls.push('model');
       assert.equal(exe, modelPath);
       assert(args.includes('gpt-6.1-sol') && args.includes('model_reasoning_effort="xhigh"'));
       assert(args.includes('forced_login_method="chatgpt"') && args.includes('workspace-write'));
       assert.equal(options.env.DISCORD_TEST_TOKEN, undefined);
+      assert.equal(options.env.TEST_API_TOKEN, undefined);
       assert.equal(options.cwd, claimDir);
-      fs.writeFileSync(reportsPath, JSON.stringify({ reports: [report] }));
+      assert.match(options.input, /PREMIUM_PM_SAVED_PROMPT.txt/);
+      assert.match(options.input, /公式開示監査/);
+      const output = options.input.match(/今回の書き込み先は (.+) のみです。$/u)[1];
+      assert.equal(path.dirname(output), claimDir);
+      const stage = path.basename(output);
+      if (stage.startsWith('official-sources-0-')) {
+        calls.push('model-sources');
+        fs.writeFileSync(output, JSON.stringify({ symbols: claim.alerts.map(({ symbolCode }) => ({
+          symbolCode, sources: [{ url: `https://example.com/${symbolCode}/ir` }],
+        })) }));
+      } else if (stage.startsWith('initial-drafts-')) {
+        calls.push('model-draft-all');
+        const packet = JSON.parse(fs.readFileSync(path.join(claimDir, 'verified-disclosures.json')));
+        assert.deepEqual(packet.alerts.map(item => item.requiredIds), [['doc-1234'], ['doc-2345']]);
+        fs.writeFileSync(output, JSON.stringify({ claimId, reports: [report, secondReport] }));
+      } else {
+        assert(stage.startsWith('repair-1-'));
+        calls.push('model-repair-one');
+        assert.match(options.input, /執筆対象のalertId: \["second-owned-event"\]/);
+        assert.match(options.input, /source content quotation mismatch/);
+        fs.writeFileSync(output, JSON.stringify({ claimId, reports: [{ ...secondReport, repaired: true }] }));
+      }
       return 0;
     },
-  });
-  assert.deepEqual(calls, ['prepare', 'model', 'audited-html-only', 'finish']);
-  assert.equal(received.imported, 1);
+    createDisclosureAudit({ evidenceDirectory }) {
+      assert.equal(evidenceDirectory, path.join(claimDir, 'premium-disclosures'));
+      return {
+        restartPreparation() {},
+        restartValidation() { calls.push('fresh-full-pass'); },
+        async prepare({ claimId: ownedId, symbolCode, receivedAt, analysisCutoff }) {
+          assert.equal(ownedId, claimId);
+          assert.equal(receivedAt, alert.receivedAt);
+          assert.equal(analysisCutoff, cutoff);
+          calls.push('audit:' + symbolCode);
+          return { inventory: { symbolCode }, requiredIds: ['doc-' + symbolCode], documents: [], missingDocumentIds: [] };
+        },
+        async validate({ inventory, report }) {
+          calls.push('verify:' + report.symbolCode);
+          assert.equal(inventory.symbolCode, report.symbolCode);
+          if (report.alertId === secondAlert.alertId && !report.repaired) {
+            throw new Error('source content quotation mismatch');
+          }
+          return { publicUrls: ['https://example.com/official.pdf'] };
+        },
+      };
+    },
+  };
+  const received = await runNewAFundamentalStage(options);
+  assert.deepEqual(calls, [
+    'prepare', 'model-sources', 'audit:1234', 'audit:2345', 'model-draft-all',
+    'python-check-all', 'fresh-full-pass', 'verify:1234', 'audited-html-only:1234', 'verify:2345',
+    'audit:2345', 'model-repair-one', 'python-check-all', 'fresh-full-pass', 'verify:1234',
+    'audited-html-only:1234', 'verify:2345', 'audited-html-only:2345', 'finish',
+  ]);
+  assert.equal(received.imported, 2);
+
+  const retained = path.join(repo, '.cache', 'weak_early_beta', 'new-a-private', 'fundamentals', 'verified', `${today}.json`);
+  fs.mkdirSync(path.dirname(retained), { recursive: true });
+  fs.writeFileSync(retained, JSON.stringify({ claim, reports: JSON.parse(fs.readFileSync(reportsPath)).reports }));
+  calls.length = 0;
+  assert.equal((await runNewAFundamentalStage(options)).imported, 2);
+  assert.deepEqual(calls, ['prepare', 'finish']);
 });

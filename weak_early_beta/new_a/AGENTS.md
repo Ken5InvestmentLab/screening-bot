@@ -12,6 +12,14 @@
 - A model preflight or research failure holds only fundamentals and preserves
   the claim/drafts while the verified detection/publication sequence continues.
   Ownership, immutable input and import-integrity failures still stop the run.
+- Premium parity includes the installed user's normal execution settings.
+  Do not discard user configuration or silently substitute a runtime. Verify
+  local input/output before research; a denied probe holds the claim.
+- Recover a retained claim from a completed daily only through
+  `scripts/windows/new-a-completed-fundamental-recovery.mjs --date YYYY-MM-DD`.
+  It uses a separate lease bound to the selected approved source, completed
+  receipt, producer and original claim/cutoff. Never forge a daily lock,
+  change the original completion, rerun detection or resend notifications.
 - Ordinary publication always retains hash-verified historical and forward
   analyses for the exact presentation episodes, independently of new research.
   Re-publishing an already completed snapshot may restore this presentation

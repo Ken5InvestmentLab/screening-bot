@@ -188,11 +188,28 @@ async function runPremiumResearch({ claim, claimPath, reportPath, config, repo, 
   const references = checkedReferences();
   const childEnv = safeChildEnvironment(fundamentalConfig);
   const invocation = codexInvocation(fundamentalConfig, [
-    '--search', '-a', 'never', 'exec', '--ignore-user-config',
-    '--cd', claimDir, '--skip-git-repo-check', '--sandbox', 'workspace-write',
+    '--search', '-a', 'never', 'exec',
+    '--cd', claimDir, '--skip-git-repo-check',
     '-m', FUNDAMENTAL_MODEL, '-c', `model_reasoning_effort="${FUNDAMENTAL_REASONING_EFFORT}"`,
     '-c', 'forced_login_method="chatgpt"', '--json', '-',
   ]);
+  // Keep the installed user's normal permission policy, including Windows
+  // sandbox initialization. Never silently substitute a different runtime.
+  // Confirm actual file I/O before passing any claim or research instructions.
+  const probeInput = path.join(claimDir, 'runtime-probe-input-' + attempt + '.txt');
+  const probeOutput = path.join(claimDir, 'runtime-probe-output-' + attempt + '.json');
+  const probeValue = randomUUID();
+  fs.writeFileSync(probeInput, probeValue, { flag: 'wx', mode: 0o600 });
+  const probeExit = await invokeAnalysis(invocation.exe, invocation.args, {
+    cwd: claimDir, env: childEnv,
+    input: `実行環境の読み書き確認だけを行います。分析・Web検索・外部送信はしません。${probeInput} を読み、その全文を値とする {"probe":"読んだ文字列"} を ${probeOutput} に保存してください。他のファイルは読み書きしないでください。`,
+    log: path.join(runDir, 'new-a-fundamental-runtime-probe'), timeoutMs: 120_000,
+  });
+  assertClaim();
+  if (probeExit !== 0 || !fs.existsSync(probeOutput)
+      || readModelFile(probeOutput, env).probe !== probeValue) {
+    throw new Error('Configured Premium runtime cannot read/write its workspace; retain the claim without research');
+  }
   const prompt = [
     'Cloud 2.0が既に取得した不変claimだけを使用します。claimの読み取り元: ' + claimPath,
     '11/24に36件完走した11/2版Premiumの保存済みタスク、手順書、見本、品質チェックの次の固定資料を最初に読んでください:\n' + references.join('\n'),
@@ -340,8 +357,13 @@ export async function runNewAFundamentalStage({
   config, repo, runtime, today, startedAt, runDir, env, runStep, expectedCount,
   invokeAnalysis = command,
   checkDirectUrls = verifyPremiumDirectUrls,
+  completedRecoverySha256 = null,
 }) {
   const payload = ['--runtime', runtime, '--date', today, '--owner-start', startedAt];
+  if (completedRecoverySha256 !== null) {
+    if (!/^[a-f0-9]{64}$/.test(completedRecoverySha256)) throw new Error('Invalid completed fundamental recovery owner');
+    payload.push('--completed-recovery-sha256',completedRecoverySha256);
+  }
   const python = ['-B', '-m', 'weak_early_beta.new_a.fundamentals'];
   const step = async (phase, rest = []) => {
     const result = await runStep(config.pythonPath, [...python, phase, ...payload, ...rest], {

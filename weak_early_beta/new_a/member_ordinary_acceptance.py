@@ -17,7 +17,7 @@ from .files import atomic_write, digest, file_sha, private_root, read
 from .member_release_source_review import (
     ENTRY_NOTICE_REVIEW_SCHEMA, FIXED_TRIAL_FEE_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA, SHARED_DEFAULTS_REVIEW_SCHEMA,
     APPROVAL_TIMEOUT_REVIEW_SCHEMA, FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA, SETTLED_PRICE_REVIEW_SCHEMA,
-    TIERED_SUCCESSOR_SCHEMAS, PREMIUM_LEGACY_REVIEW_SCHEMA, FUNDAMENTAL_RETENTION_REVIEW_SCHEMA,
+    TIERED_SUCCESSOR_SCHEMAS, PREMIUM_LEGACY_REVIEW_SCHEMA, FUNDAMENTAL_RETENTION_REVIEW_SCHEMA, PREMIUM_RUNTIME_REVIEW_SCHEMA,
     CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_UI_REVIEW_SCHEMA,
     COMPLETED_TIMING_REVIEW_SCHEMA,
     FUNDAMENTAL_IMPACT_REVIEW_SCHEMA, FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA,
@@ -52,6 +52,7 @@ MEMBER_SUCCESSORS = {
     SETTLED_PRICE_REVIEW_SCHEMA: APPROVAL_TIMEOUT_REVIEW_SCHEMA,
     APPROVAL_TIMEOUT_REVIEW_SCHEMA: PREMIUM_LEGACY_REVIEW_SCHEMA,
     PREMIUM_LEGACY_REVIEW_SCHEMA: FUNDAMENTAL_RETENTION_REVIEW_SCHEMA,
+    FUNDAMENTAL_RETENTION_REVIEW_SCHEMA: PREMIUM_RUNTIME_REVIEW_SCHEMA,
 }
 VERSION_BOUND_HANDOVERS = frozenset({
     JOURNAL_REVIEW_SCHEMA, FUNDAMENTAL_POPUP_REVIEW_SCHEMA, FUNDAMENTAL_IMPACT_REVIEW_SCHEMA, CLOUD_UI_REVIEW_SCHEMA,
@@ -215,7 +216,8 @@ def _effective_off(policy, database_id, deployment, handover, *, source_review_s
                and prior_deployment["version_id"] != deployment["version_id"]
                and prior_deployment["deployment_id"] != deployment["deployment_id"]
                and prior_id != deployment["deployment_id"]
-               and same_build_input == (source_review_schema in {JOURNAL_REVIEW_SCHEMA, APPROVAL_TIMEOUT_REVIEW_SCHEMA, PREMIUM_LEGACY_REVIEW_SCHEMA})
+               and same_build_input == (source_review_schema in {JOURNAL_REVIEW_SCHEMA, APPROVAL_TIMEOUT_REVIEW_SCHEMA,
+                                                                 PREMIUM_LEGACY_REVIEW_SCHEMA, PREMIUM_RUNTIME_REVIEW_SCHEMA})
                and oldest_observation <= observed <= changed_at,
                "successor deployment or incumbent observation differs")
     row = policy["policy"]

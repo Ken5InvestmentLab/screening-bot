@@ -90,10 +90,18 @@ test('Cloud copies the completed legacy workflow, repairs named reports, validat
     async invokeAnalysis(exe, args, options) {
       assert.equal(exe, modelPath);
       assert(args.includes('gpt-6.1-sol') && args.includes('model_reasoning_effort="xhigh"'));
-      assert(args.includes('forced_login_method="chatgpt"') && args.includes('workspace-write'));
+      assert(args.includes('forced_login_method="chatgpt"'));
+      assert(!args.includes('--ignore-user-config') && !args.includes('--sandbox'));
       assert.equal(options.env.DISCORD_TEST_TOKEN, undefined);
       assert.equal(options.env.TEST_API_TOKEN, undefined);
       assert.equal(options.cwd, claimDir);
+      if (options.input.includes('実行環境の読み書き確認だけ')) {
+        assert(!options.input.includes('claim.json') && !options.input.includes('PREMIUM_PM_SAVED_PROMPT'));
+        const input=options.input.match(/。([^。]+runtime-probe-input-[^ ]+\.txt) を読み/)[1];
+        const output=options.input.match(/を (.+runtime-probe-output-[^ ]+\.json) に保存/)[1];
+        fs.writeFileSync(output,JSON.stringify({probe:fs.readFileSync(input,'utf8')}));
+        return 0;
+      }
       assert.match(options.input, /PREMIUM_PM_SAVED_PROMPT.txt/);
       assert.match(options.input, /11\/2版Premium/);
       assert(!options.input.includes('DISCLOSURE_AUDIT.md'));

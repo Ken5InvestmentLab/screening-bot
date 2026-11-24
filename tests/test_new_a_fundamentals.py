@@ -86,6 +86,56 @@ class NewAFundamentalTests(unittest.TestCase):
     def finish(self, sha=None):
         return stage(self.repo, self.runtime, self.target_day, self.start, "finish", reports_sha256=sha)
 
+    def completed_recovery(self):
+        prepared=self.prepare()
+        claim_path=Path(prepared['claimPath'])
+        (self.runtime/'daily.lock').unlink()
+        atomic_write(self.runtime/'daily-latest.json',{'startedAt':self.start,'date':self.day,'ok':True,
+                     'completedAt':self.day+'T09:30:00Z'})
+        run=read(self.root/'latest-run.json')
+        atomic_write(self.root/'latest-publication.json',{'as_of':self.day,'snapshot_sha256':run['snapshot_sha256'],
+                     'source_version':run['source_version'],'published':True,'active_readback_verified':True})
+        lease={'schema':'NEW_A_COMPLETED_FUNDAMENTAL_RECOVERY_V1','source_commit':'e'*40,'day':self.day,
+               'original_daily_started_at':self.start,'completed_daily_sha256':file_sha(self.runtime/'daily-latest.json'),
+               'producer_sha256':file_sha(self.root/'latest-run.json'),'claim_sha256':file_sha(claim_path),'token':'fixture'}
+        atomic_write(self.runtime/'fundamental-recovery.lock',lease)
+        return prepared,file_sha(self.runtime/'fundamental-recovery.lock')
+
+    def test_completed_recovery_keeps_the_original_claim_cutoff_and_never_replays_detection(self):
+        prepared,lease=self.completed_recovery()
+        claim=read(prepared['claimPath'])
+        snapshot=file_sha(self.target/'snapshot.json')
+        daily=file_sha(self.runtime/'daily-latest.json')
+        with patch('weak_early_beta.new_a.fundamentals.approved_recovery_source',return_value='e'*40):
+            again=stage(self.repo,self.runtime,self.day,self.start,'prepare','2026-11-19T00:00:00Z',recovery_sha256=lease)
+            self.assertEqual(read(again['claimPath']),claim)
+            sha=self.emit_reports(prepared,[self.report(claim['alerts'][0])])
+            result=stage(self.repo,self.runtime,self.day,self.start,'finish',reports_sha256=sha,recovery_sha256=lease)
+        self.assertTrue(result['ok'])
+        self.assertEqual(result['imported'],1)
+        self.assertEqual(result['posted'],0)
+        self.assertEqual(file_sha(self.target/'snapshot.json'),snapshot)
+        self.assertEqual(file_sha(self.runtime/'daily-latest.json'),daily)
+        self.assertFalse((self.runtime/'daily.lock').exists())
+
+    def test_completed_recovery_rejects_a_changed_daily_result_claim_or_source(self):
+        prepared,lease=self.completed_recovery()
+        with patch('weak_early_beta.new_a.fundamentals.approved_recovery_source',return_value='f'*40):
+            with self.assertRaisesRegex(ValueError,'frozen run or admission'):
+                stage(self.repo,self.runtime,self.day,self.start,'prepare',recovery_sha256=lease)
+        with patch('weak_early_beta.new_a.fundamentals.approved_recovery_source',return_value='e'*40):
+            Path(prepared['claimPath']).write_text('{}',encoding='utf-8')
+            with self.assertRaisesRegex(ValueError,'retained claim'):
+                stage(self.repo,self.runtime,self.day,self.start,'prepare',recovery_sha256=lease)
+            self.assertFalse((self.root/'fundamentals/verified').exists())
+
+    def test_completed_recovery_never_competes_with_a_new_daily_runner(self):
+        _,lease=self.completed_recovery()
+        (self.runtime/'daily.lock').write_text('new-owner',encoding='utf-8')
+        with patch('weak_early_beta.new_a.fundamentals.approved_recovery_source',return_value='e'*40):
+            with self.assertRaisesRegex(ValueError,'frozen run or admission'):
+                stage(self.repo,self.runtime,self.day,self.start,'prepare',recovery_sha256=lease)
+
     def report(self, alert):
         fields = {name: "確認した資料に基づくテスト本文" for name in FIELD_ORDER}
         fields["材料インパクト"] = "様子見：テスト本文"

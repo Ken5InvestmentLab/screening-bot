@@ -61,17 +61,52 @@ def _manifest(folder):
     return manifest, receipt
 
 
-def _context(repo, runtime, day, started_at):
+def approved_recovery_source(repo):
+    from .approval_git import approval_blobs
+    from .continuing_transition import ordinary_runtime_release
+    from .continuing_acceptance import head
+    with approval_blobs(repo):
+        release = ordinary_runtime_release(repo)
+        _check(release is not None and release["source_commit"] == head(repo),
+               "completed fundamental recovery requires the selected approved source")
+        return release["source_commit"]
+
+
+def _recovery_owner(repo, runtime, day, started_at, recovery_sha256):
+    lock = runtime / "fundamental-recovery.lock"
+    _check(HEX.fullmatch(recovery_sha256 or "") and lock.resolve() == lock
+           and lock.stat().st_size <= 2048 and file_sha(lock) == recovery_sha256,
+           "completed fundamental recovery owner changed")
+    recovery = read(lock)
+    _check(recovery.get("schema") == "NEW_A_COMPLETED_FUNDAMENTAL_RECOVERY_V1"
+           and recovery.get("day") == day and recovery.get("original_daily_started_at") == started_at
+           and recovery.get("source_commit") == approved_recovery_source(repo)
+           and not (runtime / "daily.lock").exists()
+           and recovery.get("completed_daily_sha256") == file_sha(runtime / "daily-latest.json")
+           and recovery.get("producer_sha256") == file_sha(private_root(repo) / "latest-run.json"),
+           "completed fundamental recovery frozen run or admission changed")
+    owner = read(runtime / "daily-latest.json")
+    _check(owner.get("ok") is True and owner.get("completedAt") and owner.get("date") == day
+           and owner.get("startedAt") == started_at,
+           "completed fundamental recovery requires the original successful daily result")
+    return recovery
+
+
+def _context(repo, runtime, day, started_at, recovery_sha256=None):
     root = private_root(repo)
     _check(dt.date.fromisoformat(day).isoformat() == day, "fundamental date must be canonical")
     runtime = Path(runtime).resolve()
     lock = runtime / "daily.lock"
-    _check(runtime.is_relative_to(repo) and lock.read_text(encoding="utf-8").strip() == started_at,
-           "fundamental stage requires the exact daily lock owner")
+    _check(runtime.is_relative_to(repo), "fundamental runtime is outside the selected checkout")
     owner = read(runtime / "daily-latest.json")
-    _check(owner.get("startedAt") == started_at and owner.get("date") == day
-           and owner.get("stage") == "fundamental" and not owner.get("completedAt"),
-           "fundamental stage differs from the active daily runner")
+    if recovery_sha256 is None:
+        _check(lock.read_text(encoding="utf-8").strip() == started_at,
+               "fundamental stage requires the exact daily lock owner")
+        _check(owner.get("startedAt") == started_at and owner.get("date") == day
+               and owner.get("stage") == "fundamental" and not owner.get("completedAt"),
+               "fundamental stage differs from the active daily runner")
+    else:
+        _recovery_owner(repo, runtime, day, started_at, recovery_sha256)
     latest = root / "latest-run.json"
     run = read(latest)
     _check(run.get("identity") == "NEW_A_CLOUD_DAILY_V1" and run.get("strategy") == "A_BASE"
@@ -81,7 +116,14 @@ def _context(repo, runtime, day, started_at):
            "fundamental stage requires same-day ordinary New A detection")
     publication = root / "latest-publication.json"
     if publication.exists():
-        _check(read(publication).get("as_of", "") < day, "target day already published; do not rerun analysis")
+        published = read(publication)
+        if recovery_sha256 is None:
+            _check(published.get("as_of", "") < day, "target day already published; do not rerun analysis")
+        else:
+            _check(published.get("as_of") == day and published.get("snapshot_sha256") == run["snapshot_sha256"]
+                   and published.get("source_version") == run["source_version"]
+                   and published.get("published") is published.get("active_readback_verified") is True,
+                   "completed recovery must retain the exact current published snapshot")
     target = (root / "runs" / day / run["source_sha256"] / "live").resolve()
     _check(target.is_relative_to(root) and Path(run["snapshot_file"]).resolve() == target / "snapshot.json",
            "fundamental snapshot outside exact owner run")
@@ -92,11 +134,18 @@ def _context(repo, runtime, day, started_at):
            and snapshot["observation_kind"] == "LIVE_OBSERVATION"
            and _instant(snapshot["observed_at"]).astimezone(JST).date().isoformat() == day,
            "fundamental live snapshot provenance changed")
-    base = target / "bundle"
-    _check(base.resolve() == base, "fundamental base dataset escaped its immutable directory")
+    base = Path(run["bundle_directory"]) if recovery_sha256 else target / "bundle"
+    _check(base.resolve() == base and base.parent == target,
+           "fundamental base dataset escaped its immutable directory")
     manifest, receipt = _manifest(base)
     _check(manifest["daily_snapshot_sha256"] == snapshot["payload_sha256"], "base dataset differs from detection")
-    _check(lock.read_text(encoding="utf-8").strip() == started_at, "fundamental daily lock owner changed")
+    if recovery_sha256:
+        recovery = _recovery_owner(repo, runtime, day, started_at, recovery_sha256)
+        claim = target / "fundamental-analysis" / "claim.json"
+        _check(claim.resolve() == claim and claim.is_file() and file_sha(claim) == recovery.get("claim_sha256"),
+               "completed recovery requires the exact retained claim")
+    else:
+        _check(lock.read_text(encoding="utf-8").strip() == started_at, "fundamental daily lock owner changed")
     return root, target, latest, run, snapshot, base, manifest, receipt
 
 
@@ -408,8 +457,8 @@ def retain_verified_for_publication(root, run):
     return result
 
 
-def stage(repo, runtime, day, started_at, action, analysis_started=None, reports_sha256=None):
-    root, target, latest, run, snapshot, base, manifest, receipt = _context(repo, runtime, day, started_at)
+def stage(repo, runtime, day, started_at, action, analysis_started=None, reports_sha256=None, recovery_sha256=None):
+    root, target, latest, run, snapshot, base, manifest, receipt = _context(repo, runtime, day, started_at, recovery_sha256)
     rows = _rows(base, manifest)
     stage_path = target / "fundamental-analysis"
     claim_path = stage_path / "claim.json"
@@ -452,8 +501,12 @@ def stage(repo, runtime, day, started_at, action, analysis_started=None, reports
     forward = _history(root, day)
     historical, counts = _historical_history(root, historical_sha, rows, forward, day)
     output, source = _bundle(base, manifest, receipt, target, rows, {**historical, **forward})
-    _check(read(latest) == run and (Path(runtime) / "daily.lock").read_text(encoding="utf-8").strip() == started_at,
-           "detection or owner changed before final bundle handoff")
+    if recovery_sha256:
+        _recovery_owner(repo, Path(runtime), day, started_at, recovery_sha256)
+    else:
+        _check((Path(runtime) / "daily.lock").read_text(encoding="utf-8").strip() == started_at,
+               "daily owner changed before final bundle handoff")
+    _check(read(latest) == run, "detection changed before final bundle handoff")
     result = {"ok": True, "status": "COMPLETE" if claim["claimedCount"] else "NO_NEW_SIGNALS",
               "imported": claim["claimedCount"], "posted": 0, "receiptSha256": saved["sha256"]}
     if counts is not None:
@@ -470,9 +523,11 @@ def main():
     parser.add_argument("--owner-start", required=True)
     parser.add_argument("--analysis-start")
     parser.add_argument("--reports-sha256")
+    parser.add_argument("--completed-recovery-sha256")
     args = parser.parse_args()
     repo = Path(__file__).resolve().parents[2]
-    print(json.dumps(stage(repo, args.runtime, args.date, args.owner_start, args.action, args.analysis_start, args.reports_sha256)))
+    print(json.dumps(stage(repo, args.runtime, args.date, args.owner_start, args.action, args.analysis_start,
+                           args.reports_sha256, args.completed_recovery_sha256)))
 
 
 if __name__ == "__main__":

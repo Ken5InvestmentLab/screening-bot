@@ -602,6 +602,27 @@ class PresentationSuccessorReviewTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "retention successor differs from the reviewed bytes"):
                 review.review_member_release_source(self.repo, baseline, self.commit("Change research"))
 
+    def test_premium_runtime_recovery_pins_the_exact_procedure_without_widening_member_access(self):
+        config=json.dumps(self.config,indent=2).encode().replace(
+            b'    "CLOUD_MEMBER_VIEW_ENABLED": "true",\n',review._ROLE_ONLY_CONFIG_LINE+review._TIERED_AUDIENCE_LINE)
+        self.write(review.CONFIG,config)
+        paths=review._PREMIUM_RUNTIME_PRODUCT_PATHS|review._SUCCESSOR_REVIEW_PATHS
+        for path in sorted(paths-review._PREMIUM_RUNTIME_ADDITIONS):
+            self.write(path,b'prior '+path.encode())
+        baseline=self.commit('Approved retention and cards')
+        for path in sorted(paths):
+            self.write(path,b'reviewed '+path.encode())
+        candidate=self.commit('Restore normal Premium runtime and exact completed-claim recovery')
+        product_sha=review._product_digest(self.repo,candidate,review._PREMIUM_RUNTIME_PRODUCT_PATHS)
+        with (patch.object(review,'_PREMIUM_RUNTIME_BASELINE',baseline),
+              patch.object(review,'_PREMIUM_RUNTIME_PRODUCT_SHA256',product_sha)):
+            result=review.review_member_release_source(self.repo,baseline,candidate)
+            self.assertEqual(result['schema'],review.PREMIUM_RUNTIME_REVIEW_SCHEMA)
+            self.assertEqual(result['member_audience'],'tiered')
+            self.write('scripts/windows/new-a-completed-fundamental-recovery.mjs',b'unreviewed detection replay')
+            with self.assertRaisesRegex(ValueError,'runtime successor differs from the reviewed bytes'):
+                review.review_member_release_source(self.repo,baseline,self.commit('Change recovery boundary'))
+
     def test_settled_prices_require_exact_bytes_and_preserve_the_existing_tiered_boundary(self):
         config = json.dumps(self.config, indent=2).encode().replace(
             b'    "CLOUD_MEMBER_VIEW_ENABLED": "true",\n', review._ROLE_ONLY_CONFIG_LINE + review._TIERED_AUDIENCE_LINE)

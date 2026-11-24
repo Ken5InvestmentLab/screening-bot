@@ -36,8 +36,10 @@ SETTLED_PRICE_REVIEW_SCHEMA = "NEW_A_MEMBER_SETTLED_PRICE_SUCCESSOR_SOURCE_REVIE
 APPROVAL_TIMEOUT_REVIEW_SCHEMA = "NEW_A_MEMBER_APPROVAL_TIMEOUT_SUCCESSOR_SOURCE_REVIEW_V1"
 PREMIUM_LEGACY_REVIEW_SCHEMA = "NEW_A_MEMBER_PREMIUM_LEGACY_SUCCESSOR_SOURCE_REVIEW_V1"
 FUNDAMENTAL_RETENTION_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_RETENTION_SUCCESSOR_SOURCE_REVIEW_V1"
+PREMIUM_RUNTIME_REVIEW_SCHEMA = "NEW_A_MEMBER_PREMIUM_RUNTIME_SUCCESSOR_SOURCE_REVIEW_V1"
 TIERED_SUCCESSOR_SCHEMAS = frozenset({
     FUNDAMENTAL_RETENTION_REVIEW_SCHEMA,
+    PREMIUM_RUNTIME_REVIEW_SCHEMA,
     PREMIUM_LEGACY_REVIEW_SCHEMA,
     FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA, SETTLED_PRICE_REVIEW_SCHEMA, APPROVAL_TIMEOUT_REVIEW_SCHEMA,
 })
@@ -456,6 +458,16 @@ _FUNDAMENTAL_RETENTION_PRODUCT_PATHS = frozenset({
     "weak_early_beta/new_a/notifications.py", "tests/test_new_a_connection.py",
 })
 _FUNDAMENTAL_RETENTION_PRODUCT_SHA256 = "8cb6a0394a599d8906b533f436b4ea34893c23829cb8bc4e2e6d3908356c1fed"
+_PREMIUM_RUNTIME_BASELINE = "ba88d386c111422ae09e203e4f3a6f53dd8806c1"
+_PREMIUM_RUNTIME_ADDITIONS = frozenset({
+    "scripts/windows/new-a-completed-fundamental-recovery.mjs",
+    "scripts/windows/test-new-a-completed-fundamental-recovery.mjs",
+})
+_PREMIUM_RUNTIME_PRODUCT_PATHS = _PREMIUM_RUNTIME_ADDITIONS | {
+    "scripts/windows/new-a-fundamental-stage.mjs", "scripts/windows/test-new-a-fundamental-stage.mjs",
+    "weak_early_beta/new_a/fundamentals.py", "tests/test_new_a_fundamentals.py", "weak_early_beta/new_a/AGENTS.md",
+}
+_PREMIUM_RUNTIME_PRODUCT_SHA256 = "f41f26faeda66306d9a54ab7a52b36638684d551b983600759a1c04b8ba8a71a"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
     CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
     FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA, UNIFIED_MEMBER_UI_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA,
@@ -553,7 +565,14 @@ def _check_role_only_successor(repo, candidate, paths):
 
 
 def _member_successor(repo, baseline, candidate):
-    if baseline == _FUNDAMENTAL_RETENTION_BASELINE:
+    if baseline == _PREMIUM_RUNTIME_BASELINE:
+        paths = _successor_paths(repo, baseline, candidate, allowed_additions=_PREMIUM_RUNTIME_ADDITIONS)
+        if paths != _PREMIUM_RUNTIME_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
+            raise ValueError("Cloud Premium runtime successor differs from the exact reviewed source scope")
+        if _product_digest(repo, candidate, _PREMIUM_RUNTIME_PRODUCT_PATHS) != _PREMIUM_RUNTIME_PRODUCT_SHA256:
+            raise ValueError("Cloud Premium runtime successor differs from the reviewed bytes")
+        schema = PREMIUM_RUNTIME_REVIEW_SCHEMA
+    elif baseline == _FUNDAMENTAL_RETENTION_BASELINE:
         paths = _successor_paths(repo, baseline, candidate)
         if paths != _FUNDAMENTAL_RETENTION_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
             raise ValueError("Cloud fundamental retention successor differs from the exact reviewed source scope")
@@ -750,7 +769,8 @@ def review_member_release_source(repo, baseline, candidate):
                          _SHARED_DEFAULTS_BASELINE, _ENTRY_NOTICE_BASELINE}
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "role_only"):
             raise ValueError("Version-bound member successor requires the existing role-only audience")
-        if (baseline in {_SETTLED_PRICE_BASELINE, _APPROVAL_TIMEOUT_BASELINE, _PREMIUM_LEGACY_BASELINE, _FUNDAMENTAL_RETENTION_BASELINE}
+        if (baseline in {_SETTLED_PRICE_BASELINE, _APPROVAL_TIMEOUT_BASELINE, _PREMIUM_LEGACY_BASELINE,
+                         _FUNDAMENTAL_RETENTION_BASELINE, _PREMIUM_RUNTIME_BASELINE}
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "tiered"):
             raise ValueError("Cloud successor requires the existing tiered audience")
         return _member_successor(repo, baseline, candidate)

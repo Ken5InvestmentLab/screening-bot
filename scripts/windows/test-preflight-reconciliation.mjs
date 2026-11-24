@@ -183,3 +183,36 @@ test('approval timeout binds host evidence, owner day, and immutable successor a
   fs.appendFileSync(f.activation,'\n');
   assert.throws(()=>f.verify(issued.file),/successor activation changed/);
 });
+
+
+test('timeout recovery admits only the one verified intermediate Premium cutover and rejects archive tampering', async t => {
+  const f = timeoutFixture(t);
+  const root = path.join(f.repo, '.cache/weak_early_beta/new-a-private');
+  const current = JSON.parse(fs.readFileSync(f.activation));
+  const archive = path.join(root, 'continuing-acceptance/applications', current.owner_acceptance.application_id);
+  const audited = JSON.parse(fs.readFileSync(path.join(archive, 'member-ordinary.json')));
+  const intermediate = '1d3033f6b4b4ceeb6443d9a4ebef71974524d9cb';
+  const previousId = '9'.repeat(64), priorAcceptance = { sha256: '8'.repeat(64) };
+  const original = JSON.stringify({ owner_acceptance: { application_id: previousId, continuing_acceptance: priorAcceptance } });
+  fs.writeFileSync(path.join(archive, 'original.json'), original);
+  const previousRelease = {...f.approved, source_commit: intermediate, activation_sha256: sha(original),
+    version_id: '33333333-3333-4333-8333-333333333333'};
+  const previousAudit = JSON.stringify({...audited, source_review:
+    {schema:'NEW_A_MEMBER_APPROVAL_TIMEOUT_SUCCESSOR_SOURCE_REVIEW_V1'}, deployment: previousRelease});
+  const previousArchive = path.join(root, 'continuing-acceptance/applications', previousId);
+  fs.mkdirSync(previousArchive, {recursive:true});
+  fs.writeFileSync(path.join(previousArchive, 'member-ordinary.json'), previousAudit);
+  fs.writeFileSync(path.join(previousArchive, 'completed.json'), JSON.stringify({
+    schema:'NEW_A_MEMBER_ORDINARY_APPLICATION_V1',source_commit:intermediate,
+    after_sha256:sha(original),member_ordinary_sha256:sha(previousAudit)}));
+  const updated = JSON.stringify({...audited, predecessor: previousRelease,
+    source_review:{schema:'NEW_A_MEMBER_PREMIUM_LEGACY_SUCCESSOR_SOURCE_REVIEW_V1'}});
+  fs.writeFileSync(path.join(archive, 'member-ordinary.json'), updated);
+  const complete = JSON.parse(fs.readFileSync(path.join(archive, 'completed.json')));
+  fs.writeFileSync(path.join(archive, 'completed.json'), JSON.stringify({...complete,
+    member_ordinary_sha256:sha(updated),previous_acceptance:priorAcceptance}));
+  const issued = await f.issue();
+  assert.equal(f.verify(issued.file).record.original_source_commit, f.prior.startCommit);
+  fs.appendFileSync(path.join(previousArchive, 'member-ordinary.json'),'\n');
+  assert.throws(()=>f.verify(issued.file), /intermediate audit/);
+});

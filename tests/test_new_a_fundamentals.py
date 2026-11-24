@@ -108,7 +108,7 @@ class NewAFundamentalTests(unittest.TestCase):
         prepared = self.prepare()
         self.assertEqual(prepared["claimed"], 1)
         claim = read(prepared["claimPath"])
-        self.assertEqual(claim["rules"], {"model": "gpt-6.1-sol", "reasoningEffort": "xhigh", "destination": "html"})
+        self.assertEqual(claim["rules"], {"model": "gpt-6.1-sol", "reasoningEffort": "xhigh", "destination": "html", "workflow": "premium-legacy-1fa6d89"})
         self.assertEqual(claim["alerts"][0]["eventId"], self.event["event_id"])
         self.assertEqual(claim["alerts"][0]["receivedAt"], "2026-11-18T08:10:00Z")
         report = self.report(claim["alerts"][0])

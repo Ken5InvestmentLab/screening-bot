@@ -708,9 +708,17 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
 
 
     const regularAnalysis = !delayedPlan && today === executionDate;
+    let fundamentalUnavailable = false;
     if (regularAnalysis && config.fundamentalConfigPath) {
       saveProgress('model-preflight');
-      await probeFundamentalModel(config, runDir, env);
+      try {
+        await probeFundamentalModel(config, runDir, env);
+      } catch {
+        fundamentalUnavailable = true;
+        result.fundamental = { ok: false, status: 'HELD', imported: 0, posted: 0,
+          reason: 'model_preflight_failed' };
+        saveProgress('model-preflight', { fundamental: result.fundamental });
+      }
     }
     saveProgress('detection');
     const cacheRecovery = prior ? await verifiedDetectionCache(repo, today) : null;
@@ -765,10 +773,17 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
       await checkApprovedWorker(approvedRelease, result.startCommit, 'approved-release-after-detection');
     }
     await sendSystemLog('detected', ['--count', String(result.selectorRows)]);
-    if (regularAnalysis) {
+    if (regularAnalysis && !fundamentalUnavailable) {
       saveProgress('fundamental');
-      result.fundamental = await runNewAFundamentalStage({ config, repo, runtime, today, startedAt, runDir, env,
-        runStep: requireOk, expectedCount: result.selectorRows });
+      try {
+        result.fundamental = await runNewAFundamentalStage({ config, repo, runtime, today, startedAt, runDir, env,
+          runStep: requireOk, expectedCount: result.selectorRows });
+      } catch (error) {
+        if (error.cloudFundamentalHeld !== true) throw error;
+        result.fundamental = { ok: false, status: 'HELD', imported: 0, posted: 0,
+          reason: 'premium_legacy_research_failed', claimRetained: true };
+        saveProgress('fundamental', { fundamental: result.fundamental });
+      }
     }
 
 

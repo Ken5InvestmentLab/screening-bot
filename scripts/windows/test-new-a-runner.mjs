@@ -29,7 +29,7 @@ const ordinaryFixture = (head = 'f'.repeat(40)) => ({
  activation_sha256: '1'.repeat(64), build_input_sha256: '2'.repeat(64), policy_sha256: '3'.repeat(64),
  tag: 'cloud-deploy-transition-fixture', ci_run_id: 1234,
 });
-export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nativeInspector=null,dateOverride=null,detected=0,fundamentalOK=true,approvedWorker=null,failApprovedAt=null,noticeConfigured=false,noticeHost=null,memberEnabled=false,memberDrift=false,detectFailure=null}={}){
+export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nativeInspector=null,dateOverride=null,detected=0,fundamentalOK=true,modelOK=true,fundamentalInvariant=false,approvedWorker=null,failApprovedAt=null,noticeConfigured=false,noticeHost=null,memberEnabled=false,memberDrift=false,detectFailure=null}={}){
  const {repo,runtime}=fixture(),today=dateOverride||'2026-11-13',head='f'.repeat(40),calls=[];let sent=false;
  const config={repoPath:repo,runtimeDir:runtime,nodePath:'FAKE_NODE_NO_EXEC',pythonPath:'FAKE_PYTHON_NO_EXEC',npmPath:'FAKE_NPM_NO_EXEC',ghPath:'FAKE_GH_NO_EXEC',date:today};
  if(memberEnabled)write(path.join(repo,'weak-early-beta-gate/wrangler.jsonc'),{
@@ -44,10 +44,10 @@ export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nati
  const context={fs,path,isDeepStrictEqual,console:{log(){},error(){}},process:{pid:1234,platform:'linux',env:{},exitCode:0},Date,JSON,randomUUID:crypto.randomUUID,createHash:crypto.createHash,
   loadDailyConfig:()=>config,readJson:p=>JSON.parse(fs.readFileSync(p,'utf8')),writeJson:write,atomicJson:write,appendEvent:(p,v)=>{fs.mkdirSync(path.dirname(p),{recursive:true});fs.appendFileSync(p,JSON.stringify(v)+'\n');},
   loadDotEnv:()=>{},jstDate:()=>today,newATaskPlan:taskRoute.newATaskPlan,parseGitStatus:s=>s.trim()?['dirty']:[],
-  probeFundamentalModel:async()=>{assert(detected>0);calls.push({args:['fundamental-model-preflight']});},
+  probeFundamentalModel:async()=>{assert(detected>0);calls.push({args:['fundamental-model-preflight']});if(!modelOK)throw Error('model unavailable');},
   runNewAFundamentalStage:async({expectedCount})=>{
    assert.equal(expectedCount,detected);calls.push({args:['new-a-fundamental']});
-   if(!fundamentalOK)throw Error('synthetic analysis failed');
+   if(!fundamentalOK)throw Object.assign(Error('synthetic analysis failed'),fundamentalInvariant?{}:{cloudFundamentalHeld:true});
    if(detected>0){metadata={...metadata,source_version:'e'.repeat(64)};write(path.join(local,'latest-run.json'),metadata);}
    return {ok:true,status:detected?'COMPLETE':'NO_NEW_SIGNALS',imported:detected,posted:0};
   },drainFundamentalQueue:()=>{throw Error('FUNDAMENTAL_QUEUE_MUST_NOT_RUN');},assertHtmlImports:()=>{throw Error('FUNDAMENTAL_STATE_MUST_NOT_READ');},
@@ -138,12 +138,13 @@ test('Fundamental analysis covers the current batch before report and publicatio
  assert(before>=0&&before<detection&&detection<analysis&&analysis<publish);
  assert.equal(result.new_a.source_version,'e'.repeat(64));
 });
-test('Fundamental failure retains detection without starting report deployment or notifications',async()=>{
+test('Fundamental research failure is held while one detection and publication finish',async()=>{
  const f=runnerFixture({detected:2,fundamentalOK:false});f.config.fundamentalConfigPath='SYNTHETIC';
  const result=await f.run();
- assert.equal(result.ok,false);assert.equal(result.stage,'fundamental');
+ assert.equal(result.ok,true);assert.equal(result.fundamental.status,'HELD');
+ assert.equal(result.fundamental.claimRetained,true);
  assert.equal(f.calls.filter(c=>c.args.includes('daily')&&c.args.includes('--strategy')).length,1);
- assert(!f.calls.some(c=>c.args.includes('publish')||c.args.includes('notify')||c.args[0]==='tag'));
+ assert(f.calls.some(c=>c.args.includes('publish')));
 });
 test('Health success alone cannot complete owner publication or trigger notify',async()=>{
  const f=runnerFixture({gateAccepted:false});const result=await f.run();assert.equal(result.ok,false);assert(!f.calls.some(c=>c.args.includes('weak_early_beta.new_a.cli')&&c.args.includes('notify')));receipts.push({case:'owner_proof_required_beyond_health',passed:true});
@@ -417,3 +418,20 @@ test('A-only launch preflight passes with absent fundamental config; legacy stil
  assert.equal((await context.check(configPath,{strategy:'A_BASE',platform:'linux',command})).ok,true);await assert.rejects(context.check(configPath,{strategy:'legacy',platform:'linux',command}));receipts.push({case:'launch_preflight_no_fundamental_A_only',passed:true,credentialsRead:false});
 });
 test.after(()=>{write(path.join(ROOT,'.cache/new-a-runner-tests/verification.json'),{passed:true,groups:receipts.length,checks:receipts,scope:'EXACT_STAGED_MAIN_AND_PREFLIGHT_WITH_SYNTHETIC_CONFIG_EMPTY_ENV_FAKE_SUBPROCESS_NETWORK_BOUNDARIES',actualSubprocessesExecuted:0,actualNotifications:0,actualGitWrites:0,actualDeployments:0,sourceHashes:{runner:hash(source),preflight:hash(preflight),journal:hash(journal)}});});
+
+
+test('Unavailable fundamental model does not create a claim and still publishes detection',async()=>{
+ const f=runnerFixture({detected:2,modelOK:false});f.config.fundamentalConfigPath='SYNTHETIC';
+ const result=await f.run();
+ assert.equal(result.ok,true);assert.equal(result.fundamental.reason,'model_preflight_failed');
+ assert(!f.calls.some(c=>c.args.includes('new-a-fundamental')));
+ assert.equal(f.calls.filter(c=>c.args.includes('daily')&&c.args.includes('--strategy')).length,1);
+ assert(f.calls.some(c=>c.args.includes('publish')));
+});
+test('Fundamental ownership or import invariant failure still stops publication',async()=>{
+ const f=runnerFixture({detected:2,fundamentalOK:false,fundamentalInvariant:true});
+ f.config.fundamentalConfigPath='SYNTHETIC';
+ const result=await f.run();
+ assert.equal(result.ok,false);assert.equal(result.stage,'fundamental');
+ assert(!f.calls.some(c=>c.args.includes('publish')||c.args.includes('notify')));
+});

@@ -34,7 +34,9 @@ FIXED_TRIAL_FEE_REVIEW_SCHEMA = "NEW_A_MEMBER_FIXED_TRIAL_FEE_SUCCESSOR_SOURCE_R
 FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA = "NEW_A_MEMBER_FREE_COMPLETED_ANALYTICS_SUCCESSOR_SOURCE_REVIEW_V1"
 SETTLED_PRICE_REVIEW_SCHEMA = "NEW_A_MEMBER_SETTLED_PRICE_SUCCESSOR_SOURCE_REVIEW_V1"
 APPROVAL_TIMEOUT_REVIEW_SCHEMA = "NEW_A_MEMBER_APPROVAL_TIMEOUT_SUCCESSOR_SOURCE_REVIEW_V1"
+PREMIUM_LEGACY_REVIEW_SCHEMA = "NEW_A_MEMBER_PREMIUM_LEGACY_SUCCESSOR_SOURCE_REVIEW_V1"
 TIERED_SUCCESSOR_SCHEMAS = frozenset({
+    PREMIUM_LEGACY_REVIEW_SCHEMA,
     FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA, SETTLED_PRICE_REVIEW_SCHEMA, APPROVAL_TIMEOUT_REVIEW_SCHEMA,
 })
 _PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumのアクセス権を購入する</a>'.encode()
@@ -419,6 +421,28 @@ _APPROVAL_TIMEOUT_PRODUCT_PATHS = _APPROVAL_TIMEOUT_ADDITIONS | {
     "weak_early_beta/scripts/post_historical_snapshot.mjs",
 }
 _APPROVAL_TIMEOUT_PRODUCT_SHA256 = "557a13502c3d74831c4d47c20bd51a597f3100e276a14daa5d387383ff8277b5"
+_PREMIUM_LEGACY_BASELINE = "1d3033f6b4b4ceeb6443d9a4ebef71974524d9cb"
+_PREMIUM_LEGACY_ADDITIONS = frozenset({
+    "scripts/windows/cloud-premium-references/PREMIUM_LEGACY_WORKER.mjs",
+    "scripts/windows/cloud-premium-references/PREMIUM_NO_SEND_PRELOAD.mjs",
+    "scripts/windows/cloud-premium-references/AGENTS.md",
+})
+_PREMIUM_LEGACY_PRODUCT_PATHS = _PREMIUM_LEGACY_ADDITIONS | {
+    "weak_early_beta/new_a/AGENTS.md",
+    "scripts/windows/weak-early-beta-fundamental-runner.mjs",
+    "weak_early_beta/new_a/fundamentals.py",
+    "tests/test_new_a_fundamentals.py",
+    "scripts/windows/cloud-premium-references/AUTOMATION_PROMPT.md",
+    "scripts/windows/cloud-premium-references/FUNDAMENTAL_EXAMPLES.md",
+    "scripts/windows/cloud-premium-references/PREMIUM_PM_SAVED_PROMPT.txt",
+    "scripts/windows/new-a-fundamental-stage.mjs",
+    "scripts/windows/test-new-a-fundamental-stage.mjs",
+    "scripts/windows/weak-early-beta-daily-runner.mjs",
+    "scripts/windows/test-new-a-runner.mjs",
+    "scripts/windows/preflight-reconciliation.mjs",
+    "scripts/windows/test-preflight-reconciliation.mjs",
+}
+_PREMIUM_LEGACY_PRODUCT_SHA256 = "c6e04f5287968184ccd3d25f737d14ce3265542dbfdc1efc12ae1169a11a08f3"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
     CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
     FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA, UNIFIED_MEMBER_UI_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA,
@@ -516,7 +540,14 @@ def _check_role_only_successor(repo, candidate, paths):
 
 
 def _member_successor(repo, baseline, candidate):
-    if baseline == _APPROVAL_TIMEOUT_BASELINE:
+    if baseline == _PREMIUM_LEGACY_BASELINE:
+        paths = _successor_paths(repo, baseline, candidate, allowed_additions=_PREMIUM_LEGACY_ADDITIONS)
+        if paths != _PREMIUM_LEGACY_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
+            raise ValueError("Cloud Premium legacy successor differs from the exact reviewed source scope")
+        if _product_digest(repo, candidate, _PREMIUM_LEGACY_PRODUCT_PATHS) != _PREMIUM_LEGACY_PRODUCT_SHA256:
+            raise ValueError("Cloud Premium legacy successor differs from the reviewed bytes")
+        schema = PREMIUM_LEGACY_REVIEW_SCHEMA
+    elif baseline == _APPROVAL_TIMEOUT_BASELINE:
         paths = _successor_paths(repo, baseline, candidate, allowed_additions=_APPROVAL_TIMEOUT_ADDITIONS)
         if paths != _APPROVAL_TIMEOUT_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
             raise ValueError("Cloud approval-timeout successor differs from the exact reviewed source scope")
@@ -699,7 +730,7 @@ def review_member_release_source(repo, baseline, candidate):
                          _SHARED_DEFAULTS_BASELINE, _ENTRY_NOTICE_BASELINE}
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "role_only"):
             raise ValueError("Version-bound member successor requires the existing role-only audience")
-        if (baseline in {_SETTLED_PRICE_BASELINE, _APPROVAL_TIMEOUT_BASELINE}
+        if (baseline in {_SETTLED_PRICE_BASELINE, _APPROVAL_TIMEOUT_BASELINE, _PREMIUM_LEGACY_BASELINE}
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "tiered"):
             raise ValueError("Cloud successor requires the existing tiered audience")
         return _member_successor(repo, baseline, candidate)

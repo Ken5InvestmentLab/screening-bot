@@ -11,7 +11,7 @@ const FUNDAMENTAL_CHANNEL_ID = '1550876675884060702';
 const FUNDAMENTAL_MODEL = 'gpt-6.1-sol';
 const FUNDAMENTAL_REASONING_EFFORT = 'xhigh';
 
-const CLOUD_REPORT_CONTRACT = [
+export const CLOUD_LEGACY_REPORT_CONTRACT = [
   'CloudはHTML保存専用です。長期材料と増資の主要根拠を開示リンクとdisclosuresに欠落なく保持し、Discord向け文字数制限のために証跡を削除・省略しないでください。Discordへの投稿は行いません。',
   'Cloud固有のJSON契約: sourceChecksは必ずオブジェクトの配列です。role名をキーにしたオブジェクトにはしません。',
   '実際に確認した公式IRとIRBANKまたはTDnetについて、次の形の確認記録を必ず含めてください。例のURLや本文は確認した実値へ置き換え、未確認の資料を確認済みにしないでください。',
@@ -21,9 +21,9 @@ const CLOUD_REPORT_CONTRACT = [
   ] }),
   '各記録のurlは確認したhttps URLとし、disclosuresには採用資料ごとのtitle、publishedAt、url、contentReviewed:trueを保存します。開示リンクのURLはdisclosuresと一致させます。開示がない場合は確認根拠をnoMaterialDisclosureReasonに記録します。',
   'alertId、signalDate、analysisCutoffは不変claimの値と文字列まで一致させ、auditStatusは監査を通過した場合だけpassにしてください。',
-  CLOUD_CAPITAL_RISK_CONTRACT,
-  CLOUD_LONG_TERM_MATERIAL_CONTRACT,
 ].join('\n');
+const CLOUD_REPORT_CONTRACT = [CLOUD_LEGACY_REPORT_CONTRACT,
+  CLOUD_CAPITAL_RISK_CONTRACT, CLOUD_LONG_TERM_MATERIAL_CONTRACT].join('\n');
 
 
 function readJson(file) {

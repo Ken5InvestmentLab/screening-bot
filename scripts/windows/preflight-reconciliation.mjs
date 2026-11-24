@@ -99,9 +99,35 @@ function checkedTimeoutRelease(repo, head, proof, release) {
   const auditedRaw = checkedFile(repo, path.join(archive, 'member-ordinary.json'));
   const audited = JSON.parse(auditedRaw.toString('utf8').replace(/^\uFEFF/, ''));
   const keys = ['source_commit', 'version_id', 'build_input_sha256', 'policy_sha256', 'ci_run_id', 'tag'];
+  let originalPredecessor = audited.predecessor?.source_commit === proof.original_source_commit;
+  if (!originalPredecessor) {
+    // The user selected the completed Premium runtime while this timeout repair
+    // was being released. Admit that one exact intermediate accepted release.
+    check(audited.predecessor?.source_commit === '1d3033f6b4b4ceeb6443d9a4ebef71974524d9cb'
+      && audited.source_review?.schema === 'NEW_A_MEMBER_PREMIUM_LEGACY_SUCCESSOR_SOURCE_REVIEW_V1',
+      'exact approved successor audit differs');
+    const originalRaw = checkedFile(repo, path.join(archive, 'original.json'));
+    const original = JSON.parse(originalRaw);
+    const previousId = original.owner_acceptance?.application_id;
+    check(sha(originalRaw) === audited.predecessor.activation_sha256 && sha256.test(previousId)
+      && isDeepStrictEqual(original.owner_acceptance?.continuing_acceptance, completed.previous_acceptance),
+      'exact approved intermediate activation differs');
+    const previousArchive = path.join(root, 'continuing-acceptance', 'applications', previousId);
+    const previousCompleted = JSON.parse(checkedFile(repo, path.join(previousArchive, 'completed.json')));
+    const previousAuditRaw = checkedFile(repo, path.join(previousArchive, 'member-ordinary.json'));
+    const previousAudit = JSON.parse(previousAuditRaw);
+    check(previousCompleted.schema === 'NEW_A_MEMBER_ORDINARY_APPLICATION_V1'
+      && previousCompleted.source_commit === audited.predecessor.source_commit
+      && previousCompleted.after_sha256 === audited.predecessor.activation_sha256
+      && previousCompleted.member_ordinary_sha256 === sha(previousAuditRaw)
+      && previousAudit.source_review?.schema === 'NEW_A_MEMBER_APPROVAL_TIMEOUT_SUCCESSOR_SOURCE_REVIEW_V1'
+      && keys.every(key => previousAudit.deployment?.[key] === audited.predecessor[key]),
+      'exact approved intermediate audit differs');
+    originalPredecessor = previousAudit.predecessor?.source_commit === proof.original_source_commit;
+  }
   check(completed.schema === 'NEW_A_MEMBER_ORDINARY_APPLICATION_V1' && completed.source_commit === head
     && completed.after_sha256 === release.activation_sha256 && completed.member_ordinary_sha256 === sha(auditedRaw)
-    && audited.predecessor?.source_commit === proof.original_source_commit && version.test(audited.predecessor?.version_id)
+    && originalPredecessor && version.test(audited.predecessor?.version_id)
     && audited.predecessor.version_id !== release.version_id && keys.every(key => audited.deployment?.[key] === release[key]),
     'exact approved successor audit differs');
 }

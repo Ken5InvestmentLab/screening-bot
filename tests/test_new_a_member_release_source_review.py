@@ -560,6 +560,27 @@ class PresentationSuccessorReviewTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "approval-timeout successor differs from the reviewed bytes"):
                 review.review_member_release_source(self.repo, baseline, self.commit("Change recovery"))
 
+    def test_completed_premium_legacy_copy_requires_exact_bytes_and_existing_roles(self):
+        config = json.dumps(self.config, indent=2).encode().replace(
+            b'    "CLOUD_MEMBER_VIEW_ENABLED": "true",\n', review._ROLE_ONLY_CONFIG_LINE + review._TIERED_AUDIENCE_LINE)
+        self.write(review.CONFIG, config)
+        paths = review._PREMIUM_LEGACY_PRODUCT_PATHS | review._SUCCESSOR_REVIEW_PATHS
+        for path in sorted(paths - review._PREMIUM_LEGACY_ADDITIONS):
+            self.write(path, b"prior " + path.encode())
+        baseline = self.commit("Approved tiered worker")
+        for path in sorted(paths):
+            self.write(path, b"reviewed " + path.encode())
+        candidate = self.commit("Fix local approval timeout")
+        product_sha = review._product_digest(self.repo, candidate, review._PREMIUM_LEGACY_PRODUCT_PATHS)
+        with (patch.object(review, "_PREMIUM_LEGACY_BASELINE", baseline),
+              patch.object(review, "_PREMIUM_LEGACY_PRODUCT_SHA256", product_sha)):
+            result = review.review_member_release_source(self.repo, baseline, candidate)
+            self.assertEqual(result["schema"], review.PREMIUM_LEGACY_REVIEW_SCHEMA)
+            self.assertEqual(result["member_audience"], "tiered")
+            self.write("scripts/windows/cloud-premium-references/PREMIUM_LEGACY_WORKER.mjs", b"unreviewed recovery")
+            with self.assertRaisesRegex(ValueError, "Premium legacy successor differs from the reviewed bytes"):
+                review.review_member_release_source(self.repo, baseline, self.commit("Change recovery"))
+
     def test_settled_prices_require_exact_bytes_and_preserve_the_existing_tiered_boundary(self):
         config = json.dumps(self.config, indent=2).encode().replace(
             b'    "CLOUD_MEMBER_VIEW_ENABLED": "true",\n', review._ROLE_ONLY_CONFIG_LINE + review._TIERED_AUDIENCE_LINE)

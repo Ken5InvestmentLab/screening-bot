@@ -23,8 +23,6 @@ RECEIPT_SCHEMA = "NEW_A_FORWARD_FUNDAMENTAL_RECEIPT_V1"
 HISTORICAL_SCHEMA = "NEW_A_LOCAL_HISTORICAL_OWNER_LEDGER_V1"
 MAX_HISTORICAL_LEDGER_BYTES = 128 * 1024 * 1024
 CODE = re.compile(r"[0-9A-Z]{4}")
-CAPITAL_RISK_VERSION = 1
-LONG_TERM_VERSION = 1
 
 
 def _check(value, message):
@@ -134,8 +132,6 @@ def make_claim(snapshot, presentation, analysis_started):
             "entryPrice": None,
             "tradingViewUrl": f"https://jp.tradingview.com/chart/?symbol=TSE%3A{symbol}",
             "betaSelectors": ["A_BASE"],
-            "capitalRiskReviewVersion": CAPITAL_RISK_VERSION,
-            "longTermMaterialReviewVersion": LONG_TERM_VERSION,
         })
     _check(len(alerts) == snapshot["new_live_signals"]
            and len({alert["alertId"] for alert in alerts}) == len(alerts)
@@ -150,9 +146,8 @@ def make_claim(snapshot, presentation, analysis_started):
         "claimedCount": len(alerts),
         "snapshotSha256": snapshot["payload_sha256"],
         "alerts": alerts,
-        "capitalRiskReviewVersion": CAPITAL_RISK_VERSION,
-        "longTermMaterialReviewVersion": LONG_TERM_VERSION,
-        "rules": {"destination": "html", "model": MODEL, "reasoningEffort": EFFORT},
+        "rules": {"destination": "html", "model": MODEL, "reasoningEffort": EFFORT,
+                  "workflow": "premium-legacy-1fa6d89"},
     }
 
 

@@ -168,7 +168,7 @@ export async function verifyPremiumDirectUrls(reports, fetchImpl = fetch) {
   }));
 }
 
-async function runPremiumResearch({ claim, claimPath, reportPath, config, repo, runDir, env, runStep,
+export async function runPremiumResearch({ claim, claimPath, reportPath, config, repo, runDir, env, runStep,
   invokeAnalysis, checkDirectUrls }) {
   if (!config.fundamentalConfigPath) throw new Error('Configured Cloud fundamental runtime is required');
   const fundamentalConfigPath = fs.realpathSync(path.resolve(config.fundamentalConfigPath));

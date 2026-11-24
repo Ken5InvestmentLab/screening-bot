@@ -243,6 +243,23 @@ test('forward HTML snapshots use exact analysis start and later-day publication 
     assert.equal(saved.completed[report.alertId].analysisCutoff, cutoff);
     assert.deepEqual(saved.claims, state.claims);
     assert.deepEqual(saved.posted, {});
+
+    report.fields[5].value = '対象時点までの該当する開示はありません。';
+    report.disclosures = [];
+    report.disclosureEvidence = [];
+    report.noMaterialDisclosureReason = '公式一覧と独立した開示一覧に対象時点までの開示がないことを確認';
+    assert.match(run().stderr, /dated title and publication time/);
+    claim.officialInventoryVerifiedZero = true;
+    fs.writeFileSync(statePath, JSON.stringify(state));
+    assert.equal(run().status, 0);
+    report.noMaterialDisclosureReason = '';
+    assert.match(run().stderr, /dated title and publication time/);
+    report.noMaterialDisclosureReason = '公式一覧で該当なしを確認';
+    fs.writeFileSync(reportPath, JSON.stringify({ reports: [report] }));
+    const discordDryRun = spawnSync(process.execPath, [poster, '--input', reportPath, '--state', statePath, '--dry-run'], {
+      encoding: 'utf8', env: { ...process.env, WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL: '' },
+    });
+    assert.match(discordDryRun.stderr, /dated title and publication time/);
   } finally {
     const resolved = path.resolve(fixture);
     if (!resolved.startsWith(`${path.resolve(os.tmpdir())}${path.sep}`) || !path.basename(resolved).startsWith('weak-early-beta-forward-cutoff-')) {

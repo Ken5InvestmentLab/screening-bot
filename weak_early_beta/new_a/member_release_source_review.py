@@ -38,7 +38,9 @@ PREMIUM_LEGACY_REVIEW_SCHEMA = "NEW_A_MEMBER_PREMIUM_LEGACY_SUCCESSOR_SOURCE_REV
 FUNDAMENTAL_RETENTION_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_RETENTION_SUCCESSOR_SOURCE_REVIEW_V1"
 PREMIUM_RUNTIME_REVIEW_SCHEMA = "NEW_A_MEMBER_PREMIUM_RUNTIME_SUCCESSOR_SOURCE_REVIEW_V1"
 CARD_DISPLAY_REVIEW_SCHEMA = "NEW_A_MEMBER_CARD_DISPLAY_SUCCESSOR_SOURCE_REVIEW_V1"
+PUBLICATION_RECOVERY_REVIEW_SCHEMA = "NEW_A_MEMBER_PUBLICATION_RECOVERY_SUCCESSOR_SOURCE_REVIEW_V1"
 TIERED_SUCCESSOR_SCHEMAS = frozenset({
+    PUBLICATION_RECOVERY_REVIEW_SCHEMA,
     CARD_DISPLAY_REVIEW_SCHEMA,
     FUNDAMENTAL_RETENTION_REVIEW_SCHEMA,
     PREMIUM_RUNTIME_REVIEW_SCHEMA,
@@ -481,6 +483,13 @@ _CARD_DISPLAY_PRODUCT_PATHS = frozenset({
     "tests/new_a_role_presentation_candidate.test.cjs",
 })
 _CARD_DISPLAY_PRODUCT_SHA256 = "89ca8793f2d15c701e33899267dbdb2b7193e9bba9a76b59e8aab3329a2eb5dd"
+_PUBLICATION_RECOVERY_BASELINE = "1d9803f7169a1e82529a13677a72ea0599dd42af"
+_PUBLICATION_RECOVERY_PRODUCT_PATHS = frozenset({
+    "weak_early_beta/new_a/publisher.py", "weak_early_beta/new_a/member_publisher.py",
+    "weak_early_beta/new_a/notifications.py", "weak_early_beta/new_a/AGENTS.md",
+    "tests/test_new_a_wrangler_response.py", "tests/test_new_a_member_publisher.py", "tests/test_new_a_connection.py",
+})
+_PUBLICATION_RECOVERY_PRODUCT_SHA256 = "88bef40a58024c17b26dc30b649329bbd069c6c57a0e7f37f3c7289d09dc07c8"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
     CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
     FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA, UNIFIED_MEMBER_UI_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA,
@@ -578,7 +587,14 @@ def _check_role_only_successor(repo, candidate, paths):
 
 
 def _member_successor(repo, baseline, candidate):
-    if baseline == _CARD_DISPLAY_BASELINE:
+    if baseline == _PUBLICATION_RECOVERY_BASELINE:
+        paths = _successor_paths(repo, baseline, candidate)
+        if paths != _PUBLICATION_RECOVERY_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
+            raise ValueError("Cloud member publication recovery successor differs from the exact reviewed source scope")
+        if _product_digest(repo, candidate, _PUBLICATION_RECOVERY_PRODUCT_PATHS) != _PUBLICATION_RECOVERY_PRODUCT_SHA256:
+            raise ValueError("Cloud member publication recovery successor differs from the reviewed bytes")
+        schema = PUBLICATION_RECOVERY_REVIEW_SCHEMA
+    elif baseline == _CARD_DISPLAY_BASELINE:
         paths = _successor_paths(repo, baseline, candidate)
         if paths != _CARD_DISPLAY_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
             raise ValueError("Cloud card display successor differs from the exact reviewed source scope")
@@ -790,7 +806,8 @@ def review_member_release_source(repo, baseline, candidate):
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "role_only"):
             raise ValueError("Version-bound member successor requires the existing role-only audience")
         if (baseline in {_SETTLED_PRICE_BASELINE, _APPROVAL_TIMEOUT_BASELINE, _PREMIUM_LEGACY_BASELINE,
-                         _FUNDAMENTAL_RETENTION_BASELINE, _PREMIUM_RUNTIME_BASELINE, _CARD_DISPLAY_BASELINE}
+                         _FUNDAMENTAL_RETENTION_BASELINE, _PREMIUM_RUNTIME_BASELINE, _CARD_DISPLAY_BASELINE,
+                         _PUBLICATION_RECOVERY_BASELINE}
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "tiered"):
             raise ValueError("Cloud successor requires the existing tiered audience")
         return _member_successor(repo, baseline, candidate)

@@ -220,8 +220,8 @@ def _format_opening_price(price):
 def _opening_field(openings, attached, names=None):
     rows = openings["rows"]
     lines = [
-        f"{_stock_label(symbol,names or {})}　{_format_opening_price(price)}円" if price is not None
-        else f"{_stock_label(symbol,names or {})}　始値保留"
+        f"{_stock_link(symbol,names or {})}　{_format_opening_price(price)}円" if price is not None
+        else f"{_stock_link(symbol,names or {})}　始値保留"
         for symbol, price in (rows[:5] if attached else rows)
     ]
     if attached:

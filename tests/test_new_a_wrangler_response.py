@@ -71,6 +71,31 @@ class QueryResponse(unittest.TestCase):
    with self.subTest(meta=meta):
     self.reject(json.dumps([primary,{**primary,'meta':meta}]),'remote_d1_primary_read_unconfirmed',2,require_primary=True)
 
+class UploadFailureRecognition(unittest.TestCase):
+ def upload_error(self):
+  return {'error':{'text':'File could not be uploaded. Please retry.\nGot response: '
+   '<?xml version="1.0" encoding="UTF-8"?><Error><Code>InternalError</Code>'
+   '<Message>We encountered an internal error. Please try again.</Message></Error>','notes':[]}}
+ def category(self,text,*,query=False,stderr=''):
+  from weak_early_beta.new_a.publisher import parse_wrangler_import_ack
+  parse=parse_wrangler_query_results if query else parse_wrangler_import_ack
+  with self.assertRaises(RemoteD1Error) as caught:parse(text,1,returncode=1,stderr=stderr)
+  self.assertNotIn('<Error>',str(caught.exception))
+  return str(caught.exception)
+ def test_only_exact_pre_ingestion_internal_error_is_distinguished(self):
+  text=json.dumps(self.upload_error())
+  for prefix in ['', 'Using secrets defined in process.env\n├ Checking if file needs uploading\n│\n├ 🌀 Uploading synthetic.sql\n']:
+   self.assertEqual(self.category(prefix+text),'remote_d1_upload_internal_error_reconcile_before_retry')
+  self.assertEqual(self.category(text,query=True),'remote_d1_operation_failed_reconcile_before_retry')
+ def test_authentication_and_other_unknown_outcomes_never_gain_upload_retry(self):
+  text=json.dumps(self.upload_error())
+  self.assertEqual(self.category(text,stderr='[code: 7403]'),'remote_d1_authorization_failed_reconcile_before_retry')
+  for value in [text.replace('InternalError','AccessDenied'),text+' trailing',
+                'untrusted prefix\n'+text,'{"error":{"text":"fetch failed"}}',
+                text.replace('"notes": []','"text": "different"')]:
+   with self.subTest(value=value):
+    self.assertEqual(self.category(value),'remote_d1_operation_failed_reconcile_before_retry')
+
 class PrivateTransportFixture(unittest.TestCase):
  def setUp(self):
   self.tmp=tempfile.TemporaryDirectory();self.repo=Path(self.tmp.name)

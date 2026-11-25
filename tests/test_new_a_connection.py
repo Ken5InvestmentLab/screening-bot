@@ -200,7 +200,8 @@ class BatchedDiscord(unittest.TestCase):
         embed=self.posts[0][0]["embeds"][0]
         self.assertIn("[0000 監視の会社](https://jp.tradingview.com/chart/",embed["description"])
         self.assertIn("[2345 候補の会社](https://jp.tradingview.com/chart/",embed["fields"][-1]["value"])
-        self.assertIn('5000 決済の会社　1,234.5円','\n'.join(field['value'] for field in embed['fields']))
+        self.assertIn('[5000 決済の会社](https://jp.tradingview.com/chart/?symbol=TSE%3A5000)　1,234.5円',
+                      '\n'.join(field['value'] for field in embed['fields']))
         self.assertNotIn("footer",embed)
         self.assertNotIn("新A",embed["title"])
         self.assertNotIn("判定保留",str(embed))
@@ -509,7 +510,9 @@ class BatchedDiscord(unittest.TestCase):
         message = self.posts[0][0]
         fields = {field["name"]: field["value"] for field in message["embeds"][0]["fields"]}
         self.assertEqual(fields["終了後に確認した始値（日足始値）"],
-                         "5001　1,271.5円\n5002　始値保留\n5003　始値保留")
+                         "[5001](https://jp.tradingview.com/chart/?symbol=TSE%3A5001)　1,271.5円\n"
+                         "[5002](https://jp.tradingview.com/chart/?symbol=TSE%3A5002)　始値保留\n"
+                         "[5003](https://jp.tradingview.com/chart/?symbol=TSE%3A5003)　始値保留")
         self.assertIn("2345", fields["翌取引日の仮想保有開始候補（2026-06-03）"])
         self.assertNotIn("713158963", json.dumps(message, ensure_ascii=False))
         button = message["components"][0]["components"][0]

@@ -14,7 +14,7 @@ from weak_early_beta.new_a.member_reference_publication import DATA_VARIANTS, SC
 from weak_early_beta.new_a.files import atomic_write, file_sha, private_root, read
 from weak_early_beta.new_a.member_publisher import import_member_projection, read_member_marker
 from weak_early_beta.new_a.operational_admission import read_active_metadata
-from weak_early_beta.new_a.publisher import LocalD1
+from weak_early_beta.new_a.publisher import LocalD1, RemoteD1Error
 
 
 REPO = Path(__file__).resolve().parents[1]
@@ -317,6 +317,62 @@ class MemberPublisherTest(unittest.TestCase):
         self.assertEqual(self.member.query("SELECT COUNT(*) AS n FROM private_projection_part"), [{"n": 1}])
         self.assertEqual(self.ingest()["status"], "activated")
         self.assertEqual(self.member.query("SELECT COUNT(*) AS n FROM private_projection_part"), [{"n": 5}])
+
+    def upload_failure_db(self, *, failures=1, category='remote_d1_upload_internal_error_reconcile_before_retry', after_failure=lambda: None):
+        class UploadFailure(FaultableD1):
+            def __init__(wrapped, db):
+                super().__init__(db)
+                wrapped.groups = []
+            def batch(wrapped, statements):
+                wrapped.groups.append(tuple(statements))
+                if len(wrapped.groups) <= failures:
+                    after_failure()
+                    raise RemoteD1Error(category)
+                return super().batch(statements)
+        return UploadFailure(self.member)
+
+    def test_transient_upload_reconciles_and_retries_only_exact_immutable_group_once(self):
+        wrapped = self.upload_failure_db()
+        self.assertEqual(self.ingest(db=wrapped)['status'], 'activated')
+        self.assertEqual(len(wrapped.groups), 2)
+        self.assertEqual(wrapped.groups[0], wrapped.groups[1])
+        self.assertEqual(wrapped.marker_writes, 1)
+        self.assertEqual(self.member.query('SELECT COUNT(*) AS n FROM private_projection_part'), [{'n': 5}])
+
+    def test_second_upload_failure_stops_without_activating_or_restarting(self):
+        wrapped = self.upload_failure_db(failures=2)
+        with self.assertRaises(RemoteD1Error):
+            self.ingest(db=wrapped)
+        self.assertEqual(len(wrapped.groups), 2)
+        self.assertEqual(wrapped.marker_writes, 0)
+        self.assertIsNone(read_member_marker(self.member))
+
+    def test_unknown_or_authentication_failure_does_not_retry(self):
+        for category in ('remote_d1_operation_failed_reconcile_before_retry',
+                         'remote_d1_authorization_failed_reconcile_before_retry'):
+            wrapped = self.upload_failure_db(category=category)
+            with self.assertRaises(RemoteD1Error):
+                self.ingest(db=wrapped)
+            self.assertEqual(len(wrapped.groups), 1)
+            self.assertEqual(wrapped.marker_writes, 0)
+
+    def test_changed_owner_after_upload_failure_blocks_retry(self):
+        wrapped = self.upload_failure_db(after_failure=lambda: self.put_owner(source(5)))
+        with self.assertRaisesRegex(ValueError, 'owner_ready_changed'):
+            self.ingest(db=wrapped)
+        self.assertEqual(len(wrapped.groups), 1)
+        self.assertIsNone(read_member_marker(self.member))
+
+    def test_changed_member_marker_after_upload_failure_blocks_retry(self):
+        competing = encode(source(3))
+        def move_marker():
+            self.member.query('INSERT INTO private_projection_manifest VALUES (?,?,?)', (competing, 'f' * 64, '{}'))
+            self.member.query('INSERT INTO private_projection_ready VALUES (1,?,?)', (competing, 'f' * 64))
+        wrapped = self.upload_failure_db(after_failure=move_marker)
+        with self.assertRaisesRegex(ValueError, 'marker_changed'):
+            self.ingest(db=wrapped)
+        self.assertEqual(len(wrapped.groups), 1)
+        self.assertEqual(read_member_marker(self.member)['identity'], competing)
 
     def test_concurrent_member_cas_keeps_the_other_marker(self):
         self.ingest()

@@ -37,12 +37,41 @@ _CLI_NOTICES={
  "Proxy environment variables detected. We'll use your proxy for fetch requests.",
 }
 
+_UPLOAD_INTERNAL_ERROR = ('File could not be uploaded. Please retry.\nGot response: '
+ '<?xml version="1.0" encoding="UTF-8"?><Error><Code>InternalError</Code>'
+ '<Message>We encountered an internal error. Please try again.</Message></Error>')
+
+def _is_upload_internal_error(stdout):
+ """Recognize only Wrangler's pre-ingestion upload failure, never SQL errors."""
+ if not isinstance(stdout,str):return False
+ lines=re.sub(r'\x1b\[[0-9;]*m','',stdout).lstrip('\ufeff').splitlines(keepends=True)
+ while lines:
+  line=lines[0].strip()
+  if (not line or line in _CLI_NOTICES or line in
+      {'├ Checking if file needs uploading','│','│ 🌀 Uploading complete.'}
+      or re.fullmatch(r'├ 🌀 Uploading [^\s\x00-\x1f\x7f\[\]{}]{1,512}',line)):
+   lines.pop(0)
+  else:break
+ def unique(pairs):
+  value={}
+  for key,item in pairs:
+   if key in value:raise ValueError('duplicate JSON key')
+   value[key]=item
+  return value
+ try:
+  data=json.loads(''.join(lines),object_pairs_hook=unique)
+ except (ValueError,TypeError):return False
+ return (isinstance(data,dict) and set(data)=={'error'} and isinstance(data['error'],dict)
+         and data['error'].get('text')==_UPLOAD_INTERNAL_ERROR)
+
 def _decode_wrangler_output(stdout,*,returncode=0,stderr='',import_progress=False):
  """Decode one document with only the existing allowlisted CLI notices."""
  def reject(category,codes=()):
   raise RemoteD1Error(category,provider_codes=codes,returncode=returncode)
  if returncode:
   codes=sorted({int(value) for pair in re.findall(r'\[code:\s*(\d+)\]|"code"\s*:\s*(\d+)',(stdout or '')+'\n'+(stderr or '')) for value in pair if value})
+  if 7403 not in codes and import_progress and _is_upload_internal_error(stdout):
+   reject('remote_d1_upload_internal_error_reconcile_before_retry',codes)
   reject('remote_d1_authorization_failed_reconcile_before_retry' if 7403 in codes else 'remote_d1_operation_failed_reconcile_before_retry',codes)
  if not isinstance(stdout,str) or not stdout.strip('\ufeff \t\r\n'):
   reject('remote_d1_response_empty_reconcile_before_retry')

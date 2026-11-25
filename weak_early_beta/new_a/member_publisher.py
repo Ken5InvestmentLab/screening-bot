@@ -7,7 +7,7 @@ import re
 import stat
 from pathlib import Path
 
-from .publisher import literal
+from .publisher import RemoteD1Error, literal
 
 
 _SOURCE_KEYS = ("status", "dataset_id", "revision", "as_of", "source_version")
@@ -431,7 +431,17 @@ def import_member_projection(
         member_db.query(*stage)
         _verify_manifest(member_db, identity, digest, text)
         for group in _batches(statements):
-            member_db.batch(group)
+            try:
+                member_db.batch(group)
+            except RemoteD1Error as error:
+                if str(error) != 'remote_d1_upload_internal_error_reconcile_before_retry':
+                    raise
+                # The installed Wrangler raises this before beginning ingestion.
+                # Reconcile both primaries, then retry only this immutable group once.
+                check_owner()
+                _require(read_member_marker(member_db) == current, 'member_projection_marker_changed')
+                _verify_manifest(member_db, identity, digest, text)
+                member_db.batch(group)
     _verify_staged(member_db, identity, digest, text, parts, reports)
     check_owner()
     if not activate or replay:

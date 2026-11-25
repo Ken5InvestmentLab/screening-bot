@@ -39,7 +39,9 @@ FUNDAMENTAL_RETENTION_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_RETENTION_SUCCES
 PREMIUM_RUNTIME_REVIEW_SCHEMA = "NEW_A_MEMBER_PREMIUM_RUNTIME_SUCCESSOR_SOURCE_REVIEW_V1"
 CARD_DISPLAY_REVIEW_SCHEMA = "NEW_A_MEMBER_CARD_DISPLAY_SUCCESSOR_SOURCE_REVIEW_V1"
 PUBLICATION_RECOVERY_REVIEW_SCHEMA = "NEW_A_MEMBER_PUBLICATION_RECOVERY_SUCCESSOR_SOURCE_REVIEW_V1"
+CARD_EDITORIAL_REVIEW_SCHEMA = "NEW_A_MEMBER_CARD_EDITORIAL_SUCCESSOR_SOURCE_REVIEW_V1"
 TIERED_SUCCESSOR_SCHEMAS = frozenset({
+    CARD_EDITORIAL_REVIEW_SCHEMA,
     PUBLICATION_RECOVERY_REVIEW_SCHEMA,
     CARD_DISPLAY_REVIEW_SCHEMA,
     FUNDAMENTAL_RETENTION_REVIEW_SCHEMA,
@@ -492,6 +494,34 @@ _PUBLICATION_RECOVERY_PRODUCT_PATHS = frozenset({
     "tests/test_new_a_wrangler_response.py", "tests/test_new_a_member_publisher.py", "tests/test_new_a_connection.py",
 })
 _PUBLICATION_RECOVERY_PRODUCT_SHA256 = "2dfb9b1255e243b0281e405d0ad80d935b0f1b5eaa8626901561384c766069fe"
+_CARD_EDITORIAL_BASELINE = "c1cf2ec7f9067d765a0377bcde7eead02499456a"
+_CARD_EDITORIAL_PRODUCT_PATHS = frozenset({
+    'scripts/windows/cloud-premium-references/AGENTS.md',
+    'scripts/windows/cloud-premium-references/AUTOMATION_PROMPT.md',
+    'scripts/windows/cloud-premium-references/COPY_MANIFEST.json',
+    'scripts/windows/cloud-premium-references/PREMIUM_CLOUD_WORKER.mjs',
+    'scripts/windows/cloud-premium-references/PREMIUM_PM_SAVED_PROMPT.txt',
+    'scripts/windows/cloud-premium-references/SOURCE_COMPANION_REVIEW.md',
+    'scripts/windows/cloud-premium-references/verified-untimed-disclosures.json',
+    'scripts/windows/new-a-fundamental-stage.mjs',
+    'scripts/windows/test-new-a-fundamental-stage.mjs',
+    'tests/new_a_role_presentation_candidate.test.cjs',
+    'tests/test_new_a_fundamental_corrections.py',
+    'weak-early-beta-gate/AGENTS.md',
+    'weak-early-beta-gate/scripts/new-a-ui-source/assets/member-loader.js',
+    'weak-early-beta-gate/scripts/new-a-ui-source/assets/member-presentation.js',
+    'weak_early_beta/new_a/AGENTS.md',
+    'weak_early_beta/new_a/cli.py',
+    'weak_early_beta/new_a/fundamental_corrections.py',
+    'weak_early_beta/new_a/fundamentals.py',
+})
+_CARD_EDITORIAL_ADDITIONS = frozenset({
+    'scripts/windows/cloud-premium-references/COPY_MANIFEST.json',
+    'scripts/windows/cloud-premium-references/verified-untimed-disclosures.json',
+    'tests/test_new_a_fundamental_corrections.py',
+    'weak_early_beta/new_a/fundamental_corrections.py',
+})
+_CARD_EDITORIAL_PRODUCT_SHA256 = "c06df70acc86d69337d67b67f0ca76f08745420bd69bbf67dc8ccba0a9f14e24"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
     CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
     FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA, UNIFIED_MEMBER_UI_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA,
@@ -589,7 +619,14 @@ def _check_role_only_successor(repo, candidate, paths):
 
 
 def _member_successor(repo, baseline, candidate):
-    if baseline == _PUBLICATION_RECOVERY_BASELINE:
+    if baseline == _CARD_EDITORIAL_BASELINE:
+        paths = _successor_paths(repo, baseline, candidate, allowed_additions=_CARD_EDITORIAL_ADDITIONS)
+        if paths != _CARD_EDITORIAL_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
+            raise ValueError("Cloud card editorial successor differs from the exact reviewed source scope")
+        if _product_digest(repo, candidate, _CARD_EDITORIAL_PRODUCT_PATHS) != _CARD_EDITORIAL_PRODUCT_SHA256:
+            raise ValueError("Cloud card editorial successor differs from the reviewed bytes")
+        schema = CARD_EDITORIAL_REVIEW_SCHEMA
+    elif baseline == _PUBLICATION_RECOVERY_BASELINE:
         paths = _successor_paths(repo, baseline, candidate)
         if paths != _PUBLICATION_RECOVERY_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
             raise ValueError("Cloud member publication recovery successor differs from the exact reviewed source scope")
@@ -809,7 +846,7 @@ def review_member_release_source(repo, baseline, candidate):
             raise ValueError("Version-bound member successor requires the existing role-only audience")
         if (baseline in {_SETTLED_PRICE_BASELINE, _APPROVAL_TIMEOUT_BASELINE, _PREMIUM_LEGACY_BASELINE,
                          _FUNDAMENTAL_RETENTION_BASELINE, _PREMIUM_RUNTIME_BASELINE, _CARD_DISPLAY_BASELINE,
-                         _PUBLICATION_RECOVERY_BASELINE}
+                         _PUBLICATION_RECOVERY_BASELINE, _CARD_EDITORIAL_BASELINE}
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "tiered"):
             raise ValueError("Cloud successor requires the existing tiered audience")
         return _member_successor(repo, baseline, candidate)

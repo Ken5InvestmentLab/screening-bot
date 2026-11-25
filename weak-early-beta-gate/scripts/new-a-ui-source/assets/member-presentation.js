@@ -140,10 +140,12 @@ function matchingHistory(index, { symbol, from, through, order }) {
 }
 function sortReferenceCards(cards, order) {
   const compare=(a,b)=>String(a??'').localeCompare(String(b??''),'ja',{numeric:true});
+  const labels=['ENTRY_CANDIDATE','HOLD_ENDED','HOLD_STARTED','WATCH_STARTED','WATCH_TERMINAL'];
+  const rank=kind=>labels.includes(kind)?labels.indexOf(kind):labels.length;
   return [...cards].sort((a,b)=>{
     const left=a.dataset,right=b.dataset;
     const primary=order==='name'?compare(left.referenceName,right.referenceName)
-      :order==='symbol'?0:(left.referenceKind==='ENTRY_CANDIDATE'?0:1)-(right.referenceKind==='ENTRY_CANDIDATE'?0:1);
+      :order==='symbol'?0:rank(left.referenceKind)-rank(right.referenceKind)||compare(left.referenceKind,right.referenceKind);
     return primary||compare(left.referenceSymbol,right.referenceSymbol)||compare(left.referenceKind,right.referenceKind);
   });
 }

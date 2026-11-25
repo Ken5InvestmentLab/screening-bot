@@ -15,14 +15,41 @@ const premiumHome = {
   watching:[{date:'2026-11-18',symbol:'345A',state:'WATCHING'}],
  },
 };
-test('record card sorting keeps every item and uses deterministic kind, code and Japanese name order',()=>{
- const cards=[['MONITOR_RESET','3000','あさ'],['ENTRY_CANDIDATE','2000','かさ'],['ENTRY_CANDIDATE','1000','さけ']]
+test('record card sorting groups every label before code and retains code and Japanese name options',()=>{
+ const cards=[['WATCH_STARTED','3000','あさ'],['ENTRY_CANDIDATE','2000','かさ'],['ENTRY_CANDIDATE','1000','さけ'],
+  ['WATCH_TERMINAL','0500','なみ'],['HOLD_STARTED','0800','たけ'],['HOLD_ENDED','4000','らん'],['WATCH_STARTED','1100','はな']]
   .map(([referenceKind,referenceSymbol,referenceName])=>({dataset:{referenceKind,referenceSymbol,referenceName}}));
  const codes=order=>ui.sortReferenceCards(cards,order).map(card=>card.dataset.referenceSymbol);
- a.deepEqual(Array.from(codes('kind')),['1000','2000','3000']);
- a.deepEqual(Array.from(codes('symbol')),['1000','2000','3000']);
- a.deepEqual(Array.from(codes('name')),['3000','2000','1000']);
+ a.deepEqual(Array.from(codes('kind')),['1000','2000','4000','0800','1100','3000','0500']);
+ a.deepEqual(Array.from(codes('symbol')),['0500','0800','1000','1100','2000','3000','4000']);
+ a.deepEqual(Array.from(codes('name')),['3000','2000','1000','0800','0500','1100','4000']);
  a.equal(cards[0].dataset.referenceSymbol,'3000');
+});
+test('saved dashboard references merge candidate and other cards without dropping details or label groups',()=>{
+ const card=(kind,symbol,label)=>({localName:'article',dataset:{referenceKind:kind,referenceSymbol:symbol},
+  querySelectorAll:selector=>selector==='.cloud-transition'?[{textContent:label}]:[],querySelector:()=>null});
+ const candidate=card('ENTRY_CANDIDATE','9000','仮想保有開始候補');
+ const watch=card('OTHER','1000','監視開始'),ended=card('HOLD_ENDED','8000','仮想保有終了');
+ const first={children:[candidate],replaceChildren(...nodes){this.children=nodes;}};
+ const extra={children:[watch,ended],remove(){this.removed=true;}};
+ const wrapper={remove(){this.removed=true;}},heading={textContent:'仮想保有開始候補・終了銘柄'};
+ const button={textContent:'候補を先に'};
+ const group={querySelectorAll:selector=>selector==='[data-reference-cards]'?[first,extra]
+   :selector==='.cloud-other-events'?[wrapper]:[],
+  querySelector:selector=>selector===':scope > h3'?heading:button};
+ const fragment={querySelectorAll:selector=>selector==='.cloud-stock-grid > article'?[candidate,watch,ended]
+   :selector==='.cloud-reference-events'?[group]:[]};
+ const source=fs.readFileSync(path.join(src,'member-loader.js'),'utf8');
+ const start=source.indexOf('  function expandStockCards(fragment) {');
+ const end=source.indexOf('  async function analyticsOverview(',start);
+ a.ok(start>0&&end>start);
+ const normalize=vm.runInNewContext('('+source.slice(start,end).trim()+')',
+  {g:{NewAMemberPresentation:ui},document:{createElement(){throw Error('Unexpected card reconstruction');}}});
+ normalize(fragment);
+ a.deepEqual(first.children,[candidate,ended,watch]);
+ a.equal(watch.dataset.referenceKind,'WATCH_STARTED');
+ a.equal(extra.removed,true);a.equal(wrapper.removed,true);
+ a.equal(heading.textContent,'銘柄一覧');a.equal(button.textContent,'ラベル順');
 });
 test('shared dashboard follows the prior owner heading, daily cards, holdings, watch and history order',()=>{
  const html=ui.view({...premiumHome,chartRows:[{date:premiumHome.asOf,equity_yen:9500,holding_count:2}]});

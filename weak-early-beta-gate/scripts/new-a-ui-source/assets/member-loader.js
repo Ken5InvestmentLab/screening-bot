@@ -136,6 +136,12 @@
         const label = card.querySelector(':scope > .badge');
         if (label) label.classList.add('cloud-transition', 'cloud-transition--entry-candidate');
       }
+      if (card.dataset.referenceKind === 'OTHER') {
+        const labels = Array.from(card.querySelectorAll('.cloud-transition')).map(label => label.textContent.trim());
+        const known = [['HOLD_ENDED','仮想保有終了'],['HOLD_STARTED','仮想保有開始'],
+          ['WATCH_STARTED','監視開始'],['WATCH_TERMINAL','監視終了']];
+        card.dataset.referenceKind = known.find(([, label]) => labels.includes(label))?.[0] ?? 'OTHER';
+      }
       for (const detail of card.querySelectorAll('details.cloud-stock-detail')) {
         const panel = document.createElement('div');
         panel.className = detail.className;
@@ -143,18 +149,24 @@
         detail.replaceWith(panel);
       }
     }
-    for (const group of fragment.querySelectorAll('details.cloud-other-events')) {
-      if (!group.querySelector('.cloud-stock-grid > article')) {
-        group.remove();
-        continue;
+    for (const group of fragment.querySelectorAll('.cloud-reference-events')) {
+      const grids = Array.from(group.querySelectorAll('[data-reference-cards]'));
+      if (!grids.length) continue;
+      const cards = grids.flatMap(grid => Array.from(grid.children).filter(card => card.localName === 'article'));
+      const grid = grids[0];
+      grid.replaceChildren(...g.NewAMemberPresentation.sortReferenceCards(cards, 'kind'));
+      if (!cards.length) {
+        const empty = document.createElement('p');
+        empty.className = 'cloud-empty';
+        empty.textContent = '対象の銘柄はありません';
+        grid.append(empty);
       }
-      const panel = document.createElement('section');
-      panel.className = group.className;
-      const heading = document.createElement('h4');
-      heading.textContent = 'その他の動き・記録';
-      const summary = group.querySelector(':scope > summary');
-      panel.append(heading, ...Array.from(group.childNodes).filter(node => node !== summary));
-      group.replaceWith(panel);
+      for (const extra of grids.slice(1)) extra.remove();
+      for (const other of group.querySelectorAll('.cloud-other-events')) other.remove();
+      const heading = group.querySelector(':scope > h3');
+      if (heading) heading.textContent = '銘柄一覧';
+      const labelOrder = group.querySelector('[data-reference-sort="kind"]');
+      if (labelOrder) labelOrder.textContent = 'ラベル順';
     }
   }
 

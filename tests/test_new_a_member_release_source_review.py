@@ -623,6 +623,31 @@ class PresentationSuccessorReviewTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'runtime successor differs from the reviewed bytes'):
                 review.review_member_release_source(self.repo,baseline,self.commit('Change recovery boundary'))
 
+    def test_settled_history_rejects_unreviewed_scope_or_bytes_and_retains_auth(self):
+        config = json.dumps(self.config, indent=2).encode().replace(
+            b'    "CLOUD_MEMBER_VIEW_ENABLED": "true",\n', review._ROLE_ONLY_CONFIG_LINE + review._TIERED_AUDIENCE_LINE)
+        self.write(review.CONFIG, config)
+        paths = review._SETTLED_HISTORY_PRODUCT_PATHS | review._SUCCESSOR_REVIEW_PATHS
+        for path in sorted(paths):
+            self.write(path, b"prior " + path.encode())
+        baseline = self.commit("Approved card display")
+        for path in sorted(paths):
+            self.write(path, b"reviewed " + path.encode())
+        candidate = self.commit("Reconcile upload and link confirmed openings")
+        product_sha = review._product_digest(self.repo, candidate, review._SETTLED_HISTORY_PRODUCT_PATHS)
+        with (patch.object(review, "_SETTLED_HISTORY_BASELINE", baseline),
+              patch.object(review, "_SETTLED_HISTORY_PRODUCT_SHA256", product_sha)):
+            result = review.review_member_release_source(self.repo, baseline, candidate)
+            self.assertEqual(result["schema"], review.SETTLED_HISTORY_REVIEW_SCHEMA)
+            self.assertEqual(result["member_audience"], "tiered")
+            self.write(review.ENTRY, b"unreviewed authentication")
+            with self.assertRaisesRegex(ValueError, "existing Discord or owner authorization"):
+                review.review_member_release_source(self.repo, baseline, self.commit("Change authentication"))
+            self.write(review.ENTRY, review.git(self.repo, "show", f"{candidate}:{review.ENTRY}"))
+            self.write("weak-early-beta-gate/scripts/new-a-ui-source/assets/member-loader.js", b"unreviewed retry")
+            with self.assertRaisesRegex(ValueError, "settled history successor differs from the reviewed bytes"):
+                review.review_member_release_source(self.repo, baseline, self.commit("Broaden retry"))
+
     def test_card_editorial_rejects_unreviewed_scope_or_bytes_and_retains_auth(self):
         config = json.dumps(self.config, indent=2).encode().replace(
             b'    "CLOUD_MEMBER_VIEW_ENABLED": "true",\n', review._ROLE_ONLY_CONFIG_LINE + review._TIERED_AUDIENCE_LINE)

@@ -532,6 +532,7 @@ function buildEmbed(report) {
   assertNoProceduralAnalysisLanguage(alertId, fieldMap);
   assertNoGenericBusinessOverview(alertId, fieldMap);
   assertNoGenericFundamentalPoint(alertId, fieldMap);
+  assertNoUnsupportedDilutionBoilerplate(alertId, fieldMap);
   assertNoNarrowDisclosureCaveat(alertId, fieldMap);
   assertNoStaleSingleMaterialSummary(alertId, fieldMap);
   assertNoStaleDisclosureProxyLabels(alertId, fieldMap);
@@ -991,6 +992,19 @@ function assertNoGenericFundamentalPoint(alertId, fieldMap) {
   }
 }
 
+function assertNoUnsupportedDilutionBoilerplate(alertId, fieldMap) {
+  const prose = [fieldMap.get("材料インパクト"), fieldMap.get("注意点")].join("\n");
+  const researchGapWarnings = [
+    /希薄化(?:リスク|余地)?の有無[^。\n]{0,80}(?:未確認|未確定|確認でき|確定でき|判定でき)/,
+    /(?:全潜在株式|潜在株式全体)[^。\n]{0,80}(?:未確認|照合でき|確認でき)/,
+    /(?:現在|現時点)[^。\n]{0,35}残高を示す資料はなく/,
+    /(?:報告書|資料|本文)[^。\n]{0,20}取得できず[^。\n]{0,100}(?:残高|希薄化)[^。\n]{0,30}未確認/,
+  ];
+  if (researchGapWarnings.some(pattern => pattern.test(prose))) {
+    throw new Error(`report ${alertId} field 注意点 uses unsupported dilution research-gap wording; verify the identified instrument and dated facts instead of turning missing research into issuer risk`);
+  }
+}
+
 function assertNoNarrowDisclosureCaveat(alertId, fieldMap) {
   const materials = String(fieldMap.get("足元材料") || "");
   const disclosure = String(fieldMap.get("開示リンク") || "");
@@ -1044,28 +1058,14 @@ function assertNoStaleDisclosureProxyLabels(alertId, fieldMap) {
     }
     const warrantBalanceAnnualFiling = /有価証券報告書/.test(label)
       && (hasDatedWarrantBalanceUncertainty(fieldMap)
-        || hasReviewedIssuerCapitalCompanion(label, url, fieldMap));
+        || (isVerifiedUntimedDisclosure(normalizeDisclosureLabelForDisplay(label), url)
+          && /新株予約権|ストック[・]?オプション|SO|潜在株式|希薄化/.test(String(fieldMap.get("注意点") || ""))));
     if (staleOfficialPatterns.some(pattern => pattern.test(label))
       && !hasSparseDisclosureFallback(fieldMap)
       && !warrantBalanceAnnualFiling) {
       throw new Error(`report ${alertId} disclosure link uses a stale/proxy document instead of a current direct disclosure: ${label}`);
     }
   }
-}
-
-// A dated absence in this verified annual filing is supplementary capital
-// evidence, not a replacement for the current earnings packet. Preserve the
-// distinction between that historical observation and today's unknown balance.
-function hasReviewedIssuerCapitalCompanion(label, url, fieldMap) {
-  if (url !== 'https://www.aiholdings.co.jp/uploads/2026/09/Security-Report_20.pdf'
-      || !/2026-09-25.*有価証券報告書.*第20期/.test(label)) return false;
-  const urls = new Set(extractMarkdownLinks(String(fieldMap.get('開示リンク') || '')).map(link => link.url));
-  const caveat = String(fieldMap.get('注意点') || '').normalize('NFKC');
-  return urls.has('https://www.aiholdings.co.jp/uploads/2026/11/fy2027q1.pdf')
-    && urls.has('https://www.aiholdings.co.jp/uploads/2026/11/fy2027q1_presentation.pdf')
-    && /2026年6月末(?:時点|基準)[^。]*新株予約権[^。]*該当なし/.test(caveat)
-    && /締切現在の未行使残高は(?:未確認|独立に確定できておらず)/.test(caveat)
-    && /現在残高ゼロとはみなしません/.test(caveat);
 }
 
 function hasSparseDisclosureFallback(fieldMap) {
@@ -1103,7 +1103,7 @@ function assertDisclosureLinksAreDirectDisclosures(alertId, fieldMap) {
       throw new Error(`report ${alertId} disclosure link must be a direct disclosure URL: ${label}`);
     }
     if (!isTimestampedDisclosureLabel(label, url)) {
-      throw new Error(`report ${alertId} disclosure link label must be "YYYY-MM-DD 開示タイトル(hh:mm)": ${label}`);
+      throw new Error(`report ${alertId} disclosure link label must be "YYYY-MM-DD 開示タイトル(hh:mm)" or "(hh:mm JST)"; date-only labels require a verified individual disclosure: ${label}`);
     }
   }
 }
@@ -1134,14 +1134,21 @@ function isExplicitlyAllowedUntimedIssuerDisclosureUrl(url) {
 
 function isTimestampedDisclosureLabel(label, url = "") {
   const normalized = normalizeDisclosureLabelForDisplay(label);
-  // Official IR lists this exact companion on 11/16 without a publication time.
-  // Accept its truthful date precision; do not accept an invented hh:mm instead.
-  if (url === 'https://www.aiholdings.co.jp/uploads/2026/11/fy2027q1_presentation.pdf') {
-    return /^2026-11-16\s+2027年6月期\s*第1四半期決算説明資料\(時刻記載なし\)$/.test(normalized);
-  }
-  if (/^20\d{2}-\d{2}-\d{2}\s+\S.+\((?:[01]?\d|2[0-3]):[0-5]\d\)$/.test(normalized)) return true;
-  return (isCoconalaIssuerNewsUrl(url) || isExplicitlyAllowedUntimedIssuerDisclosureUrl(url))
+  if (/^20\d{2}-\d{2}-\d{2}\s+\S.+\((?:[01]?\d|2[0-3]):[0-5]\d(?: JST)?\)$/.test(normalized)) return true;
+  return (isCoconalaIssuerNewsUrl(url) || isExplicitlyAllowedUntimedIssuerDisclosureUrl(url)
+    || isVerifiedUntimedDisclosure(normalized, url))
     && /^20\d{2}-\d{2}-\d{2}\s+\S.+\(時刻記載なし\)$/.test(normalized);
+}
+
+function isVerifiedUntimedDisclosure(label, url) {
+  const inventoryPath = path.join(WORKER_DIR, "verified-untimed-disclosures.json");
+  if (!fs.existsSync(inventoryPath)) return false;
+  const inventory = readJson(inventoryPath);
+  return Array.isArray(inventory) && inventory.some(item =>
+    item.publicationDateVerified === true
+    && item.url === String(url || "").trim()
+    && normalizeDisclosureLabelForDisplay(item.label) === label
+  );
 }
 
 function normalizeDisclosureLabelForDisplay(label) {
@@ -1765,6 +1772,11 @@ function extractIrbankPdfUrlFromHtml(html, disclosureId = "") {
 }
 
 function isDisclosureDetailPageUrl(url) {
+  const verifiedPath = path.join(WORKER_DIR, "verified-untimed-disclosures.json");
+  if (fs.existsSync(verifiedPath) && readJson(verifiedPath).some(item =>
+    item.publicationDateVerified === true && item.kind === "issuer-detail"
+    && item.url === String(url || "").trim()
+  )) return true;
   const explicitIssuerDetailPages = new Set([
     "https://stmn.co.jp/news/13406",
     "https://www.chiyodacorp.com/jp/media/2026/post_20241050.html",
@@ -2669,21 +2681,42 @@ function base64url(input) {
 }
 
 function selfTest() {
-  const reviewedCompanions = new Map([
-    ['注意点', '2026年6月末基準では新株予約権等は該当なし。締切現在の未行使残高は未確認。過去の該当なしを現在残高ゼロとはみなしません。'],
-    ['開示リンク', '[2026-11-16 2027年6月期 第1四半期決算短信(15:30)](https://www.aiholdings.co.jp/uploads/2026/11/fy2027q1.pdf)\n[2026-11-16 2027年6月期 第1四半期決算説明資料(時刻記載なし)](https://www.aiholdings.co.jp/uploads/2026/11/fy2027q1_presentation.pdf)\n[2026-09-25 有価証券報告書 第20期(15:29)](https://www.aiholdings.co.jp/uploads/2026/09/Security-Report_20.pdf)'],
-  ]);
-  assert.doesNotThrow(() => assertNoStaleDisclosureProxyLabels('reviewed-capital', reviewedCompanions));
-  assert.doesNotThrow(() => assertDisclosureLinksAreDirectDisclosures('reviewed-date', reviewedCompanions));
-  for (const caveat of ['', '現在の新株予約権残高はゼロです。', reviewedCompanions.get('注意点').replace('2026年6月末', '2025年6月末')]) {
-    assert.throws(() => assertNoStaleDisclosureProxyLabels('unverified-capital', new Map([...reviewedCompanions, ['注意点', caveat]])), /stale\/proxy/);
+  for (const text of [
+    "新株予約権の発行原資料が未照合で、希薄化リスクの有無は未確認。",
+    "検出日時点の全潜在株式残高は未確認。",
+    "半期報告は新株予約権・CB等ゼロですが、現在の未行使残高を示す資料はなく、現残高は未確認です。",
+    "最新半期報告書本文を取得できず11/25現在の新株予約権・CB残高と希薄化率は未確認です。",
+  ]) assert.throws(() => assertNoUnsupportedDilutionBoilerplate("research-gap", new Map([["注意点", text]])), /unsupported dilution research-gap/);
+  for (const text of [
+    "2026年6月末の開示では新株予約権等に該当事項なし。工事採算と受注の進捗が焦点。",
+    "2029年満期CBは発行額50億円。6月末の簿価50.27億円は未転換元本と区別する。検出日時点の未転換元本は未確認。",
+    "第22回新株予約権は10月末100万株相当が残存。行使による株式供給と資金調達の進捗を確認する。",
+  ]) assert.doesNotThrow(() => assertNoUnsupportedDilutionBoilerplate("dated-evidence", new Map([["注意点", text]])));
+  assert.equal(isTimestampedDisclosureLabel("2026-11-25 決算短信(15:30)"), true);
+  assert.equal(isTimestampedDisclosureLabel("2026-11-25 決算短信(15:30 JST)"), true);
+  assert.equal(isTimestampedDisclosureLabel("2026-11-25 決算短信(25:30 JST)"), false);
+  assert.equal(isTimestampedDisclosureLabel("2026-11-25 決算短信(15:60 JST)"), false);
+  assert.equal(isTimestampedDisclosureLabel("2026-11-25 決算短信(15:30 UTC)"), false);
+  assert.equal(isTimestampedDisclosureLabel("2026-11-25 決算短信(時刻記載なし)", "https://example.com/unverified.pdf"), false);
+  const verifiedUntimedPath = path.join(WORKER_DIR, "verified-untimed-disclosures.json");
+  if (fs.existsSync(verifiedUntimedPath)) {
+    for (const item of readJson(verifiedUntimedPath)) {
+      assert.equal(isTimestampedDisclosureLabel(item.label, item.url), true);
+      assert.equal(isVerifiedUntimedDisclosure(normalizeDisclosureLabelForDisplay(item.label), `${item.url}?unverified=1`), false);
+      assert.equal(isVerifiedUntimedDisclosure(normalizeDisclosureLabelForDisplay(item.label).replace(/^\d{4}-\d{2}-\d{2}/, "2000-01-01"), item.url), false);
+      assert.equal(isVerifiedUntimedDisclosure(normalizeDisclosureLabelForDisplay(item.label).replace("時刻記載なし", "未確認資料"), item.url), false);
+      if (item.kind === "issuer-detail") assert.equal(isAllowedDisclosureDetailPageUrl(item.url), true);
+      if (/有価証券報告書/.test(item.label)) {
+        const links = `[${item.label}](${item.url})`;
+        assert.doesNotThrow(() => assertNoStaleDisclosureProxyLabels("reviewed-rights", new Map([
+          ["開示リンク", links], ["注意点", "新株予約権の確認済み残高と現在未確認を区別する。"]
+        ])));
+        assert.throws(() => assertNoStaleDisclosureProxyLabels("not-rights-evidence", new Map([
+          ["開示リンク", links], ["注意点", "補助資料を最新の業績分析の代替にしない。"]
+        ])), /stale\/proxy document/);
+      }
+    }
   }
-  const annualOnly = new Map([...reviewedCompanions, ['開示リンク', '[2026-09-25 有価証券報告書 第20期(15:29)](https://www.aiholdings.co.jp/uploads/2026/09/Security-Report_20.pdf)']]);
-  assert.throws(() => assertNoStaleDisclosureProxyLabels('annual-alone', annualOnly), /stale\/proxy/);
-  const issuerPresentation = 'https://www.aiholdings.co.jp/uploads/2026/11/fy2027q1_presentation.pdf';
-  assert.equal(isTimestampedDisclosureLabel('2026-11-16 2027年6月期 第1四半期決算説明資料(15:30)', issuerPresentation), false);
-  assert.equal(isTimestampedDisclosureLabel('2026-11-17 2027年6月期 第1四半期決算説明資料(時刻記載なし)', issuerPresentation), false);
-  assert.equal(isTimestampedDisclosureLabel('2026-11-16 2027年6月期 第1四半期決算説明資料(時刻記載なし)', 'https://example.com/unreviewed.pdf'), false);
   assert.equal(normalizeTradingViewSymbol("TYO:7203"), "TSE:7203");
   assert.equal(buildTradingViewUrl("TYO:7203"), "https://www.tradingview.com/chart/?symbol=TSE%3A7203");
   assert.equal(buildTradingViewUrl("TSE:8285"), "https://www.tradingview.com/chart/?symbol=TSE%3A8285");

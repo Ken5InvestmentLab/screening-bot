@@ -8,12 +8,14 @@ import {
   FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT,
 } from './weak-early-beta-fundamental-runner.mjs';
 const REFERENCE_FILES = {
-  'PREMIUM_PM_SAVED_PROMPT.txt': '59f43ff76489b95108d269a31cd82a2e52c3595dc45b802dde46466aa4009854',
-  'AUTOMATION_PROMPT.md': 'cf2ed83da7948826c319e375119c3d3072275552fc33acc30de4337353bf831d',
+  'COPY_MANIFEST.json': '127ee5f57fc802b4362611be5f38ba60fc61e63a165dc538cee8aaaf6f6b934f',
+  'verified-untimed-disclosures.json': 'a2316766f691fffe25c48846872ab3017eed57404c9e830331b588364ac7e2b8',
+  'PREMIUM_PM_SAVED_PROMPT.txt': 'af31b0175e968a8fe17354339a899e2f988ecf6c37dbc30958037b25f493c317',
+  'AUTOMATION_PROMPT.md': '18a3e023317bca07c2f749de7c1ca8acfd7845f872f3a858449fe9ee9377a1d7',
   'FUNDAMENTAL_EXAMPLES.md': 'c49243cc7ee6685d3dedf2789fc452ce4d610f463edcc54b48001487a39d77fb',
   'PREMIUM_LEGACY_WORKER.mjs': '98edbc6921dfcad6b853660a1d1bc6e508ef684f71d29732960330a53cb80dc3',
-  'PREMIUM_CLOUD_WORKER.mjs': '4a90e1c0c5687aa0e9f86f284bad86f9b182acefef7e598e9cc6d3fbf80870d3',
-  'SOURCE_COMPANION_REVIEW.md': '1720b0f5b1f36b224ee20878d60985cadfb666acbad316a426694b318937c991',
+  'PREMIUM_CLOUD_WORKER.mjs': '53f9b9fc97940fc746b34651be6bf31bb7b73ea6f40ab1db6d9500e8c40e0b87',
+  'SOURCE_COMPANION_REVIEW.md': '5b9b55c83d4622af2f1c9abe806d9cf235229f944815b09619c49ac8bdf12fd5',
   'PREMIUM_NO_SEND_PRELOAD.mjs': '2121ad3d3301524762efe3e10970006ce1e2fa792c7caa47ba0f61aa1b2ee5e0',
   'report_quality.md': '6df031fabe3d309b0f2c7c317734920ba1450926c344987491e0fc14b5c7a6fb',
 };
@@ -214,9 +216,9 @@ export async function runPremiumResearch({ claim, claimPath, reportPath, config,
   }
   const prompt = [
     'Cloud 2.0が既に取得した不変claimだけを使用します。claimの読み取り元: ' + claimPath,
-    '11/24に36件完走した11/2版Premiumの保存済みタスク、手順書、見本、品質チェックの次の固定資料を最初に読んでください:\n' + references.join('\n'),
+    '11/2版Premiumを基礎に修正済みの現行Premiumと完全照合した保存済みタスク、手順書、見本、品質チェックの次の固定資料を最初に読んでください:\n' + references.join('\n'),
     '照合、調査、初稿、指名された修正、全件再検証の手順と品質を適用してください。Cloudが所有権、時刻、HTML保存を管理します。Premium資料で言及される収集、スケジュール、GAS、Discord、実送信、状態変更、fail処理、Git操作は実行しないでください。例示用の銘柄、リンク、JSON識別子は実データとして使わないでください。',
-    '元のPREMIUM_LEGACY_WORKER.mjsは不変のコピー元です。全件検証には、そのコピーに確認済み資料の扱いだけを補正したPREMIUM_CLOUD_WORKER.mjsを使います。SOURCE_COMPANION_REVIEW.mdを読み、該当する資料の掲載日精度と過去の資本状況・現在未確認の区別を保持してください。時刻や残高を推測して埋めず、根拠資料や引用を検証回避のために削除しないでください。',
+    '元のPREMIUM_LEGACY_WORKER.mjsは不変のコピー元です。全件検証には、現行Premiumと同じバイト列のPREMIUM_CLOUD_WORKER.mjsを使います。SOURCE_COMPANION_REVIEW.mdを読み、COPY_MANIFEST.jsonでコピー元を照合し、資料の掲載日精度と資本状況の観測日を保持してください。時刻や残高を推測して埋めず、根拠資料や引用を検証回避のために削除しないでください。',
     '実際の公式IR/ニュース、IRBANKとTDnet/JPX相当一覧を会社ごとに照合します。最新の開示は定型の題名でも原本を見て重要性を確認し、最も新しい重要開示と同時公表の関連資料をまとめます。資料本文を読み、一次資料に基づく具体的なKPI、材料、リスクを日本語で記載します。',
     'analysisCutoffはCloudの実着手時刻で固定します。これを過ぎた公表と、公表時刻未確認の当日資料は採用しません。増資、ワラント、CB、MSワラント、行使・失効・潜在株式数と確定できない残高も追跡します。',
     '調査不足と会社固有の希薄化リスクを混同しません。発行・残存する商品があるという一次資料の根拠がない銘柄へ、「潜在株式残高・希薄化リスクは未確認」等の定型文を注意点や材料インパクトへ追加しないでください。調査未了の事実は内部記録へ残して必要な調査を続け、未確認だけを理由に混在/要確認へ分類しません。根拠なく希薄化なしとも断定しません。',

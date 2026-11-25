@@ -191,8 +191,32 @@ Examples:
   burden.
 
 Do not write `材料インパクト` until the selected disclosure content has been read.
-If the disclosure file cannot be opened or the content cannot be verified, use
-`混在/要確認` or `様子見`, and explain the uncertainty in `注意点`.
+If a disclosure cannot be read, continue source verification or retain the
+unresolved research internally. A retrieval failure is not a negative issuer
+fact and is not, by itself, a reason to choose `混在/要確認` or add a risk.
+
+### Capital-risk evidence and research gaps
+
+- Establish whether an actual issued warrant, convertible bond or other
+  potential share instrument exists before describing dilution risk. Inspect
+  the latest financial/annual filing and subsequent issuance, exercise,
+  redemption, cancellation and expiry disclosures through the analysis cutoff.
+- Do not append a generic "current balance unconfirmed" warning merely because
+  the latest filing says no applicable instruments and there is no newer balance
+  update. Keep the disclosed observation date; do not infer either current zero
+  or an outstanding instrument from missing research. Keep that research gap
+  internal and continue the relevant source checks.
+- For an identified instrument, state its series/name, the last verified date,
+  quantity or principal, conversion/exercise conditions and the resulting
+  share-supply mechanism. Distinguish issuance value, carrying value,
+  unconverted principal and potential shares. Never substitute a book value for
+  principal or present a dated balance as the current balance. If current
+  quantity is genuinely unavailable, qualify that specific instrument and the
+  dated figure, rather than suggesting an unidentified dilution risk.
+- Preserve real financing and dilution facts. Do not hide issued instruments
+  or remove their sources to avoid a validator error. Decide the impact label
+  from issuer facts, not from the completeness of the research checklist.
+
 5. Create `premium_worker/out/premium_reports.json` with one report per alert.
    Each report must include fields named exactly:
    `材料インパクト`, `事業概要`, `足元材料`, `ファンダ要点`, `注意点`, `開示リンク`, `Sources`.
@@ -291,6 +315,14 @@ Keep this as a source-grounded material impact label, not a trading action.
    Every `開示リンク` label MUST be formatted as:
 
    `YYYY-MM-DD 開示タイトル(hh:mm)`
+
+   The authorized label compatibility also accepts `(hh:mm JST)` for the
+   identical verified clock. Domestic TDnet/IRBANK/Yahoo TDnet rows are handled
+   by the legacy JST parser; do not invent a separate per-row timezone gate.
+   Official date-only documents keep `(時刻記載なし)` and require individual
+   review in `verified-untimed-disclosures.json`, matching the exact URL and
+   date/title. A reviewed annual filing may support stock-rights evidence; it
+   must not replace the current material disclosure or bypass the latest check.
 
    Example:
 

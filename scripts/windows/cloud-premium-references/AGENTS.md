@@ -1,24 +1,14 @@
 # Verified Premium research copy
 
-These files snapshot the Premium runtime that completed 36 reports on
-2026-11-24. `PREMIUM_LEGACY_WORKER.mjs`, `AUTOMATION_PROMPT.md` and
-`FUNDAMENTAL_EXAMPLES.md` come byte-for-byte from Premium commit `1fa6d89`.
-The saved PM task is the version used for that completed run.
+Use the selected Premium source recorded in COPY_MANIFEST.json. The executed
+worker, shared automation guide, examples and reviewed issuer inventory are
+exact byte copies. Keep the November 2 original as historical evidence only.
+Do not add independent issuer-specific risk requirements or require generic
+current-unconfirmed caveats to accept a dated capital-structure source.
 
-The immutable legacy snapshot remains unchanged. The Cloud copy
-`PREMIUM_CLOUD_WORKER.mjs` retains it as the base and adds only the reviewed
-issuer-companion checks in `SOURCE_COMPANION_REVIEW.md`. Preserve that explicit
-provenance, date precision and dated/current-balance distinction. An annual
-filing alone and guessed publication times remain invalid.
-
-Use its sequence: official listings and selected originals, all initial
-drafts, validator-named repairs, direct URL checks and the full legacy dry-run.
-Do not add the later disclosure inventory or research checkpoint gates.
-Cloud retains its immutable detection/analysis identity and HTML storage
-contract. The copied executable is invoked only with `post --dry-run` against
-an isolated claim-local ledger and a credential-free environment. Cloud owns
-its existing notifications; this copy must never collect or send Premium posts.
-
-If research cannot finish, retain its claim and drafts and hold that analysis
-while publishing verified detection data. Ownership and import integrity
-failures still require reconciliation.
+Follow the copied source checks, seven fields, targeted repairs, direct URL
+verification and full dry-run. Cloud alone owns immutable claims, cutoff and
+HTML import. The isolated credential-free worker may only post --dry-run with
+the no-send preload. It must never collect or send Premium notifications.
+A research failure may hold fundamentals while verified detection publication
+continues; ownership and import-integrity failures remain fatal.

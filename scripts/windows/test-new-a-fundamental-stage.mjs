@@ -6,6 +6,18 @@ import path from 'node:path';
 import test from 'node:test';
 import { runNewAFundamentalStage, verifyPremiumDirectUrls } from './new-a-fundamental-stage.mjs';
 
+test('selected Premium copy manifest matches every executed reference without companion code changes', () => {
+  const base = path.join(import.meta.dirname, 'cloud-premium-references');
+  const manifest = JSON.parse(fs.readFileSync(path.join(base, 'COPY_MANIFEST.json'), 'utf8'));
+  assert.equal(manifest.schema, 'CLOUD_PREMIUM_EXACT_RESEARCH_COPY_V1');
+  assert.equal(manifest.source_commit, '1491c916ec617491b7f602d3fed2d7fba2c733df');
+  for (const [name, entry] of Object.entries(manifest.files)) {
+    assert.equal(createHash('sha256').update(fs.readFileSync(path.join(base, name))).digest('hex'), entry.sha256);
+  }
+  assert.equal(createHash('sha256').update(fs.readFileSync(path.join(base, 'PREMIUM_PM_SAVED_PROMPT.txt')))
+    .digest('hex'), manifest.saved_task_sha256);
+});
+
 test('Cloud copies the completed legacy workflow, repairs named reports, validates the full batch without posting', async t => {
   const repo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'new-a-fundamental-stage-')));
   t.after(() => fs.rmSync(repo, { recursive: true, force: true }));
@@ -73,7 +85,7 @@ test('Cloud copies the completed legacy workflow, repairs named reports, validat
         assert(args.includes('--dry-run') && !args.includes('--save-only') && args[0] === '--import');
         assert(options.env.DISCORD_PREMIUM_WEBHOOK_URL === undefined);
         assert.equal(createHash('sha256').update(fs.readFileSync(args[2])).digest('hex'),
-          '4a90e1c0c5687aa0e9f86f284bad86f9b182acefef7e598e9cc6d3fbf80870d3');
+          '53f9b9fc97940fc746b34651be6bf31bb7b73ea6f40ab1db6d9500e8c40e0b87');
         const input = JSON.parse(fs.readFileSync(args[args.indexOf('--input') + 1]));
         calls.push('legacy:' + input.reports.map(r => r.symbolCode).join(','));
         if (input.reports.some(r => r.alertId === secondAlert.alertId && !repaired)) throw Error('company-specific KPI is missing');
@@ -103,7 +115,8 @@ test('Cloud copies the completed legacy workflow, repairs named reports, validat
         return 0;
       }
       assert.match(options.input, /PREMIUM_PM_SAVED_PROMPT.txt/);
-      assert.match(options.input, /11\/2版Premium/);
+      assert.match(options.input, /現行Premiumと完全照合/);
+      assert.match(options.input, /COPY_MANIFEST.json/);
       assert.match(options.input, /調査不足と会社固有の希薄化リスクを混同しません/);
       assert.match(options.input, /未確認だけを理由に混在\/要確認へ分類しません/);
       assert.match(options.input, /発行額、簿価、未転換元本、潜在株式数を区別/);

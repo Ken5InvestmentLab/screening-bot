@@ -45,11 +45,19 @@ def main(argv=None):
  p=argparse.ArgumentParser();sub=p.add_subparsers(dest='command',required=True);pub=sub.add_parser('publish');pub.add_argument('--remote',action='store_true');pub.add_argument('--local',action='store_true');n=sub.add_parser('notify');n.add_argument('--date',required=True);mode=n.add_mutually_exclusive_group();mode.add_argument('--dry-run',action='store_true');mode.add_argument('--reconcile-only',action='store_true');n.add_argument('--report-url',default='')
  member=sub.add_parser('publish-member')
  member.add_argument('--remote',action='store_true',required=True)
+ editorial=sub.add_parser('correct-fundamentals')
+ editorial.add_argument('--review-file',required=True)
+ editorial.add_argument('--review-sha256',required=True)
  for command in ['prepare-release','prearm-release']:
   initial=sub.add_parser(command);initial.add_argument('--remote',action='store_true');initial.add_argument('--local',action='store_true');initial.add_argument('--approval-file');initial.add_argument('--code-manifest')
   if command=='prepare-release':initial.add_argument('--bundle',required=True);initial.add_argument('--expected-revision',type=int,default=0)
   else:initial.add_argument('--version-receipt',required=True);initial.add_argument('--expected-revision',type=int,required=True)
  args=p.parse_args(argv);root=private_root(ROOT)
+ if args.command=='correct-fundamentals':
+  from .fundamental_corrections import register
+  require_activation(root,ROOT)
+  receipt=register(ROOT,args.review_file,args.review_sha256)
+  print(json.dumps(receipt,ensure_ascii=False));return receipt
  if args.command in ['prepare-release','prearm-release']:
   from . import release
   if args.remote==args.local:raise ValueError('choose one preparation target')

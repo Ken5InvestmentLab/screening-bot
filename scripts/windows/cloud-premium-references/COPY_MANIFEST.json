@@ -1,0 +1,33 @@
+{
+  "schema": "CLOUD_PREMIUM_EXACT_RESEARCH_COPY_V1",
+  "source_repository": "Ken5InvestmentLab/weekly_report_gas",
+  "source_commit": "1491c916ec617491b7f602d3fed2d7fba2c733df",
+  "source_branch": "experiment/fundamental-scoring-test",
+  "files": {
+    "PREMIUM_CLOUD_WORKER.mjs": {
+      "source_path": "premium_worker/worker.mjs",
+      "sha256": "53f9b9fc97940fc746b34651be6bf31bb7b73ea6f40ab1db6d9500e8c40e0b87"
+    },
+    "AUTOMATION_PROMPT.md": {
+      "source_path": "premium_worker/AUTOMATION_PROMPT.md",
+      "sha256": "18a3e023317bca07c2f749de7c1ca8acfd7845f872f3a858449fe9ee9377a1d7"
+    },
+    "FUNDAMENTAL_EXAMPLES.md": {
+      "source_path": "premium_worker/FUNDAMENTAL_EXAMPLES.md",
+      "sha256": "c49243cc7ee6685d3dedf2789fc452ce4d610f463edcc54b48001487a39d77fb"
+    },
+    "verified-untimed-disclosures.json": {
+      "source_path": "premium_worker/verified-untimed-disclosures.json",
+      "sha256": "a2316766f691fffe25c48846872ab3017eed57404c9e830331b588364ac7e2b8"
+    }
+  },
+  "saved_task_id": "premium-alert-snapshot-worker-1540",
+  "saved_task_sha256": "af31b0175e968a8fe17354339a899e2f988ecf6c37dbc30958037b25f493c317",
+  "historical_original_worker_sha256": "98edbc6921dfcad6b853660a1d1bc6e508ef684f71d29732960330a53cb80dc3",
+  "cloud_only_boundaries": [
+    "immutable claim identity",
+    "analysis cutoff",
+    "HTML import",
+    "no collection or external writes"
+  ]
+}

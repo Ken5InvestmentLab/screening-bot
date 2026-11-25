@@ -1,35 +1,25 @@
-# Reviewed issuer companion documents
+# Exact selected Premium source
 
-The original `PREMIUM_LEGACY_WORKER.mjs` remains the byte-for-byte Premium
-snapshot (SHA-256 `98edbc6921dfcad6b853660a1d1bc6e508ef684f71d29732960330a53cb80dc3`).
-`PREMIUM_CLOUD_WORKER.mjs` uses that source with the two narrowly scoped
-quality corrections below. All research, full-batch checks and no-send behavior
-remain the same. Do not remove a cited source or invent a time to pass a check.
+The executed `PREMIUM_CLOUD_WORKER.mjs` is byte-identical to the selected
+Premium worker from `1491c916ec617491b7f602d3fed2d7fba2c733df`. Worker SHA-256:
+`53f9b9fc97940fc746b34651be6bf31bb7b73ea6f40ab1db6d9500e8c40e0b87`. The prompt, quality examples and
+reviewed untimed-disclosure inventory are copied from the same working source;
+`COPY_MANIFEST.json` records their exact hashes. The original November 2
+`PREMIUM_LEGACY_WORKER.mjs` remains unchanged as historical provenance.
 
-- The official issuer IR news and library list
-  `https://www.aiholdings.co.jp/uploads/2026/11/fy2027q1_presentation.pdf`
-  on 2026-11-16, without a publication time. Its exact label is
-  `2026-11-16 2027年6月期 第1四半期決算説明資料(時刻記載なし)`.
-  Keep `publishedAtPrecision: "date_only"` and that date. The existing Cloud
-  cutoff check still rejects a date-only disclosure on or after the cutoff day.
-  A guessed hh:mm and a different date for this URL are rejected.
-- The issuer's `https://www.aiholdings.co.jp/uploads/2026/09/Security-Report_20.pdf`
-  is the 20th annual filing, dated 2026-09-25. Page 30 identifies the 2026-06-30
-  period and records no applicable stock-option, other warrant or variable-price
-  convertible-bond exercise items. This is dated capital-structure evidence,
-  not the current earnings material and not proof of today's zero balance.
-  Keep both current-quarter originals in the disclosure links. State
-  `2026年6月末基準では新株予約権等は該当なし`, that the cutoff's current
-  unexercised balance is unconfirmed, and that the past finding does not imply
-  a current zero balance. The annual-only packet is still rejected.
+The previous Cloud-only 3076 check required an unconfirmed-current-balance
+warning even after a dated absence finding. That additional requirement is
+removed. Use the selected Premium capital-evidence rules: missing research is
+not issuer dilution risk, dated absence is not proof of current zero, and
+identified instruments retain their dated quantities and terms. Never invent
+a risk, its absence, a principal balance or a publication clock.
 
-Primary provenance, checked 2026-11-25 JST:
+The shared inventory includes two individually reviewed 3076 companion files.
+The issuer IR news list gives November 16, 2026 for the Q1 presentation and
+September 25, 2026 for the twentieth annual filing. Keep date-only precision;
+the annual filing supplements current material rather than replacing it.
+Source: https://www.aiholdings.co.jp/ir/news/
 
-- https://www.aiholdings.co.jp/ir/news/
-- https://www.aiholdings.co.jp/ir/library/
-- https://www.aiholdings.co.jp/uploads/2026/11/fy2027q1_presentation.pdf
-- https://www.aiholdings.co.jp/uploads/2026/09/Security-Report_20.pdf
-
-Only the pending 3076 report needs re-review. Keep the validated 6908 and 9823
-reports unchanged, retain the original three-alert claim and 11/24 cutoff, and
-repeat the full three-report dry-run and direct-URL checks before import.
+Cloud keeps ownership, cutoff, HTML-only import and no-send boundaries. Its
+research copy must not collect Premium claims, modify Premium state or send
+Discord messages. Preserve verified original analysis receipts.

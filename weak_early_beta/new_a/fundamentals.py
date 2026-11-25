@@ -330,7 +330,12 @@ def _historical_history(root, sha, rows, forward, day):
     return matched, counts
 
 
-def _bundle(base, manifest, receipt, target, rows, analyses):
+def _bundle(base, manifest, receipt, target, rows, analyses, *, correction_root=None):
+    from . import fundamental_corrections as editorial
+
+    before_rows = digest(rows)
+    corrections = editorial.retained(correction_root) if correction_root is not None else None
+    editorial.normalize(rows, corrections)
     matched = set()
     changed = False
     for row in rows:
@@ -348,9 +353,11 @@ def _bundle(base, manifest, receipt, target, rows, analyses):
         matched.add(row["identity"])
         changed = True
     _check(matched == set(analyses), "analysis receipt no longer matches an exact owner presentation row")
+    editorial.apply(rows, corrections)
+    changed = digest(rows) != before_rows
     if not changed:
         return base, manifest["source_version"]
-    source_version = digest([manifest["source_version"], analyses])
+    source_version = digest([manifest["source_version"], analyses, "editorial", digest(corrections)]) if corrections else digest([manifest["source_version"], analyses])
     output = target / ("bundle-fundamental-" + source_version)
     # Rebuild via a staging directory. Never rewrite the detection bundle or its snapshot.
     with tempfile.TemporaryDirectory(prefix="fundamental-bundle-", dir=target) as workspace:
@@ -440,7 +447,7 @@ def retain_verified_for_publication(root, run):
            "cached analysis publication differs from the frozen detection")
     rows = _rows(base, manifest)
     historical, counts = _historical_history(root, historical_sha, rows, forward, day)
-    output, source = _bundle(base, manifest, receipt, target, rows, {**historical, **forward})
+    output, source = _bundle(base, manifest, receipt, target, rows, {**historical, **forward}, correction_root=root)
     retained = {
         "historicalLedgerSha256": historical_sha,
         "historicalAvailable": counts["available"] if counts else 0,
@@ -500,7 +507,7 @@ def stage(repo, runtime, day, started_at, action, analysis_started=None, reports
            "invalid saved historical fundamental digest")
     forward = _history(root, day)
     historical, counts = _historical_history(root, historical_sha, rows, forward, day)
-    output, source = _bundle(base, manifest, receipt, target, rows, {**historical, **forward})
+    output, source = _bundle(base, manifest, receipt, target, rows, {**historical, **forward}, correction_root=root)
     if recovery_sha256:
         _recovery_owner(repo, Path(runtime), day, started_at, recovery_sha256)
     else:

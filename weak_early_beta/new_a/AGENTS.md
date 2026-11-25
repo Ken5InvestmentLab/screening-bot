@@ -2,9 +2,11 @@
 
 ## New A fundamental workflow
 
-- Use the user's selected, completed Premium legacy workflow pinned under
-  `scripts/windows/cloud-premium-references/`. New A claims name
-  `premium-legacy-1fa6d89`; use its source research, seven fields, targeted
+- Use the selected Premium source pinned by `COPY_MANIFEST.json` under
+  `scripts/windows/cloud-premium-references/`. The executed worker, shared
+  guide, examples and reviewed issuer inventory are exact copies. New A's
+  `premium-legacy-1fa6d89` claim name retains the contract lineage; use the
+  recorded selected source for research, seven fields, targeted
   repair and exact full dry-run. This replaces the later machine inventory,
   capital-risk packet and long-term packet requirements for this path. Keep
   the guide's substantive source/dilution checks, Cloud identity/cutoff,
@@ -32,6 +34,13 @@
   cache; keep its detection snapshot and SENT outbox unchanged, and do not
   rerun research or notifications. An identical attached report is a no-op;
   conflicting existing analysis must fail instead of being overwritten.
+- An editorial correction to an already published analysis uses the explicit
+  `correct-fundamentals` command with exact reviewed bytes. Retain its original
+  seven-field report, cutoff, source links and immutable analysis receipts in
+  the append-only correction ledger. Only impact and notes prose may change.
+  The ordinary publication rebuilds presentation parts with that ledger; it
+  must preserve the snapshot, price parts and SENT notifications. Removing an
+  unsupported research-gap warning never establishes absence of dilution.
 
 ## Notifications
 

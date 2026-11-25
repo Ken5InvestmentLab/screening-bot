@@ -429,11 +429,11 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
                          member.CARD_DISPLAY_REVIEW_SCHEMA)
         self.assertEqual(member.MEMBER_SUCCESSORS[member.CARD_DISPLAY_REVIEW_SCHEMA],
                          member.PUBLICATION_RECOVERY_REVIEW_SCHEMA)
-        self.assertEqual(member._effective_off(effective_off, MEMBER_BINDING['database_id'],
-                         dict(deployment,build_input_sha256=previous['build_input_sha256']), handover,
+        self.assertEqual(member._effective_off(effective_off, MEMBER_BINDING['database_id'], deployment, handover,
                          source_review_schema=member.PUBLICATION_RECOVERY_REVIEW_SCHEMA), row)
         with self.assertRaisesRegex(ValueError, "successor deployment"):
-            member._effective_off(effective_off, MEMBER_BINDING['database_id'], deployment, handover,
+            member._effective_off(effective_off, MEMBER_BINDING['database_id'],
+                                  dict(deployment,build_input_sha256=previous['build_input_sha256']), handover,
                                   source_review_schema=member.PUBLICATION_RECOVERY_REVIEW_SCHEMA)
         self.assertEqual(member._effective_off(effective_off, MEMBER_BINDING['database_id'],
                          dict(deployment,build_input_sha256=previous['build_input_sha256']), handover,

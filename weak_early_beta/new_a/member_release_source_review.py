@@ -485,11 +485,13 @@ _CARD_DISPLAY_PRODUCT_PATHS = frozenset({
 _CARD_DISPLAY_PRODUCT_SHA256 = "89ca8793f2d15c701e33899267dbdb2b7193e9bba9a76b59e8aab3329a2eb5dd"
 _PUBLICATION_RECOVERY_BASELINE = "1d9803f7169a1e82529a13677a72ea0599dd42af"
 _PUBLICATION_RECOVERY_PRODUCT_PATHS = frozenset({
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/member-loader.js",
+    "weak-early-beta-gate/AGENTS.md", "tests/new_a_member_consistency.test.cjs",
     "weak_early_beta/new_a/publisher.py", "weak_early_beta/new_a/member_publisher.py",
     "weak_early_beta/new_a/notifications.py", "weak_early_beta/new_a/AGENTS.md",
     "tests/test_new_a_wrangler_response.py", "tests/test_new_a_member_publisher.py", "tests/test_new_a_connection.py",
 })
-_PUBLICATION_RECOVERY_PRODUCT_SHA256 = "88bef40a58024c17b26dc30b649329bbd069c6c57a0e7f37f3c7289d09dc07c8"
+_PUBLICATION_RECOVERY_PRODUCT_SHA256 = "2dfb9b1255e243b0281e405d0ad80d935b0f1b5eaa8626901561384c766069fe"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
     CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
     FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA, UNIFIED_MEMBER_UI_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA,

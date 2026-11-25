@@ -448,6 +448,44 @@ test('account display settings apply without blocking cards or skipping saved hi
   assert.deepEqual(view.document.documentElement.dataset, { theme: 'dark' });
 });
 
+test('transient access failure clears content and a fresh successful check reloads it', async () => {
+  for (const tier of ['premium', 'free']) {
+    for (const resume of ['poll', 'show', 'restore']) {
+      const view = browser({ tier });
+      await flush();
+      assert.notEqual(view.nodes['member-content'].innerHTML, '');
+      view.setAccess(503);
+      view.poll();
+      await flush();
+      assert.equal(view.nodes['member-content'].innerHTML, '');
+      assert.match(view.nodes['member-state'].textContent, /現在読み込めません/);
+      const before = view.requests.length;
+      view.setAccess(204);
+      view[resume]();
+      await flush();
+      assert.notEqual(view.nodes['member-content'].innerHTML, '', tier + ':' + resume);
+      assert.ok(view.requests.slice(before).filter(call => call.name === 'session').length >= 2);
+    }
+  }
+});
+
+test('denied access stays cleared after subsequent successful periodic checks', async () => {
+  for (const status of [401, 403]) {
+    const view = browser();
+    await flush();
+    view.setAccess(status);
+    view.poll();
+    await flush();
+    const before = view.requests.length;
+    view.setAccess(204);
+    view.poll();
+    await flush();
+    assert.equal(view.nodes['member-content'].innerHTML, '');
+    assert.match(view.nodes['member-state'].textContent, /アクセス権/);
+    assert.ok(view.requests.slice(before).every(call => call.name === 'session'));
+  }
+});
+
 test('role loss aborts delayed dashboard history and does not repaint either protected region', async () => {
   const delayedHistory = Promise.withResolvers();
   const dashboard = browser({

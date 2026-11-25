@@ -305,6 +305,12 @@
     return accessCheck;
   }
 
+  async function refreshVisibleAccess(hideUntilChecked = false) {
+    const recover = snapshot === null && attempt === undefined && status.textContent === unavailable;
+    if (await verifyAccess(hideUntilChecked) && recover && snapshot === null && attempt === undefined
+      && status.textContent === unavailable) await load();
+  }
+
   function historyNavigation(label, previous, next, step) {
     if (!previous && !next) return null;
     const nav = document.createElement('nav');
@@ -890,15 +896,15 @@
   });
   retry.addEventListener('click', load);
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') verifyAccess(true);
+    if (document.visibilityState === 'visible') refreshVisibleAccess(true);
     else suspendDisplay();
   });
   g.addEventListener('pagehide', suspendDisplay);
   g.addEventListener('pageshow', event => {
-    if (event.persisted) verifyAccess(true);
+    if (event.persisted) refreshVisibleAccess(true);
   });
   g.setInterval(() => {
-    if (document.visibilityState === 'visible') verifyAccess();
+    if (document.visibilityState === 'visible') refreshVisibleAccess();
   }, 30000);
   load();
 })(globalThis);

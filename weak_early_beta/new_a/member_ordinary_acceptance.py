@@ -220,8 +220,7 @@ def _effective_off(policy, database_id, deployment, handover, *, source_review_s
                and prior_deployment["deployment_id"] != deployment["deployment_id"]
                and prior_id != deployment["deployment_id"]
                and same_build_input == (source_review_schema in {JOURNAL_REVIEW_SCHEMA, APPROVAL_TIMEOUT_REVIEW_SCHEMA,
-                                                                 PREMIUM_LEGACY_REVIEW_SCHEMA, PREMIUM_RUNTIME_REVIEW_SCHEMA,
-                                                                 PUBLICATION_RECOVERY_REVIEW_SCHEMA})
+                                                                 PREMIUM_LEGACY_REVIEW_SCHEMA, PREMIUM_RUNTIME_REVIEW_SCHEMA})
                and oldest_observation <= observed <= changed_at,
                "successor deployment or incumbent observation differs")
     row = policy["policy"]

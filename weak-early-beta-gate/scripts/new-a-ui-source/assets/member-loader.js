@@ -120,7 +120,29 @@
       }
     }
     if (!aggregatesOnly && markup.includes('data-reference-cards')) expandStockCards(template.content);
+    if (!aggregatesOnly) addHoldingProfitTotal(template.content);
     return { fragment: template.content, items };
+  }
+
+  function addHoldingProfitTotal(fragment) {
+    const section=fragment.querySelector('#new-a-model-holdings');
+    const table=section?.querySelector('[data-finite-table="holdings"]');
+    const note=section?.querySelector(':scope > p.note');
+    if(!table || !note || section.querySelector('[data-member-holdings-total]'))return;
+    const values=Array.from(table.querySelectorAll('tbody td[data-label="評価損益"]'),cell=>cell.textContent);
+    const amount=g.NewAMemberPresentation.holdingProfitTotal(values);
+    const row=document.createElement('div');
+    row.className='cloud-section-head';
+    note.replaceWith(row);
+    const total=document.createElement('p');
+    total.className='cloud-meta';
+    total.setAttribute('data-member-holdings-total','');
+    total.append('合計含み損益 ');
+    const value=document.createElement('strong');
+    value.className=amount>0?'positive':amount<0?'negative':'';
+    value.textContent=amount===null?'未確認':(amount>0?'+':'')+amount.toLocaleString('ja-JP')+'円';
+    total.append(value);
+    row.append(note,total);
   }
 
   // Saved and future canonical references share this member presentation.
@@ -398,14 +420,13 @@
     const target = document.getElementById('member-history-results');
     const notice = document.getElementById('member-history-filter-status');
     if (!controls || !target || !notice) return;
-    const state = { index: null, controller: null, timer: undefined };
+    const state = { index: null, controller: null, timer: undefined, pages: new Map([[native.page,native.rows]]) };
     historySearch = state;
     const ui = g.NewAMemberPresentation;
     const keys = Object.keys(initialHistoryQuery);
     const inputs = Object.fromEntries(keys.map(key => [key, controls.querySelector('[data-history-filter="' + key + '"]')]));
     const current = () => historySearch === state && scope.generation === snapshot
       && scope.session === memberSession && memberAccess === 'premium';
-    const usingFilter = () => historyQuery.symbol.trim() || historyQuery.from || historyQuery.through || historyQuery.order !== 'newest';
     const updateScope = rows => {
       const entries = new Map(dashboardItems);
       for (const row of rows) if (row.item && !entries.has(row.item)) entries.set(row.item, row);
@@ -426,18 +447,6 @@
       dismissFundamental();
       updateScope([]);
       target.replaceChildren();
-      if (!usingFilter()) {
-        notice.textContent = '';
-        target.removeAttribute('aria-busy');
-        if (native.page !== 1 || historyOffset !== 0) {
-          resetPage();
-          return;
-        }
-        target.innerHTML = ui.referenceHistoryTable(native.visible, selected);
-        updateScope(native.visible);
-        if (native.nav) target.append(native.nav);
-        return;
-      }
       const { from, through } = historyQuery;
       if (from && through && from > through) {
         notice.textContent = '開始日と終了日を確認してください。';
@@ -463,10 +472,10 @@
         }
         const matches = ui.matchingHistory(state.index, historyQuery);
         const size = display.page_size ?? 20;
-        const offsets = matches.slice((resultPage - 1) * size, resultPage * size);
-        const needed = new Set(offsets.map(offset => Math.floor(offset / historyPartSize) + 1));
-        const available = new Map(await Promise.all([...needed].map(async number => {
-          if (number === native.page) return [number,native.rows];
+        const result = await ui.settledHistoryPage(matches, async offset => {
+          if (!active()) throw Error(changed);
+          const number=Math.floor(offset / historyPartSize) + 1;
+          if(state.pages.has(number))return state.pages.get(number)[offset % historyPartSize];
           const first = (number - 1) * historyPartSize;
           const expected = state.index.rows.slice(first,first + historyPartSize).map(([date,symbol,name]) => ({
             date, symbol, companyName: state.index.names[name] ?? null,
@@ -474,18 +483,21 @@
           const markup = await readReference('history.' + number, options);
           const rows = ui.referenceHistory(markup, number, scope.asOf, expected, true);
           if (!rows) throw Error(unavailable);
-          return [number,rows];
-        })));
+          if(!active())throw Error(changed);
+          state.pages.set(number,rows);
+          return rows[offset % historyPartSize];
+        }, selected, (resultPage - 1) * size, size);
         if (!active() || !await verifyAccess() || !active()) return;
-        const rows = offsets.map(offset => available.get(Math.floor(offset / historyPartSize) + 1)[offset % historyPartSize]);
+        const rows = result.rows;
         updateScope(rows);
         target.innerHTML = ui.referenceHistoryTable(rows, selected);
-        notice.textContent = '検索結果 ' + matches.length.toLocaleString('ja-JP') + '件';
-        const nav = historyPagination(resultPage, Math.ceil(matches.length / size), number => {
+        notice.textContent = '損益確定済み ' + (result.total ?? resultPage * size).toLocaleString('ja-JP')
+          + (result.hasMore ? '件以上' : '件');
+        const nav = historyPagination(resultPage, resultPage + (result.hasMore ? 1 : 0), number => {
           notice.setAttribute('tabindex','-1');
           notice.focus();
           apply(number);
-        });
+        }, false);
         if (nav) target.append(nav);
       } catch (error) {
         if (!active()) return;
@@ -525,7 +537,7 @@
       apply();
       inputs.symbol.focus();
     });
-    if (usingFilter()) apply();
+    apply();
   }
 
   function dismissFundamental(restoreFocus = false) {
@@ -672,7 +684,7 @@
       const total = knownPageCount === undefined ? history.pages * pagesPerPart : Math.ceil(knownPageCount / size);
       const go = next => readHistory(Math.ceil(next / pagesPerPart), true, (next - 1) % pagesPerPart * size);
       const nav = historyPagination(current, total, go, pagesPerPart === 1 || knownPageCount !== undefined);
-      if (nav) (document.getElementById('member-history-results') ?? region).append(nav);
+      if (nav && (!referenceRows || !document.getElementById('member-history-filters'))) (document.getElementById('member-history-results') ?? region).append(nav);
       if (referenceRows) mountHistorySearch({ rows: referenceRows, page: number, pages: history.pages, visible: detailed, nav },
         scope, dashboardItems, () => readHistory(1));
     }

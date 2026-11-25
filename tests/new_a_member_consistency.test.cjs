@@ -134,7 +134,7 @@ const presenter = { require: require('node:module').createRequire(path.join(asse
 vm.runInNewContext(fs.readFileSync(path.join(assets, 'member-presentation.js'), 'utf8'), presenter);
 const {
   fundamentalItem, fundamentalMarkup, fundamentalSelector, referencePayload, referenceHistory,
-  referenceHistoryIndex, matchingHistory, referenceHistoryTable, historyContent, freeHistoryRows,
+  referenceHistoryIndex, matchingHistory, settledHistoryPage, holdingProfitTotal, referenceHistoryTable, historyContent, freeHistoryRows,
 } = presenter.module.exports;
 const initialToken = 'a'.repeat(64);
 const nextToken = 'b'.repeat(64);
@@ -279,7 +279,7 @@ function browser(options = {}) {
       lockedPage: mode => 'synthetic-premium-lock-' + mode,
       freeHome: () => 'synthetic-premium-purchase', freeHistoryRows,
       fundamentalItem, fundamentalMarkup, fundamentalSelector, referencePayload, referenceHistory,
-      referenceHistoryIndex, matchingHistory, referenceHistoryTable,
+      referenceHistoryIndex, matchingHistory, settledHistoryPage, holdingProfitTotal, referenceHistoryTable,
       historyContent(rows, page, referenceRows, selected) {
         historyRenderings.push({ page, referenceRows, selected });
         return historyContent(rows, page, referenceRows, selected);
@@ -341,7 +341,8 @@ function historyReference(page, rows = []) {
 const detailRow = {
   date: availableAnalysis.date, symbol: availableAnalysis.symbol, companyName: '合成',
   chartAllowed: true, signalClose: 100, d5: null, d6: null, item: analysisItem,
-  levels: [['EXPIRED',false,null,null],['EXPIRED',false,null,null],['EXPIRED',false,null,null]],
+  levels: [['EXPIRED',false,null,null],['EXPIRED',false,null,null],
+    ['FILLED',true,['2026-11-18',100,100,10000],['2026-11-19',110,1000,.1]]],
 };
 function projectedElement(localName, values = {}) {
   return {
@@ -406,7 +407,7 @@ test('dashboard cards render before offscreen or stalled history and history use
 test('account display settings apply without blocking cards or skipping saved history', async () => {
   const preferences = Promise.withResolvers();
   const rows = Array.from({ length: 107 }, (_, index) => ({
-    date: day, symbol: String(1000 + index), state: 'EXPIRED',
+    date: day, symbol: String(1000 + index), state: 'HOLD_ENDED',
   }));
   const view = browser({ historyOffscreen: true, read: (name, url, init) => {
     if (name === 'preferences') {
@@ -681,13 +682,13 @@ test('old filters lazily resolve only matching rich pages and clear back to nati
   }});
   await flush();
   const asked = item => view.requests.filter(c=>c.url.searchParams.get('item')===item);
-  assert.equal(asked('history.index').length,0);
+  assert.equal(asked('history.index').length,1);
   assert.equal(asked('history.2').length,0);
   view.inputs.symbol.value = '合成検索';
   view.historyFilters.events.input({target:view.inputs.symbol});
   await flush();
   await flush();
-  assert.match(view.historyNotice.textContent,/40件/);
+  assert.match(view.historyNotice.textContent,/20件以上/);
   assert.equal(asked('history.index').length,1);
   assert.equal(asked('history.2').length,1);
   assert.equal(asked('history.index')[0].init.headers['x-cloud-generation'],initialToken);
@@ -699,8 +700,9 @@ test('old filters lazily resolve only matching rich pages and clear back to nati
   assert.match(view.historyResults.innerHTML,/>1120<.*>1139</);
   view.clearSearch.events.click();
   await flush();
-  assert.equal(view.historyNotice.textContent,'');
-  assert.match(view.historyResults.innerHTML,/>1000<.*>1099</);
+  assert.match(view.historyNotice.textContent,/20件以上/);
+  assert.match(view.historyResults.innerHTML,/>1000<.*>1019</);
+  assert.doesNotMatch(view.historyResults.innerHTML,/>1020</);
   assert.equal(view.inputs.symbol.focused,true);
 });
 

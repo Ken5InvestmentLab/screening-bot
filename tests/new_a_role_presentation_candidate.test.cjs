@@ -65,7 +65,7 @@ test('saved dashboard references merge candidate and other cards without droppin
 test('shared dashboard follows the prior owner heading, daily cards, holdings, watch and history order',()=>{
  const html=ui.view({...premiumHome,chartRows:[{date:premiumHome.asOf,equity_yen:9500,holding_count:2}]});
  const order=['データ更新日','ダッシュボード','運用レベル','対象日の動き',
-  '234A','456A','567A','現在の仮想保有','現在の監視','345A','>検出履歴<','1234'];
+  '234A','456A','567A','現在の仮想保有','現在の監視','345A','>検出履歴<'];
  let previous=-1;
  for(const label of order){
   const index=html.indexOf(label);
@@ -306,9 +306,9 @@ test('reference history restores the old columns and selected trial details usin
  a.match(html,/symbol=TSE%3A234A/);
  a.match(html,/&lt;合成&gt;/);
  a.doesNotMatch(html,/<合成>|symbol=TSE%3A456A|検出履歴へ|運用レベルの比較/);
- a.match(render('medium'),/仮想保有中/);
+ a.doesNotMatch(render('medium'),/仮想保有中|234A|456A/);
  a.doesNotMatch(render('medium'),/決済 2026-11-19/);
- a.match(render('defensive'),/株価上限/);
+ a.doesNotMatch(render('defensive'),/株価上限|234A|456A/);
  a.equal(decode([row,held],1),null);
  a.equal(decode([held,row]),null);
  for(const invalid of [{...row,item:'1.2026-11-10.234A'},{...row,chartAllowed:false},{...row,d5:['2026-11-20',22,true]},
@@ -369,7 +369,7 @@ test('free dashboard shares the Premium section order with data-free locked rows
  a.doesNotMatch(analytics,/href="\/purchase"|検出履歴|試算結果を準備中|TODAY_ONLY|234A/);
 });
 test('only verified Premium history rows have the exact page, date and symbol analysis button',()=>{
- const match={date:'2026-11-18',symbol:'234A',state:'EXPIRED',has_fundamental:true};
+ const match={date:'2026-11-18',symbol:'234A',state:'HOLD_ENDED',has_fundamental:true};
  const rows=[match,{...match,symbol:'345A',has_fundamental:false},
    {...match,symbol:'456A',has_fundamental:'true'},{...match,symbol:'567A',date:'2026-11-31'}];
  const html=ui.view({...premiumHome,rows,historyPage:42});
@@ -444,3 +444,35 @@ test('verified disclosure and Sources fields render only safe titled HTTPS links
 test('chart gaps never joined and values not normalized to fake zero',()=>{const html=ui.chart([{date:'2026-11-17',equity_yen:100},{date:'2026-11-18',equity_yen:null},{date:'2026-11-19',equity_yen:120}]);a.equal((html.match(/<polyline/g)||[]).length,2);a.ok(!/NaN|Infinity/.test(html));a.ok(ui.chart([{date:'2026-11-19',equity_yen:null}]).includes('未確定'));});
 test('untrusted labels escaped and unresolved metrics never shown',()=>{a.ok(!ui.history([{date:'<script>',symbol:'<img>',state:'<script>'}]).includes('<script>'));a.ok(ui.metrics(null).includes('未確定'));a.ok(!ui.metrics(null).includes('0円'));});
 test('member transport never loads owner inputs, worker or notifications',()=>{const js=fs.readFileSync(path.join(src,'member-loader.js'),'utf8');a.doesNotMatch(js,/new-a-finite|input\/manifest|new Worker|notification-preferences/);});
+
+
+test('settled history paginates after level confirmation across sparse source pages, retaining original selectors',async()=>{
+ const exit=['2026-11-19',120,2000,.2],entry=['2026-11-12',100,100,10000];
+ const rows=Array.from({length:12},(_,i)=>({symbol:String(1000+i),item:'2.2026-11-10.'+(1000+i),
+  levels:[['EXPIRED',false,null,null],['FILLED',true,entry,i===8?exit:null],
+   ['FILLED',true,entry,[2,7,8,11].includes(i)?exit:null]]}));
+ let reads=[];
+ const read=async i=>{reads.push(i);return rows[i];},matches=rows.map((_,i)=>i);
+ const first=await ui.settledHistoryPage(matches,read,'return_priority',0,2);
+ a.deepEqual(Array.from(first.rows,r=>r.symbol),['1002','1007']);
+ a.equal(first.hasMore,true);a.equal(first.total,null);a.equal(Math.max(...reads),8);
+ const second=await ui.settledHistoryPage(matches,read,'return_priority',2,2);
+ a.deepEqual(Array.from(second.rows,r=>r.item),['2.2026-11-10.1008','2.2026-11-10.1011']);
+ a.equal(second.hasMore,false);a.equal(second.total,4);
+ const medium=await ui.settledHistoryPage(matches,read,'medium',0,20);
+ a.deepEqual(Array.from(medium.rows,r=>r.symbol),['1008']);a.equal(medium.total,1);
+ const empty=await ui.settledHistoryPage(matches,read,'defensive',0,20);
+ a.equal(empty.rows.length,0);a.equal(empty.total,0);
+ const reverse=await ui.settledHistoryPage([...matches].reverse(),read,'return_priority',0,2);
+ a.deepEqual(Array.from(reverse.rows,r=>r.symbol),['1011','1008']);
+ await a.rejects(ui.settledHistoryPage(matches,async()=>{throw Error('generation changed');},'medium',0,20),/generation changed/);
+});
+
+test('holding total sums displayed amounts and keeps unknown prices unknown',()=>{
+ a.equal(ui.holdingProfitTotal(['-2,300円 (-4.2%)','+2,100円 (+1.94%)','-900円 (-1.01%)',
+  '-5,200円 (-7.54%)','+1,400円 (+0.72%)','-1,100円 (-4.12%)','+2,250円 (+1.41%)',
+  '-7,700円 (-6.8%)','-16,200円 (-5.91%)']),-27650);
+ a.equal(ui.holdingProfitTotal(['+500円 (+2%)','−200円 (-1%)']),300);
+ a.equal(ui.holdingProfitTotal(['0円 (0%)']),0);
+ for(const values of [['未確認'],['+500円','未確認'],['1,20円'],['+2%'],['NaN円']])a.equal(ui.holdingProfitTotal(values),null);
+});

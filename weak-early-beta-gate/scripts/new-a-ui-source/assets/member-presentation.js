@@ -138,6 +138,34 @@ function matchingHistory(index, { symbol, from, through, order }) {
   if (order === 'symbol') matches.sort((left,right) => index.rows[left][1].localeCompare(index.rows[right][1]));
   return matches;
 }
+function settledHistoryRows(rows,preset) {
+  const level=Object.keys(names).indexOf(preset);
+  return rows.filter(row=>Array.isArray(row.levels?.[level]?.[3])
+    && Number.isFinite(row.levels[level][3][2]));
+}
+async function settledHistoryPage(matches,readRow,preset,offset,limit) {
+  const rows=[];
+  let count=0;
+  for(const index of matches){
+    const row=await readRow(index);
+    if(!settledHistoryRows([row],preset).length)continue;
+    if(count++<offset)continue;
+    if(rows.length===limit)return {rows,hasMore:true,total:null};
+    rows.push(row);
+  }
+  return {rows,hasMore:false,total:count};
+}
+function holdingProfitTotal(values) {
+  let total=0;
+  for(const value of values){
+    const match=String(value).trim().match(/^([+\-−]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)円(?:\s|$|\()/);
+    if(!match)return null;
+    const amount=Number(match[1].replaceAll(',','').replace('−','-'));
+    if(!Number.isFinite(amount))return null;
+    total+=amount;
+  }
+  return Math.round(total*100)/100;
+}
 function sortReferenceCards(cards, order) {
   const compare=(a,b)=>String(a??'').localeCompare(String(b??''),'ja',{numeric:true});
   const labels=['ENTRY_CANDIDATE','HOLD_ENDED','HOLD_STARTED','WATCH_STARTED','WATCH_TERMINAL'];
@@ -186,6 +214,7 @@ function fundamentalButton(item) {
     + esc(item) + '">ファンダ</button>' : '';
 }
 function history(rows, premiumPage) {
+  rows=rows.filter(row=>row.state==='HOLD_ENDED');
   return '<div class="history-table-wrap"><table id="detection-table"><thead><tr><th>検出日</th><th>銘柄</th>'
     + '<th>状態</th><th>詳細</th></tr></thead><tbody>' + rows.map(row => {
       const item = fundamentalItem(premiumPage,row);
@@ -206,6 +235,7 @@ function historyReferenceCell(point) {
   return esc(date) + '<small>' + number(price) + '円 · ' + (priceOnly ? '価格のみ参照' : '参照') + '</small>';
 }
 function referenceHistoryTable(rows, preset) {
+  rows=settledHistoryRows(rows,preset);
   if (rows.length === 0) return '<p class="note">該当する銘柄がありません。</p>';
   const level = Object.keys(names).indexOf(preset);
   const headers = historyColumns.map((label,index) => '<div' + (index === 7 ? ' class="number"' : '') + '>'
@@ -385,7 +415,7 @@ function view({mode,access,asOf,presets,selected,rows,chartRows,personal,dashboa
   +(personal?metrics(personal):'<p role="status">保存した条件による試算結果を準備中です。</p>')+'</section>';
 }
 g.NewAMemberPresentation={metrics,chart,history,view,lockedPage,freeHome,freeHistoryRows,operatingLevel,wholeYen,referencePayload,referenceHistory,
-  referenceHistoryIndex,matchingHistory,referenceHistoryTable,historyContent,sortReferenceCards,
+  referenceHistoryIndex,matchingHistory,settledHistoryRows,settledHistoryPage,holdingProfitTotal,referenceHistoryTable,historyContent,sortReferenceCards,
   fundamentalItem,fundamentalSelector,fundamentalMarkup};
 if(typeof module!=='undefined')module.exports=g.NewAMemberPresentation;
 })(globalThis);

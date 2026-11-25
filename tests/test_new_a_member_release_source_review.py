@@ -623,6 +623,31 @@ class PresentationSuccessorReviewTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'runtime successor differs from the reviewed bytes'):
                 review.review_member_release_source(self.repo,baseline,self.commit('Change recovery boundary'))
 
+    def test_card_display_rejects_unreviewed_scope_or_bytes_and_retains_auth(self):
+        config = json.dumps(self.config, indent=2).encode().replace(
+            b'    "CLOUD_MEMBER_VIEW_ENABLED": "true",\n', review._ROLE_ONLY_CONFIG_LINE + review._TIERED_AUDIENCE_LINE)
+        self.write(review.CONFIG, config)
+        paths = review._CARD_DISPLAY_PRODUCT_PATHS | review._SUCCESSOR_REVIEW_PATHS
+        for path in sorted(paths):
+            self.write(path, b"prior " + path.encode())
+        baseline = self.commit("Approved Premium runtime")
+        for path in sorted(paths):
+            self.write(path, b"reviewed " + path.encode())
+        candidate = self.commit("Open cards and distinguish candidate labels")
+        product_sha = review._product_digest(self.repo, candidate, review._CARD_DISPLAY_PRODUCT_PATHS)
+        with (patch.object(review, "_CARD_DISPLAY_BASELINE", baseline),
+              patch.object(review, "_CARD_DISPLAY_PRODUCT_SHA256", product_sha)):
+            result = review.review_member_release_source(self.repo, baseline, candidate)
+            self.assertEqual(result["schema"], review.CARD_DISPLAY_REVIEW_SCHEMA)
+            self.assertEqual(result["member_audience"], "tiered")
+            self.write(review.ENTRY, b"unreviewed authentication")
+            with self.assertRaisesRegex(ValueError, "existing Discord or owner authorization"):
+                review.review_member_release_source(self.repo, baseline, self.commit("Change authentication"))
+            self.write(review.ENTRY, review.git(self.repo, "show", f"{candidate}:{review.ENTRY}"))
+            self.write(review.PRESENTATION, b"unreviewed display")
+            with self.assertRaisesRegex(ValueError, "card display successor differs from the reviewed bytes"):
+                review.review_member_release_source(self.repo, baseline, self.commit("Change presentation"))
+
     def test_settled_prices_require_exact_bytes_and_preserve_the_existing_tiered_boundary(self):
         config = json.dumps(self.config, indent=2).encode().replace(
             b'    "CLOUD_MEMBER_VIEW_ENABLED": "true",\n', review._ROLE_ONLY_CONFIG_LINE + review._TIERED_AUDIENCE_LINE)

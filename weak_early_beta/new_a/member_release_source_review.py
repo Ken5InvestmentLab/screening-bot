@@ -37,7 +37,9 @@ APPROVAL_TIMEOUT_REVIEW_SCHEMA = "NEW_A_MEMBER_APPROVAL_TIMEOUT_SUCCESSOR_SOURCE
 PREMIUM_LEGACY_REVIEW_SCHEMA = "NEW_A_MEMBER_PREMIUM_LEGACY_SUCCESSOR_SOURCE_REVIEW_V1"
 FUNDAMENTAL_RETENTION_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_RETENTION_SUCCESSOR_SOURCE_REVIEW_V1"
 PREMIUM_RUNTIME_REVIEW_SCHEMA = "NEW_A_MEMBER_PREMIUM_RUNTIME_SUCCESSOR_SOURCE_REVIEW_V1"
+CARD_DISPLAY_REVIEW_SCHEMA = "NEW_A_MEMBER_CARD_DISPLAY_SUCCESSOR_SOURCE_REVIEW_V1"
 TIERED_SUCCESSOR_SCHEMAS = frozenset({
+    CARD_DISPLAY_REVIEW_SCHEMA,
     FUNDAMENTAL_RETENTION_REVIEW_SCHEMA,
     PREMIUM_RUNTIME_REVIEW_SCHEMA,
     PREMIUM_LEGACY_REVIEW_SCHEMA,
@@ -472,6 +474,13 @@ _PREMIUM_RUNTIME_PRODUCT_PATHS = _PREMIUM_RUNTIME_ADDITIONS | {
     "scripts/windows/cloud-premium-references/AGENTS.md",
 }
 _PREMIUM_RUNTIME_PRODUCT_SHA256 = "deeb6ebf5181f49948917450a2d24dc854408a176f05e62896eb71268c03f646"
+_CARD_DISPLAY_BASELINE = "7bb9daec4cf5a5697045854ee840bb5a48eb7db2"
+_CARD_DISPLAY_PRODUCT_PATHS = frozenset({
+    PRESENTATION, "weak-early-beta-gate/scripts/new-a-ui-source/assets/member-loader.js",
+    "weak-early-beta-gate/scripts/new-a-ui-source/frame.html", "weak-early-beta-gate/AGENTS.md",
+    "tests/new_a_role_presentation_candidate.test.cjs",
+})
+_CARD_DISPLAY_PRODUCT_SHA256 = "89ca8793f2d15c701e33899267dbdb2b7193e9bba9a76b59e8aab3329a2eb5dd"
 _ROLE_ONLY_SUCCESSOR_SCHEMAS = frozenset({
     CLOUD_UI_REVIEW_SCHEMA, CLOUD_UI_POLISH_REVIEW_SCHEMA, CLOUD_OWNER_REFERENCE_REVIEW_SCHEMA,
     FUNDAMENTAL_INLINE_LINKS_REVIEW_SCHEMA, UNIFIED_MEMBER_UI_REVIEW_SCHEMA, LOADING_AND_ZERO_REVIEW_SCHEMA,
@@ -569,7 +578,14 @@ def _check_role_only_successor(repo, candidate, paths):
 
 
 def _member_successor(repo, baseline, candidate):
-    if baseline == _PREMIUM_RUNTIME_BASELINE:
+    if baseline == _CARD_DISPLAY_BASELINE:
+        paths = _successor_paths(repo, baseline, candidate)
+        if paths != _CARD_DISPLAY_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
+            raise ValueError("Cloud card display successor differs from the exact reviewed source scope")
+        if _product_digest(repo, candidate, _CARD_DISPLAY_PRODUCT_PATHS) != _CARD_DISPLAY_PRODUCT_SHA256:
+            raise ValueError("Cloud card display successor differs from the reviewed bytes")
+        schema = CARD_DISPLAY_REVIEW_SCHEMA
+    elif baseline == _PREMIUM_RUNTIME_BASELINE:
         paths = _successor_paths(repo, baseline, candidate, allowed_additions=_PREMIUM_RUNTIME_ADDITIONS)
         if paths != _PREMIUM_RUNTIME_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
             raise ValueError("Cloud Premium runtime successor differs from the exact reviewed source scope")
@@ -774,7 +790,7 @@ def review_member_release_source(repo, baseline, candidate):
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "role_only"):
             raise ValueError("Version-bound member successor requires the existing role-only audience")
         if (baseline in {_SETTLED_PRICE_BASELINE, _APPROVAL_TIMEOUT_BASELINE, _PREMIUM_LEGACY_BASELINE,
-                         _FUNDAMENTAL_RETENTION_BASELINE, _PREMIUM_RUNTIME_BASELINE}
+                         _FUNDAMENTAL_RETENTION_BASELINE, _PREMIUM_RUNTIME_BASELINE, _CARD_DISPLAY_BASELINE}
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "tiered"):
             raise ValueError("Cloud successor requires the existing tiered audience")
         return _member_successor(repo, baseline, candidate)

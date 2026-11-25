@@ -70,7 +70,6 @@
   let historyAttempt = null;
   const initialHistoryQuery = { symbol: '', from: '', through: '', order: 'newest' };
   let historyQuery = { ...initialHistoryQuery };
-  const cardDetails = '.cloud-stock-grid > [data-daily-change] > .cloud-stock-detail';
   const referenceTags = new Set(('article section div h2 h3 h4 h5 p span small strong b em abbr details summary '
     + 'dl dt dd ol ul li table thead tbody tfoot caption tr th td colgroup col time button a br '
     + 'svg g line polyline path rect text title desc defs clippath circle polygon ellipse lineargradient stop template').split(' '));
@@ -120,7 +119,43 @@
         items.set(item, row);
       }
     }
+    if (!aggregatesOnly && markup.includes('data-reference-cards')) expandStockCards(template.content);
     return { fragment: template.content, items };
+  }
+
+  // Saved and future canonical references share this member presentation.
+  // MONITOR_RESET closes a detector episode, not necessarily a live watch.
+  // Keep the actual WATCH_TERMINAL card and omit that internal bookkeeping.
+  function expandStockCards(fragment) {
+    for (const card of fragment.querySelectorAll('.cloud-stock-grid > article')) {
+      if (card.dataset.referenceKind === 'MONITOR_RESET') {
+        card.remove();
+        continue;
+      }
+      if (card.dataset.referenceKind === 'ENTRY_CANDIDATE') {
+        const label = card.querySelector(':scope > .badge');
+        if (label) label.classList.add('cloud-transition', 'cloud-transition--entry-candidate');
+      }
+      for (const detail of card.querySelectorAll('details.cloud-stock-detail')) {
+        const panel = document.createElement('div');
+        panel.className = detail.className;
+        panel.append(...Array.from(detail.childNodes).filter(node => node.localName !== 'summary'));
+        detail.replaceWith(panel);
+      }
+    }
+    for (const group of fragment.querySelectorAll('details.cloud-other-events')) {
+      if (!group.querySelector('.cloud-stock-grid > article')) {
+        group.remove();
+        continue;
+      }
+      const panel = document.createElement('section');
+      panel.className = group.className;
+      const heading = document.createElement('h4');
+      heading.textContent = 'その他の動き・記録';
+      const summary = group.querySelector(':scope > summary');
+      panel.append(heading, ...Array.from(group.childNodes).filter(node => node !== summary));
+      group.replaceWith(panel);
+    }
   }
 
   async function analyticsOverview(preset, options, allowLegacy) {
@@ -852,15 +887,6 @@
       hidden[0]?.querySelector('summary,td')?.focus();
       return;
     }
-    const summary = event.target.closest?.(cardDetails + ' > summary');
-    if (!summary) return;
-    event.preventDefault();
-    const detail = summary.parentElement;
-    const top = detail.parentElement.getBoundingClientRect().top;
-    const sameRow = Array.from(reference.querySelectorAll(cardDetails)).filter(
-      candidate => Math.abs(candidate.parentElement.getBoundingClientRect().top - top) < 1);
-    const open = !detail.open;
-    for (const candidate of sameRow) candidate.open = open;
   });
   retry.addEventListener('click', load);
   document.addEventListener('visibilitychange', () => {

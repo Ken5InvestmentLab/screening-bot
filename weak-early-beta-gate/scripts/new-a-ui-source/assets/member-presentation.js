@@ -8,7 +8,7 @@ const wholeYen=v=>number(typeof v==='number' && Math.abs(v)<0.5 ? 0 : v, 0);
 const names={defensive:'守り',medium:'中間',return_priority:'利益優先'};
 const states={
  WATCHING:'監視中',TRIGGERED:'検出',EXPIRED:'期限終了',UP_ESCAPED:'上抜け',DOWN_INVALIDATED:'下抜け',REFERENCE_ONLY:'参考',
- WATCH_STARTED:'監視開始',ENTRY_CANDIDATE:'仮想買付候補',WATCH_TERMINAL:'監視終了',HOLD_STARTED:'仮想保有開始',HOLD_ENDED:'仮想保有終了',
+ WATCH_STARTED:'監視開始',ENTRY_CANDIDATE:'仮想保有開始候補',WATCH_TERMINAL:'監視終了',HOLD_STARTED:'仮想保有開始',HOLD_ENDED:'仮想保有終了',
  DATA_GAP:'価格未確認',BASIS_CHANGED:'価格基準変更',IDENTITY_CHANGED:'銘柄情報変更',
 };
 function metrics(m, annualized) {
@@ -292,9 +292,9 @@ function movementCards(rows) {
 function entryCandidates(rows) {
   const symbols = rows.filter(({state}) => state === 'ENTRY_CANDIDATE').map(({symbol}) => symbol);
   if (!symbols.length) return '';
-  return '<details class="cloud-table-details cloud-reference-events"><summary>仮想買付候補</summary>'
+  return '<section class="cloud-reference-events"><h3><span class="cloud-transition cloud-transition--entry-candidate">仮想保有開始候補</span></h3>'
     + '<ul class="cloud-transition-summary">' + symbols.map(symbol => '<li><span class="badge">' + esc(symbol)
-      + '</span></li>').join('') + '</ul></details>';
+      + '</span></li>').join('') + '</ul></section>';
 }
 function watchTable(rows, label) {
   return '<div class="table-wrap"><table class="scenario-table" aria-label="' + label + '">'

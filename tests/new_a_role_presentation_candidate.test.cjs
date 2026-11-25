@@ -52,7 +52,8 @@ test('shared action details use only the verified projected candidate code',()=>
  const today=[...premiumHome.dashboard.today,{date:premiumHome.asOf,symbol:'987A',state:'ENTRY_CANDIDATE',
   company_name:'DO_NOT_SHOW_COMPANY',price:87431,holding_detail:'DO_NOT_SHOW_POSITION'}];
  const html=ui.view({...premiumHome,dashboard:{...premiumHome.dashboard,today}});
- a.match(html,/<details class="cloud-table-details cloud-reference-events"><summary>仮想買付候補<\/summary>.*987A<\/span>/);
+ a.match(html,/<section class="cloud-reference-events"><h3><span class="cloud-transition cloud-transition--entry-candidate">仮想保有開始候補<\/span><\/h3>.*987A<\/span>/);
+ a.doesNotMatch(html,/<details[^>]*cloud-reference-events/);
  a.doesNotMatch(html,/DO_NOT_SHOW|87431|日足始値/);
 });
 test('current monitoring shows eight recent rows and a closed native disclosure for remaining rows',()=>{

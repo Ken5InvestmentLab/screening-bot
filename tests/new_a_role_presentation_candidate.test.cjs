@@ -25,6 +25,17 @@ test('record card sorting groups every label before code and retains code and Ja
  a.deepEqual(Array.from(codes('name')),['3000','2000','1000','0800','0500','1100','4000']);
  a.equal(cards[0].dataset.referenceSymbol,'3000');
 });
+test('partial dashboard keeps entry candidates and all other movements in the same card grid',()=>{
+ const html=ui.view({...premiumHome,dashboard:{...premiumHome.dashboard,today:[
+  ...premiumHome.dashboard.today,{date:premiumHome.asOf,symbol:'789A',state:'ENTRY_CANDIDATE'},
+ ]}});
+ const activity=html.slice(html.indexOf('id="new-a-current"'),html.indexOf('aria-labelledby="member-holdings-heading"'));
+ a.equal((activity.match(/class="cloud-stock-grid"/g)||[]).length,1);
+ a.equal((activity.match(/<article>/g)||[]).length,4);
+ for(const code of ['234A','456A','567A','789A'])a.ok(activity.includes(code));
+ a.ok(activity.includes('cloud-transition--entry-candidate'));
+ a.ok(!activity.includes('cloud-reference-events'));
+});
 test('saved dashboard references merge candidate and other cards without dropping details or label groups',()=>{
  const card=(kind,symbol,label)=>({localName:'article',dataset:{referenceKind:kind,referenceSymbol:symbol},
   querySelectorAll:selector=>selector==='.cloud-transition'?[{textContent:label}]:[],querySelector:()=>null});
@@ -79,7 +90,8 @@ test('shared action details use only the verified projected candidate code',()=>
  const today=[...premiumHome.dashboard.today,{date:premiumHome.asOf,symbol:'987A',state:'ENTRY_CANDIDATE',
   company_name:'DO_NOT_SHOW_COMPANY',price:87431,holding_detail:'DO_NOT_SHOW_POSITION'}];
  const html=ui.view({...premiumHome,dashboard:{...premiumHome.dashboard,today}});
- a.match(html,/<section class="cloud-reference-events"><h3><span class="cloud-transition cloud-transition--entry-candidate">仮想保有開始候補<\/span><\/h3>.*987A<\/span>/);
+ a.match(html,/987A<\/strong>.*cloud-transition--entry-candidate">仮想保有開始候補<\/span>/);
+ a.ok(!html.includes('<section class="cloud-reference-events">'));
  a.doesNotMatch(html,/<details[^>]*cloud-reference-events/);
  a.doesNotMatch(html,/DO_NOT_SHOW|87431|日足始値/);
 });

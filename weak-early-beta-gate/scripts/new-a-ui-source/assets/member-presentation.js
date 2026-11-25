@@ -267,7 +267,7 @@ const movementTone = {
   WATCH_STARTED: 'watch-start', WATCH_TERMINAL: 'watch-end', HOLD_STARTED: 'hold-start', HOLD_ENDED: 'hold-end',
 };
 function movementBadge(state) {
-  return '<span class="cloud-transition cloud-transition--' + movementTone[state] + '">'
+  return '<span class="cloud-transition cloud-transition--' + (state === 'ENTRY_CANDIDATE' ? 'entry-candidate' : movementTone[state]) + '">'
     + states[state] + '</span>';
 }
 function movementSummary(rows) {
@@ -282,7 +282,7 @@ function movementSummary(rows) {
 function movementCards(rows) {
   const stocks = new Map();
   for (const {symbol, state} of rows) {
-    if (!Object.hasOwn(movementTone, state)) continue;
+    if (!Object.hasOwn(movementTone, state) && state !== 'ENTRY_CANDIDATE') continue;
     if (!stocks.has(symbol)) stocks.set(symbol, []);
     stocks.get(symbol).push(state);
   }
@@ -290,13 +290,6 @@ function movementCards(rows) {
     + '<div class="cloud-transition-list">' + changes.map(state => '<div class="cloud-transition-row">'
       + movementBadge(state) + '</div>').join('') + '</div></article>').join('');
   return '<div class="cloud-stock-grid">' + (cards || '<p class="cloud-empty">確認済みの開始・終了はありません</p>') + '</div>';
-}
-function entryCandidates(rows) {
-  const symbols = rows.filter(({state}) => state === 'ENTRY_CANDIDATE').map(({symbol}) => symbol);
-  if (!symbols.length) return '';
-  return '<section class="cloud-reference-events"><h3><span class="cloud-transition cloud-transition--entry-candidate">仮想保有開始候補</span></h3>'
-    + '<ul class="cloud-transition-summary">' + symbols.map(symbol => '<li><span class="badge">' + esc(symbol)
-      + '</span></li>').join('') + '</ul></section>';
 }
 function watchTable(rows, label) {
   return '<div class="table-wrap"><table class="scenario-table" aria-label="' + label + '">'
@@ -347,7 +340,7 @@ function premiumHome({asOf, selected, rows, chartRows, dashboard, historyPage, r
   return premiumHeading('home',asOf,selected)
     + '<section class="panel" id="new-a-current" aria-labelledby="member-activity-heading"><div class="cloud-section-head">'
     + '<h2 id="member-activity-heading">対象日の動き</h2></div>'
-    + movementSummary(dashboard.today) + movementCards(dashboard.today) + entryCandidates(dashboard.today) + '</section>'
+    + movementSummary(dashboard.today) + movementCards(dashboard.today) + '</section>'
     + '<section class="panel" aria-labelledby="member-holdings-heading"><div class="cloud-section-head">'
     + '<h2 id="member-holdings-heading">現在の仮想保有</h2><span class="badge">' + holdings + '</span></div></section>'
     + '<section class="panel" aria-labelledby="member-watching-heading"><div class="cloud-section-head">'

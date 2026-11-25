@@ -104,6 +104,9 @@ test('Cloud copies the completed legacy workflow, repairs named reports, validat
       }
       assert.match(options.input, /PREMIUM_PM_SAVED_PROMPT.txt/);
       assert.match(options.input, /11\/2版Premium/);
+      assert.match(options.input, /調査不足と会社固有の希薄化リスクを混同しません/);
+      assert.match(options.input, /未確認だけを理由に混在\/要確認へ分類しません/);
+      assert.match(options.input, /発行額、簿価、未転換元本、潜在株式数を区別/);
       assert(!options.input.includes('DISCLOSURE_AUDIT.md'));
       assert(!options.input.includes('capitalRiskReview') && !options.input.includes('longTermMaterialReview'));
       const output = options.input.match(/今回の書き込み先は (.+) のみです。$/u)[1];

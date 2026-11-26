@@ -41,9 +41,11 @@ CARD_DISPLAY_REVIEW_SCHEMA = "NEW_A_MEMBER_CARD_DISPLAY_SUCCESSOR_SOURCE_REVIEW_
 PUBLICATION_RECOVERY_REVIEW_SCHEMA = "NEW_A_MEMBER_PUBLICATION_RECOVERY_SUCCESSOR_SOURCE_REVIEW_V1"
 CARD_EDITORIAL_REVIEW_SCHEMA = "NEW_A_MEMBER_CARD_EDITORIAL_SUCCESSOR_SOURCE_REVIEW_V1"
 HOLD_HEADING_REVIEW_SCHEMA = "NEW_A_MEMBER_HOLD_HEADING_SUCCESSOR_SOURCE_REVIEW_V1"
+MEMBER_READY_REVIEW_SCHEMA = "NEW_A_MEMBER_PUBLISHED_GENERATION_SUCCESSOR_SOURCE_REVIEW_V1"
 SOURCE_BASELINE_REVIEW_SCHEMA = "NEW_A_MEMBER_SOURCE_BASELINE_SUCCESSOR_SOURCE_REVIEW_V1"
 SETTLED_HISTORY_REVIEW_SCHEMA = "NEW_A_MEMBER_SETTLED_HISTORY_SUCCESSOR_SOURCE_REVIEW_V1"
 TIERED_SUCCESSOR_SCHEMAS = frozenset({
+    MEMBER_READY_REVIEW_SCHEMA,
     HOLD_HEADING_REVIEW_SCHEMA,
     SOURCE_BASELINE_REVIEW_SCHEMA,
     SETTLED_HISTORY_REVIEW_SCHEMA,
@@ -501,6 +503,16 @@ _PUBLICATION_RECOVERY_PRODUCT_PATHS = frozenset({
 })
 _PUBLICATION_RECOVERY_PRODUCT_SHA256 = "2dfb9b1255e243b0281e405d0ad80d935b0f1b5eaa8626901561384c766069fe"
 _HOLD_HEADING_BASELINE = "a3762af0017eb9ee03c95d53a21fc5e60a44f728"
+_MEMBER_READY_BASELINE = "3c589967ae782a9834f992fb2dd041307f37e156"
+_MEMBER_READY_PRODUCT_PATHS = frozenset({
+    'weak-early-beta-gate/AGENTS.md',
+    'weak-early-beta-gate/src/new-a-member-current.ts',
+    'weak-early-beta-gate/src/new-a-member-projection.ts',
+    'weak-early-beta-gate/src/new-a-role-integration.ts',
+    'tests/new_a_member_current.test.cjs',
+    'tests/new_a_member_worker.test.cjs',
+})
+_MEMBER_READY_PRODUCT_SHA256 = '560e117b5c49a84414a90e33cd85fe407cad5cec7a217e30ae402a628235a6da'
 _HOLD_HEADING_PRODUCT_PATHS = frozenset({'weak-early-beta-gate/scripts/new-a-ui-source/assets/member-loader.js', 'tests/new_a_member_consistency.test.cjs'})
 _HOLD_HEADING_PRODUCT_SHA256 = '39b00c7ae2e494eb76dcbb00d10f44435bb213737b517d2a9909666c9c79707a'
 _SOURCE_BASELINE_BASELINE = "c88e8b0a67ac53579fbac54de8c7778f92467cd8"
@@ -635,7 +647,14 @@ def _check_role_only_successor(repo, candidate, paths):
 
 
 def _member_successor(repo, baseline, candidate):
-    if baseline == _HOLD_HEADING_BASELINE:
+    if baseline == _MEMBER_READY_BASELINE:
+        paths = _successor_paths(repo, baseline, candidate)
+        if paths != _MEMBER_READY_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
+            raise ValueError("Cloud published generation successor differs from the exact reviewed source scope")
+        if _product_digest(repo, candidate, _MEMBER_READY_PRODUCT_PATHS) != _MEMBER_READY_PRODUCT_SHA256:
+            raise ValueError("Cloud published generation successor differs from the reviewed bytes")
+        schema = MEMBER_READY_REVIEW_SCHEMA
+    elif baseline == _HOLD_HEADING_BASELINE:
         paths = _successor_paths(repo, baseline, candidate)
         if paths != _HOLD_HEADING_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
             raise ValueError("Cloud hold heading successor differs from the exact reviewed source scope")
@@ -883,7 +902,7 @@ def review_member_release_source(repo, baseline, candidate):
             raise ValueError("Version-bound member successor requires the existing role-only audience")
         if (baseline in {_SETTLED_PRICE_BASELINE, _APPROVAL_TIMEOUT_BASELINE, _PREMIUM_LEGACY_BASELINE,
                          _FUNDAMENTAL_RETENTION_BASELINE, _PREMIUM_RUNTIME_BASELINE, _CARD_DISPLAY_BASELINE,
-                         _PUBLICATION_RECOVERY_BASELINE, _CARD_EDITORIAL_BASELINE, _SETTLED_HISTORY_BASELINE, _SOURCE_BASELINE_BASELINE, _HOLD_HEADING_BASELINE}
+                         _PUBLICATION_RECOVERY_BASELINE, _CARD_EDITORIAL_BASELINE, _SETTLED_HISTORY_BASELINE, _SOURCE_BASELINE_BASELINE, _HOLD_HEADING_BASELINE, _MEMBER_READY_BASELINE}
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "tiered"):
             raise ValueError("Cloud successor requires the existing tiered audience")
         return _member_successor(repo, baseline, candidate)

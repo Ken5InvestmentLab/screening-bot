@@ -22,6 +22,8 @@ The receipt pins the current worker, delivery guard, reviewed inventory, input
 bytes and ownership for five minutes. A changed/stale receipt requires another
 full dry-run, not a new sender script or an old baseline-hash override. Do not
 create batch-specific send wrappers or use the retired send-once preload.
+The real post still refreshes disclosure freshness and URL reachability for
+the whole batch before its first send; a receipt never skips those checks.
 Normal `post` without a receipt still checks the full batch before any send.
 
 The selected ledger's `.delivery.lock` serializes mutations; its persistent

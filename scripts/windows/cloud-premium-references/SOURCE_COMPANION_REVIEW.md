@@ -1,8 +1,8 @@
 # Exact selected Premium source
 
 The executed `PREMIUM_CLOUD_WORKER.mjs` is byte-identical to the selected
-Premium worker from `65192a2d200d24a892ec24452d840ab350fe3d80`. Worker SHA-256:
-`98091eca8b4fe005c2f8a3c6fd88bc0ea086612bbbf99530856b28a8dbeebda3`. The prompt, quality examples and
+Premium worker from `e3963778a5559f09ccd4aee011d9a5ec60441570`. Worker SHA-256:
+`5cfe4152365d419891115e7c4f0249855b3b4ab64ae5f3698e7f55ec172a19f0`. The prompt, quality examples and
 reviewed untimed-disclosure inventory are copied from the same working source;
 `COPY_MANIFEST.json` records their exact hashes. The original November 2
 `PREMIUM_LEGACY_WORKER.mjs` remains unchanged as historical provenance.

@@ -10,7 +10,7 @@ test('selected Premium copy manifest matches every executed reference without co
   const base = path.join(import.meta.dirname, 'cloud-premium-references');
   const manifest = JSON.parse(fs.readFileSync(path.join(base, 'COPY_MANIFEST.json'), 'utf8'));
   assert.equal(manifest.schema, 'CLOUD_PREMIUM_EXACT_RESEARCH_COPY_V1');
-  assert.equal(manifest.source_commit, '65192a2d200d24a892ec24452d840ab350fe3d80');
+  assert.equal(manifest.source_commit, 'e3963778a5559f09ccd4aee011d9a5ec60441570');
   for (const [name, entry] of Object.entries(manifest.files)) {
     assert.equal(createHash('sha256').update(fs.readFileSync(path.join(base, name))).digest('hex'), entry.sha256);
   }

@@ -1,16 +1,16 @@
 {
   "schema": "CLOUD_PREMIUM_EXACT_RESEARCH_COPY_V1",
   "source_repository": "Ken5InvestmentLab/weekly_report_gas",
-  "source_commit": "65192a2d200d24a892ec24452d840ab350fe3d80",
+  "source_commit": "e3963778a5559f09ccd4aee011d9a5ec60441570",
   "source_branch": "experiment/fundamental-scoring-test",
   "files": {
     "PREMIUM_CLOUD_WORKER.mjs": {
       "source_path": "premium_worker/worker.mjs",
-      "sha256": "98091eca8b4fe005c2f8a3c6fd88bc0ea086612bbbf99530856b28a8dbeebda3"
+      "sha256": "5cfe4152365d419891115e7c4f0249855b3b4ab64ae5f3698e7f55ec172a19f0"
     },
     "AUTOMATION_PROMPT.md": {
       "source_path": "premium_worker/AUTOMATION_PROMPT.md",
-      "sha256": "839af1e8d0430b7a9ddb437ac40c975c386373cb060444977b6ce77459eb65b6"
+      "sha256": "a5da617d30b3f0ea0c40a0cf4bb07d94c81d70945c0f98669478aa1e05dff1c7"
     },
     "FUNDAMENTAL_EXAMPLES.md": {
       "source_path": "premium_worker/FUNDAMENTAL_EXAMPLES.md",

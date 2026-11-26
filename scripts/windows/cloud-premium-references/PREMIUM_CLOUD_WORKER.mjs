@@ -186,7 +186,7 @@ async function post(opts) {
   const receipt = opts["validation-receipt"] ? readJson(path.resolve(opts["validation-receipt"])) : null;
   if (receipt) assertValidationReceipt(receipt, inputBytes, state, reports);
   const prepared = await prepareReportBatch(reports, state, {
-    localOnly: opts["local-only"] === true || Boolean(receipt), htmlOnly: opts["html-only"] === true,
+    localOnly: opts["local-only"] === true, htmlOnly: opts["html-only"] === true,
     requireComplete: opts["local-only"] !== true,
   });
   if (receipt) {

@@ -21,7 +21,7 @@ function memberAdapters(env: MemberEnv): Omit<MemberAdapters, 'identity'> | unde
   const secret = env.SESSION_SECRET;
   if (!owner || !member || owner === member || !secret
     || typeof owner.withSession !== 'function' || typeof member.withSession !== 'function') return undefined;
-  const current = createNewAMemberCurrentReader(owner);
+  const current = createNewAMemberCurrentReader(owner, member);
   return {
     current,
     reference: createMemberReferenceReader(member),

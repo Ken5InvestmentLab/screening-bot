@@ -26,35 +26,26 @@ function canonicalManifest() {
   };
 }
 
+function primary(db, sessions = [], queries = []) {
+  return { withSession(constraint) {
+    assert.equal(constraint, 'first-primary');
+    const id = sessions.push(constraint);
+    return { prepare(sql) {
+      assert.match(sql, /^SELECT /);
+      const statement = db.prepare(sql);
+      const result = values => ({ async first() { queries.push(id); return statement.get(...values) ?? null; } });
+      return { ...result([]), bind: (...values) => result(values) };
+    } };
+  } };
+}
+
 function fixture(t) {
   const db = new DatabaseSync(':memory:');
   t.after(() => db.close());
   db.exec(schema);
   const sessions = [];
   const queries = [];
-  const binding = {
-    withSession(constraint) {
-      assert.equal(constraint, 'first-primary');
-      const id = sessions.push(constraint);
-      return {
-        prepare(sql) {
-          assert.match(sql, /^SELECT /);
-          const statement = db.prepare(sql);
-          return {
-            bind(limit) {
-              assert.equal(limit, 1024 * 1024);
-              return {
-                async first() {
-                  queries.push(id);
-                  return statement.get(limit) ?? null;
-                },
-              };
-            },
-          };
-        },
-      };
-    },
-  };
+  const binding = primary(db, sessions, queries);
   function stage(manifest, { status = 'READY', version = sourceVersion, hash, id } = {}) {
     const json = typeof manifest === 'string' ? manifest : JSON.stringify(manifest);
     const manifestHash = hash ?? digest(json);
@@ -69,8 +60,101 @@ function fixture(t) {
       + ' ON CONFLICT (pointer_key) DO UPDATE SET dataset_id=excluded.dataset_id, revision=excluded.revision')
       .run(id, revision, date + 'T08:15:00Z');
   }
-  return { db, read: createNewAMemberCurrentReader(binding), point, stage, sessions, queries };
+  return { db, binding, read: createNewAMemberCurrentReader(binding), point, stage, sessions, queries };
 }
+
+function publishedFixture(t) {
+  const owner = fixture(t);
+  const member = new DatabaseSync(':memory:');
+  t.after(() => member.close());
+  member.exec(readFileSync(path.resolve(__dirname,
+    '../weak-early-beta-gate/member-migrations/0001_new_a_member_storage.sql'), 'utf8'));
+  const binding = primary(member);
+  const source = (dataset_id, revision, as_of = date) => ({
+    status: 'READY', dataset_id, revision, as_of, source_version: sourceVersion,
+  });
+  function stage(value, activate = true) {
+    const identity = JSON.stringify(value);
+    const json = JSON.stringify({ schema: 'NEW_A_SHARED_READONLY_VIEW_V2',
+      audience: 'AUTHENTICATED_TIERED_DISCORD_VIEW', basis: 'SHARED_SIMULATION_DEFAULTS_NOT_OWNER_SETTINGS',
+      source: value, history_layout: { premium_pages: 1, completed_pages: 0 }, parts: [] });
+    member.prepare('INSERT INTO private_projection_manifest VALUES (?,?,?)').run(identity, digest(json), json);
+    if (activate) member.prepare('INSERT INTO private_projection_ready VALUES (1,?,?)'
+      + ' ON CONFLICT(singleton) DO UPDATE SET identity=excluded.identity,digest=excluded.digest').run(identity, digest(json));
+  }
+  return { owner, member, binding, source, stage, read: createNewAMemberCurrentReader(owner.binding, binding) };
+}
+
+test('keeps the published day during owner staging and switches only on member activation', async t => {
+  const f = publishedFixture(t);
+  const first = f.owner.stage(canonicalManifest());
+  f.owner.point(first, 4);
+  const old = f.source(first, 4);
+  f.stage(old);
+  assert.deepEqual({ ...await f.read() }, old);
+  const next = f.owner.stage({ ...canonicalManifest(), as_of: '2026-11-20' });
+  f.owner.point(next, 5);
+  assert.deepEqual({ ...await f.read() }, old, 'advancing private owner input must not interrupt published members');
+  const current = f.source(next, 5, '2026-11-20');
+  f.stage(current, false);
+  assert.deepEqual({ ...await f.read() }, old, 'staged projection is not a published generation');
+  f.member.prepare('UPDATE private_projection_ready SET identity=?,digest=(SELECT digest FROM private_projection_manifest WHERE identity=?)')
+    .run(JSON.stringify(current), JSON.stringify(current));
+  assert.deepEqual({ ...await f.read() }, current);
+});
+
+test('fails closed when a member publication or its retained owner evidence is unavailable', async t => {
+  const f = publishedFixture(t);
+  const first = f.owner.stage(canonicalManifest());
+  f.owner.point(first, 4);
+  assert.equal(await f.read(), null, 'missing member activation must not fall back to private owner input');
+  f.stage(f.source(first, 4));
+  const next = f.owner.stage({ ...canonicalManifest(), as_of: '2026-11-20' });
+  f.owner.point(next, 5);
+  f.owner.db.prepare("UPDATE new_a_private_datasets SET status='STAGING' WHERE dataset_id=?").run(first);
+  assert.equal(await f.read(), null);
+  f.owner.db.prepare("UPDATE new_a_private_datasets SET status='READY',manifest_sha256=? WHERE dataset_id=?")
+    .run('e'.repeat(64), first);
+  assert.equal(await f.read(), null, 'a retained owner dataset needs its original manifest integrity');
+  assert.equal(await createNewAMemberCurrentReader(f.owner.binding, { withSession() { throw Error('offline'); } })(), null);
+});
+
+test('rejects a corrupt projection, a future source and a mismatched source at the same revision', async t => {
+  for (const kind of ['corrupt', 'future', 'same-revision', 'source-mismatch']) {
+    await t.test(kind, async t => {
+      const f = publishedFixture(t);
+      const first = f.owner.stage(canonicalManifest());
+      f.owner.point(first, 4);
+      const next = f.owner.stage({ ...canonicalManifest(), daily_snapshot_sha256: 'd'.repeat(64) });
+      if (kind === 'same-revision') f.owner.point(next, 4);
+      f.stage(f.source(first, kind === 'future' ? 5 : 4));
+      if (kind === 'corrupt') f.member.exec("UPDATE private_projection_manifest SET json=json_set(json,'$.basis','CORRUPT')");
+      if (kind === 'source-mismatch') {
+        const changed = f.member.prepare('SELECT identity,json FROM private_projection_manifest').get();
+        const data = JSON.parse(changed.json); data.source.revision = 3;
+        const text = JSON.stringify(data);
+        f.member.prepare('UPDATE private_projection_manifest SET json=?,digest=?').run(text, digest(text));
+        f.member.prepare('UPDATE private_projection_ready SET digest=?').run(digest(text));
+      }
+      assert.equal(await f.read(), null);
+    });
+  }
+});
+
+test('does not return a selection that changed during primary readback', async t => {
+  const f = publishedFixture(t);
+  const first = f.owner.stage(canonicalManifest());
+  f.owner.point(first, 4); f.stage(f.source(first, 4));
+  const moving = { withSession() {
+    const session = f.binding.withSession('first-primary');
+    return { prepare(sql) {
+      if (sql === 'SELECT identity, digest FROM private_projection_ready WHERE singleton = 1')
+        f.member.exec('DELETE FROM private_projection_ready');
+      return session.prepare(sql);
+    } };
+  } };
+  assert.equal(await createNewAMemberCurrentReader(f.owner.binding, moving)(), null);
+});
 
 test('returns only verified owner READY identity and observes same-day revisions on the primary', async t => {
   const { read, stage, point, sessions, queries } = fixture(t);

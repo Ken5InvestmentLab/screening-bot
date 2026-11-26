@@ -198,7 +198,12 @@ test('the Worker serves assets and shared data to a verified member while keepin
   assert.equal(premiumDashboard.status, 200);
   assert.deepEqual((await premiumDashboard.json()).watching, [{ date: day, symbol: '123A', state: 'WATCHING' }]);
   f.ownerDb.db.exec('UPDATE new_a_active_pointer SET revision=2');
-  assert.equal((await call(history, allowed)).status, 503);
+  const retained = await call(history, allowed);
+  assert.equal(retained.status, 200);
+  assert.equal((await retained.json()).generation, json.generation,
+    'private owner staging must keep the fully published member generation');
+  assert.equal((await call(dashboard, denied)).status, 403, 'staging does not widen Free access');
+  assert.equal((await call('/api/cloud/new-a-finite/input/manifest.json', allowed)).status, 403);
 });
 
 test('an authenticated Free member can save only their display settings in the tiered Worker', async t => {
@@ -308,7 +313,8 @@ test('Fundamentals rejects legacy, replaced and altered member projection bytes'
   f.memberDb.db.prepare('UPDATE private_projection_fundamental SET json=json || ?').run(' ');
   assert.equal((await fetchAt(f, route, scoped)).status, 503);
   f.ownerDb.db.exec('UPDATE new_a_active_pointer SET revision=2');
-  assert.equal((await fetchAt(f, route, scoped)).status, 409);
+  assert.equal((await fetchAt(f, route, scoped)).status, 503,
+    'corrupt published report bytes remain rejected while the private owner advances');
 });
 
 test('disabled member view or missing or shared D1 bindings cannot open the protected member route', async t => {

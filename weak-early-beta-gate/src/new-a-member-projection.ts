@@ -212,7 +212,8 @@ function manifestPart(manifest: unknown, identity: string, view: ViewKind, index
 }
 
 // The activation digest is the independently approved manifest hash. The canonical
-// source callback must do a fresh authoritative read of the owner READY pointer.
+// source callback must freshly verify the published member selection against
+// its retained owner READY dataset, including while the next day is staging.
 export function createNewAMemberProjectionReader(
   db: ProjectionDatabase | undefined,
   readOfficialReady: () => Promise<ReadyPointer | null>,

@@ -239,7 +239,7 @@ function browser(options = {}) {
           ? options.referenceElements(node.innerHTML) : options.referenceElements ?? [];
         node.content = {
           querySelectorAll: children,
-          querySelector: selector => children().find(item => '#' + item.id === selector),
+          querySelector: selector => options.referenceQuery?.(selector) ?? children().find(item => '#' + item.id === selector),
           get children() { return children(); },
         };
       }
@@ -1072,4 +1072,16 @@ test('expired login offers a user-clicked Discord link while role denial and out
     assert.equal(view.nodes['member-content'].innerHTML, 'synthetic-private-content');
     assert.equal(view.nodes['member-state'].children.length, 0);
   }
+});
+
+
+test('acknowledging holds removes the hold section while preserving nested stock details',async()=>{
+ let heldRemoved=false,nestedRemoved=false;
+ const nested={querySelector:()=>({textContent:'銘柄の詳細'}),querySelectorAll:()=>[],remove(){nestedRemoved=true;}};
+ const held={querySelector:()=>({textContent:'データ保留 49銘柄'}),querySelectorAll:()=>[],remove(){heldRemoved=true;}};
+ const watch={querySelector:selector=>selector===':scope > details.cloud-table-details'?held:nested,querySelectorAll:()=>[]};
+ const view=browser({referenceQuery:selector=>selector==='[aria-labelledby="new-a-watch-heading"]'?watch:null,
+   read:(name,url)=>name==='reference.json'?Response.json(url.searchParams.get('item')==='history.1'?historyReference(1):navigationView):null});
+ await flush();assert.equal(heldRemoved,true);assert.equal(nestedRemoved,false);
+ assert.equal(view.nodes['member-state'].textContent,'');
 });

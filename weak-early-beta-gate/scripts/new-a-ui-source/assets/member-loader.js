@@ -126,7 +126,7 @@
 
   function acknowledgeSourceHolds(fragment) {
     const watch=fragment.querySelector('[aria-labelledby="new-a-watch-heading"]');
-    const details=watch?.querySelector('details.cloud-table-details');
+    const details=watch?.querySelector(':scope > details.cloud-table-details');
     const excluded=new Set();
     const codeOf=row=>Array.from(row.cells[0]?.querySelectorAll('small')??[],e=>e.textContent.trim()).find(v=>/^[0-9A-Z]{4}$/.test(v))??(/^[0-9A-Z]{4}$/.test(row.cells[0]?.textContent.trim()??'')?row.cells[0].textContent.trim():null);
     for(const row of details?.querySelectorAll('tbody tr')??[]){

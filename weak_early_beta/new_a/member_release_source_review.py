@@ -42,9 +42,11 @@ PUBLICATION_RECOVERY_REVIEW_SCHEMA = "NEW_A_MEMBER_PUBLICATION_RECOVERY_SUCCESSO
 CARD_EDITORIAL_REVIEW_SCHEMA = "NEW_A_MEMBER_CARD_EDITORIAL_SUCCESSOR_SOURCE_REVIEW_V1"
 HOLD_HEADING_REVIEW_SCHEMA = "NEW_A_MEMBER_HOLD_HEADING_SUCCESSOR_SOURCE_REVIEW_V1"
 MEMBER_READY_REVIEW_SCHEMA = "NEW_A_MEMBER_PUBLISHED_GENERATION_SUCCESSOR_SOURCE_REVIEW_V1"
+FUNDAMENTAL_BATCH_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_BATCH_SUCCESSOR_SOURCE_REVIEW_V1"
 SOURCE_BASELINE_REVIEW_SCHEMA = "NEW_A_MEMBER_SOURCE_BASELINE_SUCCESSOR_SOURCE_REVIEW_V1"
 SETTLED_HISTORY_REVIEW_SCHEMA = "NEW_A_MEMBER_SETTLED_HISTORY_SUCCESSOR_SOURCE_REVIEW_V1"
 TIERED_SUCCESSOR_SCHEMAS = frozenset({
+    FUNDAMENTAL_BATCH_REVIEW_SCHEMA,
     MEMBER_READY_REVIEW_SCHEMA,
     HOLD_HEADING_REVIEW_SCHEMA,
     SOURCE_BASELINE_REVIEW_SCHEMA,
@@ -514,6 +516,17 @@ _MEMBER_READY_PRODUCT_PATHS = frozenset({
     'tests/new_a_member_worker.test.cjs',
 })
 _MEMBER_READY_PRODUCT_SHA256 = '2fb177b5c12055f3975fcc2d45318ec23f63df033376e8b19d1e2812d87f440d'
+_FUNDAMENTAL_BATCH_BASELINE = "a3a3896e11152e3d07555df8e5eef29c8231ce21"
+_FUNDAMENTAL_BATCH_PRODUCT_PATHS = frozenset({
+    "scripts/windows/cloud-premium-references/AGENTS.md",
+    "scripts/windows/cloud-premium-references/AUTOMATION_PROMPT.md",
+    "scripts/windows/cloud-premium-references/COPY_MANIFEST.json",
+    "scripts/windows/cloud-premium-references/PREMIUM_CLOUD_WORKER.mjs",
+    "scripts/windows/cloud-premium-references/SOURCE_COMPANION_REVIEW.md",
+    "scripts/windows/new-a-fundamental-stage.mjs",
+    "scripts/windows/test-new-a-fundamental-stage.mjs",
+})
+_FUNDAMENTAL_BATCH_PRODUCT_SHA256 = "080d5a4790e0dff34eaef7554400d75497ec43112d8e028f8f53da5c44232ba3"
 _HOLD_HEADING_PRODUCT_PATHS = frozenset({'weak-early-beta-gate/scripts/new-a-ui-source/assets/member-loader.js', 'tests/new_a_member_consistency.test.cjs'})
 _HOLD_HEADING_PRODUCT_SHA256 = '39b00c7ae2e494eb76dcbb00d10f44435bb213737b517d2a9909666c9c79707a'
 _SOURCE_BASELINE_BASELINE = "c88e8b0a67ac53579fbac54de8c7778f92467cd8"
@@ -648,7 +661,14 @@ def _check_role_only_successor(repo, candidate, paths):
 
 
 def _member_successor(repo, baseline, candidate):
-    if baseline == _MEMBER_READY_BASELINE:
+    if baseline == _FUNDAMENTAL_BATCH_BASELINE:
+        paths = _successor_paths(repo, baseline, candidate)
+        if paths != _FUNDAMENTAL_BATCH_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
+            raise ValueError("Cloud fundamental batch successor differs from the exact reviewed source scope")
+        if _product_digest(repo, candidate, _FUNDAMENTAL_BATCH_PRODUCT_PATHS) != _FUNDAMENTAL_BATCH_PRODUCT_SHA256:
+            raise ValueError("Cloud fundamental batch successor differs from the reviewed bytes")
+        schema = FUNDAMENTAL_BATCH_REVIEW_SCHEMA
+    elif baseline == _MEMBER_READY_BASELINE:
         paths = _successor_paths(repo, baseline, candidate)
         if paths != _MEMBER_READY_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
             raise ValueError("Cloud published generation successor differs from the exact reviewed source scope")
@@ -903,7 +923,7 @@ def review_member_release_source(repo, baseline, candidate):
             raise ValueError("Version-bound member successor requires the existing role-only audience")
         if (baseline in {_SETTLED_PRICE_BASELINE, _APPROVAL_TIMEOUT_BASELINE, _PREMIUM_LEGACY_BASELINE,
                          _FUNDAMENTAL_RETENTION_BASELINE, _PREMIUM_RUNTIME_BASELINE, _CARD_DISPLAY_BASELINE,
-                         _PUBLICATION_RECOVERY_BASELINE, _CARD_EDITORIAL_BASELINE, _SETTLED_HISTORY_BASELINE, _SOURCE_BASELINE_BASELINE, _HOLD_HEADING_BASELINE, _MEMBER_READY_BASELINE}
+                         _PUBLICATION_RECOVERY_BASELINE, _CARD_EDITORIAL_BASELINE, _SETTLED_HISTORY_BASELINE, _SOURCE_BASELINE_BASELINE, _HOLD_HEADING_BASELINE, _MEMBER_READY_BASELINE, _FUNDAMENTAL_BATCH_BASELINE}
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "tiered"):
             raise ValueError("Cloud successor requires the existing tiered audience")
         return _member_successor(repo, baseline, candidate)

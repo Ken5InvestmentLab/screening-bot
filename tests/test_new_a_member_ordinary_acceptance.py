@@ -385,6 +385,7 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
 
     def test_fundamental_popup_successor_binds_new_assets_to_the_existing_exact_role_policy(self):
         self.assertEqual(member.MEMBER_SUCCESSORS[member.SETTLED_HISTORY_REVIEW_SCHEMA],member.SOURCE_BASELINE_REVIEW_SCHEMA)
+        self.assertEqual(member.MEMBER_SUCCESSORS[member.SOURCE_BASELINE_REVIEW_SCHEMA],member.HOLD_HEADING_REVIEW_SCHEMA)
 
         schema = FUNDAMENTAL_POPUP_REVIEW_SCHEMA
         self.assertEqual(member.MEMBER_SUCCESSORS[JOURNAL_REVIEW_SCHEMA], schema)

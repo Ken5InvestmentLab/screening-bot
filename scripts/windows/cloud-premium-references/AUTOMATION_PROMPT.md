@@ -2,6 +2,35 @@
 
 Run the premium alert worker for the weekly_report_gas repository.
 
+## Batch validation and normal delivery (2026-11-26)
+
+Keep verified drafts and primary-document evidence. As each research fragment
+is ready, run `node premium_worker/worker.mjs validate --input <fragment.json>`.
+This checks all report formats locally without HTTP or state writes. Repair
+only its `repairTargets`; do not restart good company research or collect again.
+
+After merging every owned unposted alert, run the full check once:
+`node premium_worker/worker.mjs post --input premium_worker/out/premium_reports.json --dry-run --receipt premium_worker/out/premium_validation.json`.
+It returns all failing reports and rule messages together, also checking
+freshness and every direct disclosure URL. Unreachable links are errors, never
+silently removed. Retain valid reports, repair the named reports, then repeat
+the FULL dry-run. A fragment check cannot authorize delivery.
+
+After full success, immediately run the normal reusable production path:
+`node premium_worker/worker.mjs post --input premium_worker/out/premium_reports.json --validation-receipt premium_worker/out/premium_validation.json`.
+The receipt pins the current worker, delivery guard, reviewed inventory, input
+bytes and ownership for five minutes. A changed/stale receipt requires another
+full dry-run, not a new sender script or an old baseline-hash override. Do not
+create batch-specific send wrappers or use the retired send-once preload.
+Normal `post` without a receipt still checks the full batch before any send.
+
+The selected ledger's `.delivery.lock` serializes mutations; its persistent
+`.delivery.jsonl` records pending and confirmed outcomes before ledger changes.
+Confirmed/pending/unknown sends must be reconciled against Discord and the
+ledger before retry; never remove the journal/lock to bypass that protection.
+Preserve existing Discord/Sheets readback after delivery. These changes do not
+change research quality, model, schedule, GAS, or the collection contract.
+
 1. Run `node premium_worker/worker.mjs collect`.
    If the automation prompt says the current startup is a delayed start for the
    intended 13:05 or 15:36 run window and `collect` is skipped only by the
@@ -386,7 +415,7 @@ Keep this as a source-grounded material impact label, not a trading action.
 
 Run:
 
-`node premium_worker/worker.mjs post --input premium_worker/out/premium_reports.json --dry-run`
+`node premium_worker/worker.mjs post --input premium_worker/out/premium_reports.json --dry-run --receipt premium_worker/out/premium_validation.json`
 
 This dry-run is mandatory. Do not run the real post until the dry-run succeeds.
 
@@ -407,10 +436,10 @@ If the error says any of the following:
 then do NOT stop.
 
 Instead:
-1. Identify the failed `alertId` and symbol from the error.
+1. Read every failed `alertId`, symbol and rule in `repairTargets` together.
 2. Re-open `premium_worker/out/latest_claim.json`.
 3. Re-open the current `premium_worker/out/premium_reports.json`.
-4. Regenerate only the failed report.
+4. Repair every named report in one pass, retaining valid reports and evidence.
 5. Keep all other valid reports unchanged.
 6. For the failed symbol, open and scan:
    - the company's official IR/news disclosure list
@@ -421,11 +450,11 @@ Instead:
 9. Rewrite `premium_worker/out/premium_reports.json`.
 10. Run the dry-run again.
 
-Repeat this dry-run → fix → dry-run loop for the failed alert. A batch-level
+Repeat the full-batch dry-run after repairing all named alerts. A batch-level
 retry count is not evidence that the symbol lacks disclosures.
 
 If the dry-run still fails after repeated report repair:
-- keep the failed alert isolated from the next real post batch
+- retain the unfinished alert in the owned batch and hold delivery until all reports pass
 - read whether the validator is asking for a newer disclosure, a title/date
   match, a direct disclosure URL, or a report-field rewrite
 - keep repairing the grounded report when verified disclosure material exists
@@ -442,16 +471,15 @@ with `--alert-id`; otherwise keep regenerating grounded reports.
 
 10. Only after the dry-run succeeds, run the real post:
 
-`node premium_worker/worker.mjs post --input premium_worker/out/premium_reports.json`
+`node premium_worker/worker.mjs post --input premium_worker/out/premium_reports.json --validation-receipt premium_worker/out/premium_validation.json`
 
 The real post must preserve the worker-generated scan button component when
 Discord bot posting is configured. Each premium alert should show an enabled
 button with `custom_id` `premium_scan:<symbolCode>` and label
 `🔍 <symbolCode> をスキャンする`. The 13:05 and 15:36 automations use the same
 worker, so this button behavior applies to both posting windows. If the local
-environment lacks the bot token/channel settings, the worker will warn and fall
-back to webhook posting without components; fix the local configuration instead
-of treating the buttonless post as the intended premium format.
+environment lacks the bot token/channel settings, normal `post` fails closed;
+fix the local configuration before delivery.
 11. If a report cannot be grounded with at least one source URL, run the `fail`
     command to post a 様子見 stub:
 

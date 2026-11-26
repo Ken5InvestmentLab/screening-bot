@@ -4,18 +4,36 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { runNewAFundamentalStage, verifyPremiumDirectUrls } from './new-a-fundamental-stage.mjs';
+import { runNewAFundamentalStage, verifyPremiumDirectUrls, premiumBatchRepairTargets } from './new-a-fundamental-stage.mjs';
 
 test('selected Premium copy manifest matches every executed reference without companion code changes', () => {
   const base = path.join(import.meta.dirname, 'cloud-premium-references');
   const manifest = JSON.parse(fs.readFileSync(path.join(base, 'COPY_MANIFEST.json'), 'utf8'));
   assert.equal(manifest.schema, 'CLOUD_PREMIUM_EXACT_RESEARCH_COPY_V1');
-  assert.equal(manifest.source_commit, '1491c916ec617491b7f602d3fed2d7fba2c733df');
+  assert.equal(manifest.source_commit, '65192a2d200d24a892ec24452d840ab350fe3d80');
   for (const [name, entry] of Object.entries(manifest.files)) {
     assert.equal(createHash('sha256').update(fs.readFileSync(path.join(base, name))).digest('hex'), entry.sha256);
   }
   assert.equal(createHash('sha256').update(fs.readFileSync(path.join(base, 'PREMIUM_PM_SAVED_PROMPT.txt')))
     .digest('hex'), manifest.saved_task_sha256);
+});
+
+test('batch diagnostics preserve every company and rule without per-company fallback', t => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'premium-batch-diagnostic-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const alerts = [{ alertId: 'a', symbolCode: '1234' }, { alertId: 'b', symbolCode: '2345' }];
+  const error = Error('failed shared full dry-run');
+  assert.throws(() => premiumBatchRepairTargets(error, directory, 0, alerts), /failed shared/);
+  const rows = alerts.map(alert => ({ alertId: alert.alertId, issues: [
+    { rule: 'freshness', message: 'missing new disclosure' }, { rule: 'directUrls', message: 'HTTP 403', url: 'https://example.com/file.pdf' },
+  ] }));
+  const file = path.join(directory, 'legacy-0-full.stderr');
+  fs.writeFileSync(file, JSON.stringify({ ok: false, repairTargets: rows }));
+  const targets = premiumBatchRepairTargets(error, directory, 0, alerts);
+  assert.deepEqual(targets.map(t => t.alertId), ['a', 'b']);
+  assert(targets.every(t => t.issues.length === 2));
+  rows[0].alertId = 'unowned'; fs.writeFileSync(file, JSON.stringify({ ok: false, repairTargets: rows }));
+  assert.throws(() => premiumBatchRepairTargets(error, directory, 0, alerts), /owned Cloud reports/);
 });
 
 test('Cloud copies the completed legacy workflow, repairs named reports, validates the full batch without posting', async t => {
@@ -82,13 +100,19 @@ test('Cloud copies the completed legacy workflow, repairs named reports, validat
         return { stdout: '{}' };
       }
       if (args.includes('post')) {
-        assert(args.includes('--dry-run') && !args.includes('--save-only') && args[0] === '--import');
+        assert(args.includes('--dry-run') && args.includes('--html-only') && !args.includes('--save-only') && args[0] === '--import');
         assert(options.env.DISCORD_PREMIUM_WEBHOOK_URL === undefined);
         assert.equal(createHash('sha256').update(fs.readFileSync(args[2])).digest('hex'),
-          '53f9b9fc97940fc746b34651be6bf31bb7b73ea6f40ab1db6d9500e8c40e0b87');
+          JSON.parse(fs.readFileSync(path.join(import.meta.dirname, 'cloud-premium-references', 'COPY_MANIFEST.json'))).files['PREMIUM_CLOUD_WORKER.mjs'].sha256);
+        assert(fs.existsSync(path.join(path.dirname(args[2]), 'verified-untimed-disclosures.json')));
         const input = JSON.parse(fs.readFileSync(args[args.indexOf('--input') + 1]));
         calls.push('legacy:' + input.reports.map(r => r.symbolCode).join(','));
-        if (input.reports.some(r => r.alertId === secondAlert.alertId && !repaired)) throw Error('company-specific KPI is missing');
+        if (input.reports.some(r => r.alertId === secondAlert.alertId && !repaired)) {
+          fs.writeFileSync(options.log + '.stderr', JSON.stringify({ ok: false, repairTargets: [{
+            alertId: secondAlert.alertId, issues: [{ rule: 'fundamentals', message: 'company-specific KPI is missing' }],
+          }] }));
+          throw Error('batch validation failed');
+        }
         return { stdout: JSON.stringify({ ok: true, posted: 0,
           results: input.reports.map(report => ({ alertId: report.alertId, dryRun: true })) }) };
       }
@@ -146,9 +170,9 @@ test('Cloud copies the completed legacy workflow, repairs named reports, validat
   const received = await runNewAFundamentalStage(options);
   assert.deepEqual(calls, [
     'prepare', 'model-draft-all', 'python-check-all', 'audited-html-only:1234', 'audited-html-only:2345',
-    'direct-urls-all', 'legacy:1234,2345', 'direct-urls-all', 'legacy:1234', 'direct-urls-all', 'legacy:2345',
-    'model-repair-one', 'python-check-all', 'audited-html-only:1234', 'audited-html-only:2345',
-    'direct-urls-all', 'legacy:1234,2345', 'finish',
+    'legacy:1234,2345',
+    'model-repair-one', 'python-check-all', 'audited-html-only:2345',
+    'legacy:1234,2345', 'finish',
   ]);
   assert.equal(received.imported, 2);
 

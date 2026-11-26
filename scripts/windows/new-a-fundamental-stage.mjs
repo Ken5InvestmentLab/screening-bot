@@ -8,14 +8,14 @@ import {
   FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT,
 } from './weak-early-beta-fundamental-runner.mjs';
 const REFERENCE_FILES = {
-  'COPY_MANIFEST.json': '127ee5f57fc802b4362611be5f38ba60fc61e63a165dc538cee8aaaf6f6b934f',
+  'COPY_MANIFEST.json': '9256d109a3cac776022df96ca003d1a1e6a5a1107517cebc1cffb846929ed964',
   'verified-untimed-disclosures.json': 'a2316766f691fffe25c48846872ab3017eed57404c9e830331b588364ac7e2b8',
   'PREMIUM_PM_SAVED_PROMPT.txt': 'af31b0175e968a8fe17354339a899e2f988ecf6c37dbc30958037b25f493c317',
-  'AUTOMATION_PROMPT.md': '18a3e023317bca07c2f749de7c1ca8acfd7845f872f3a858449fe9ee9377a1d7',
+  'AUTOMATION_PROMPT.md': '839af1e8d0430b7a9ddb437ac40c975c386373cb060444977b6ce77459eb65b6',
   'FUNDAMENTAL_EXAMPLES.md': 'c49243cc7ee6685d3dedf2789fc452ce4d610f463edcc54b48001487a39d77fb',
   'PREMIUM_LEGACY_WORKER.mjs': '98edbc6921dfcad6b853660a1d1bc6e508ef684f71d29732960330a53cb80dc3',
-  'PREMIUM_CLOUD_WORKER.mjs': '53f9b9fc97940fc746b34651be6bf31bb7b73ea6f40ab1db6d9500e8c40e0b87',
-  'SOURCE_COMPANION_REVIEW.md': '5b9b55c83d4622af2f1c9abe806d9cf235229f944815b09619c49ac8bdf12fd5',
+  'PREMIUM_CLOUD_WORKER.mjs': '98091eca8b4fe005c2f8a3c6fd88bc0ea086612bbbf99530856b28a8dbeebda3',
+  'SOURCE_COMPANION_REVIEW.md': 'a4074f17e24d5d17d93bff225836bc20c7a91bcafd95301823155a6b8c623a22',
   'PREMIUM_NO_SEND_PRELOAD.mjs': '2121ad3d3301524762efe3e10970006ce1e2fa792c7caa47ba0f61aa1b2ee5e0',
   'report_quality.md': '6df031fabe3d309b0f2c7c317734920ba1450926c344987491e0fc14b5c7a6fb',
 };
@@ -139,13 +139,22 @@ function saveBatch(claim, reports, file) {
 }
 
 
-function legacyDryRunFailure(error, directory, pass, index) {
-  const file = path.join(directory, `legacy-${pass}-${index}.stderr`);
-  try {
-    const value = readJson(file);
-    if (value.ok === false && typeof value.error === 'string') return value.error.slice(0, 400);
-  } catch { /* A transport failure may not have a JSON diagnostic. */ }
-  return error.message;
+export function premiumBatchRepairTargets(error, directory, pass, alerts) {
+  let value;
+  try { value = readJson(path.join(directory, `legacy-${pass}-full.stderr`)); }
+  catch { throw error; } // Operational failures must not start N per-company retries.
+  if (value.ok !== false || !Array.isArray(value.repairTargets) || !value.repairTargets.length) throw error;
+  const owned = new Map(alerts.map(alert => [alert.alertId, alert]));
+  const seen = new Set();
+  return value.repairTargets.map(row => {
+    const alert = owned.get(row.alertId);
+    if (!alert || seen.has(row.alertId) || !Array.isArray(row.issues) || !row.issues.length ||
+        row.issues.some(issue => typeof issue.rule !== 'string' || typeof issue.message !== 'string')) {
+      throw new Error('Premium batch diagnostic does not match the owned Cloud reports');
+    }
+    seen.add(row.alertId);
+    return { ...repairTarget(alert, row.issues.map(issue => issue.message).join('\n')), issues: row.issues };
+  });
 }
 
 export async function verifyPremiumDirectUrls(reports, fetchImpl = fetch) {
@@ -262,6 +271,7 @@ export async function runPremiumResearch({ claim, claimPath, reportPath, config,
   const missing = claim.alerts.filter(alert => !reports.has(alert.alertId));
   if (missing.length) await draft('initial-drafts', missing);
 
+  const validHtmlReports = new Set();
   const validateBatch = async pass => {
     const failures = [];
     saveBatch(claim, reports, pendingFile);
@@ -277,6 +287,8 @@ export async function runPremiumResearch({ claim, claimPath, reportPath, config,
           throw new Error('report must match the exact owned alert identity, company, date and cutoff');
         }
         if (Object.hasOwn(pythonFailures, alert.alertId)) throw new Error(pythonFailures[alert.alertId]);
+        const reportKey = sha256(Buffer.from(JSON.stringify({ claimHash, report })));
+        if (validHtmlReports.has(reportKey)) continue;
         const state = path.join(validationDir, `claim-${pass}-${index}.json`);
         const input = path.join(validationDir, `report-${pass}-${index}.json`);
         fs.writeFileSync(state, JSON.stringify({ claims: { [alert.alertId]: alert } }));
@@ -293,11 +305,14 @@ export async function runPremiumResearch({ claim, claimPath, reportPath, config,
         const result = JSON.parse(dryRun.stdout);
         if (result.ok !== true || result.dryRun !== true || result.alertId !== alert.alertId ||
             result.analysisCutoff !== alert.analysisCutoff) throw new Error('Cloud HTML-only validation receipt differs');
+        validHtmlReports.add(reportKey);
       } catch (error) {
         failures.push(repairTarget(alert, error.message));
       }
     }
-    if (!failures.length) {
+    // Run the shared batch validator even when a Cloud-specific check found a
+    // report error, so one repair prompt receives every layer's diagnostics.
+    if (claim.alerts.every(alert => reports.has(alert.alertId))) {
       const state = path.join(claimDir, 'legacy-dry-run-state.json');
       writeJson(state, { posted: {}, failed: {}, claims: Object.fromEntries(claim.alerts.map(alert =>
         [alert.alertId, { ...alert, claimId: claim.claimId }])) });
@@ -310,11 +325,13 @@ export async function runPremiumResearch({ claim, claimPath, reportPath, config,
         throw new Error('Legacy dry-run directory must be isolated from environment files');
       }
       fs.copyFileSync(references.find(file => file.endsWith('PREMIUM_CLOUD_WORKER.mjs')), legacyWorker);
+      fs.copyFileSync(references.find(file => file.endsWith('verified-untimed-disclosures.json')),
+        path.join(legacyDirectory, 'verified-untimed-disclosures.json'));
       const legacyStateHash = sha256(readOwnedBytes(state));
       const legacyEnv = { ...childEnv, PREMIUM_STATE_PATH: state };
       const checkLegacy = async (input, alerts, suffix) => {
         const log = path.join(validationDir, `legacy-${pass}-${suffix}`);
-        const result = await runStep(config.nodePath, ['--import', pathToFileURL(references.find(file => file.endsWith('PREMIUM_NO_SEND_PRELOAD.mjs'))).href, legacyWorker, 'post', '--input', input, '--dry-run'], {
+        const result = await runStep(config.nodePath, ['--import', pathToFileURL(references.find(file => file.endsWith('PREMIUM_NO_SEND_PRELOAD.mjs'))).href, legacyWorker, 'post', '--input', input, '--dry-run', '--html-only'], {
           cwd: legacyDirectory, env: legacyEnv, capture: true, timeoutMs: 300_000, log,
         });
         const receipt = JSON.parse(result.stdout);
@@ -326,20 +343,11 @@ export async function runPremiumResearch({ claim, claimPath, reportPath, config,
         }
       };
       try {
-        await checkDirectUrls(claim.alerts.map(alert => reports.get(alert.alertId)));
+        // Shared Premium validation checks every direct URL and retains all
+        // errors. Do not repeat those HTTP requests via a second URL checker.
         await checkLegacy(pendingFile, claim.alerts, 'full');
       } catch (error) {
-        for (const [index, alert] of claim.alerts.entries()) {
-          const input = path.join(validationDir, `legacy-repair-${pass}-${index}.json`);
-          writeJson(input, { reports: [reports.get(alert.alertId)] });
-          try {
-            await checkDirectUrls([reports.get(alert.alertId)]);
-            await checkLegacy(input, [alert], String(index));
-          } catch (specific) {
-            failures.push(repairTarget(alert, legacyDryRunFailure(specific, validationDir, pass, index)));
-          }
-        }
-        if (!failures.length) throw error;
+        failures.push(...premiumBatchRepairTargets(error, validationDir, pass, claim.alerts));
       }
     }
     writeJson(path.join(claimDir, 'validation-targets.json'), { claimId: claim.claimId, pass, repairTargets: failures });

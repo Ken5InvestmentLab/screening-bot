@@ -1,8 +1,8 @@
 # Exact selected Premium source
 
 The executed `PREMIUM_CLOUD_WORKER.mjs` is byte-identical to the selected
-Premium worker from `1491c916ec617491b7f602d3fed2d7fba2c733df`. Worker SHA-256:
-`53f9b9fc97940fc746b34651be6bf31bb7b73ea6f40ab1db6d9500e8c40e0b87`. The prompt, quality examples and
+Premium worker from `65192a2d200d24a892ec24452d840ab350fe3d80`. Worker SHA-256:
+`98091eca8b4fe005c2f8a3c6fd88bc0ea086612bbbf99530856b28a8dbeebda3`. The prompt, quality examples and
 reviewed untimed-disclosure inventory are copied from the same working source;
 `COPY_MANIFEST.json` records their exact hashes. The original November 2
 `PREMIUM_LEGACY_WORKER.mjs` remains unchanged as historical provenance.
@@ -23,3 +23,12 @@ Source: https://www.aiholdings.co.jp/ir/news/
 Cloud keeps ownership, cutoff, HTML-only import and no-send boundaries. Its
 research copy must not collect Premium claims, modify Premium state or send
 Discord messages. Preserve verified original analysis receipts.
+
+The November 26 source returns all report/rule errors together. Cloud retains
+valid HTML validation results by exact report and claim bytes during repair,
+then runs the shared full-batch dry-run with `--html-only`. The selected
+untimed inventory is copied beside the isolated executable. No per-company
+retry cascade or separate duplicate URL pass is used. The shared worker checks
+every direct URL without dropping failed links; HTML evidence is not truncated.
+Discord delivery/receipts remain Premium-only. Cloud keeps cutoff, no-send,
+claim ownership and HTML import gates.

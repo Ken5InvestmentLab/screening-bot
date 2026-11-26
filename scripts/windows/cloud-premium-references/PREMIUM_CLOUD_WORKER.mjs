@@ -53,20 +53,28 @@ const LOG_HEADERS = [
   "source_urls", "reason"
 ];
 
+export async function main(args = process.argv.slice(2)) {
 loadDotEnv(path.join(REPO_ROOT, ".env"));
 loadDotEnv(path.join(WORKER_DIR, ".env"));
 
-const args = process.argv.slice(2);
 const command = args[0] || "help";
 const options = parseOptions(args.slice(1));
 
+let releaseMutation = () => {};
 try {
+  if (["collect", "fail", "lock-before"].includes(command)) {
+    const { acquireDeliveryLock } = await import("./delivery-guard.mjs");
+    releaseMutation = acquireDeliveryLock(env("PREMIUM_STATE_PATH") || DEFAULT_STATE_PATH);
+  }
   switch (command) {
     case "collect":
       await collect(options);
       break;
     case "post":
       await post(options);
+      break;
+    case "validate":
+      await post({ ...options, "dry-run": true, "local-only": true });
       break;
     case "fail":
       await fail(options);
@@ -86,9 +94,14 @@ try {
       break;
   }
 } catch (error) {
-  console.error(JSON.stringify({ ok: false, error: error.message }, null, 2));
+  console.error(JSON.stringify({ ok: false, error: error.message,
+    ...(error.repairTargets ? { repairTargets: error.repairTargets, validAlertIds: error.validAlertIds } : {})
+  }, null, 2));
   process.exitCode = 1;
+} finally { releaseMutation(); }
 }
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await main();
 
 async function collect(opts) {
   const now = new Date();
@@ -161,44 +174,57 @@ async function post(opts) {
   const inputPath = opts.input || opts.i;
   if (!inputPath) throw new Error("post requires --input <path>");
   const dryRun = opts["dry-run"] === true;
+  if (!dryRun && (opts["local-only"] || opts["html-only"])) throw new Error("local/HTML validation cannot deliver");
   const statePath = env("PREMIUM_STATE_PATH") || DEFAULT_STATE_PATH;
-  const webhookUrl = dryRun ? "" : requiredEnv("DISCORD_PREMIUM_WEBHOOK_URL");
-  const state = loadState(statePath);
-  if (!dryRun) await replayPendingLogEvents_(state, statePath);
-  const reports = sortReportsByImpact(normalizeReports(readJson(path.resolve(inputPath))));
+  const inputBytes = fs.readFileSync(path.resolve(inputPath));
+  const reports = sortReportsByImpact(normalizeReports(JSON.parse(inputBytes.toString("utf8").replace(/^\uFEFF/, ""))));
   if (!reports.length) throw new Error("report file contains no reports");
-
+  const { acquireDeliveryLock, createSendJournal } = dryRun ? {} : await import("./delivery-guard.mjs");
+  const release = dryRun ? () => {} : acquireDeliveryLock(statePath);
+  try {
+  const state = opts["local-only"] ? { posted: {}, claims: Object.fromEntries(reports.map(r => [r.alertId, { claimId: "local-validation" }])) } : loadState(statePath);
+  const receipt = opts["validation-receipt"] ? readJson(path.resolve(opts["validation-receipt"])) : null;
+  if (receipt) assertValidationReceipt(receipt, inputBytes, state, reports);
+  const prepared = await prepareReportBatch(reports, state, {
+    localOnly: opts["local-only"] === true || Boolean(receipt), htmlOnly: opts["html-only"] === true,
+    requireComplete: opts["local-only"] !== true,
+  });
+  if (receipt) {
+    const expected = receipt.results.filter(r => r.dryRun && !r.skipped);
+    if (expected.length !== prepared.ready.length || prepared.ready.some(item =>
+      !expected.some(r => r.alertId === item.report.alertId && payloadIdentity(r.payload) === payloadIdentity(item.payload)))) {
+      throw new Error("validation receipt payload differs; repeat the full dry-run");
+    }
+  }
+  if (dryRun) {
+    const result = { ok: true, posted: 0, localOnly: opts["local-only"] === true,
+      htmlOnly: opts["html-only"] === true, results: [...prepared.skipped,
+        ...prepared.ready.map(item => ({ alertId: item.report.alertId, dryRun: true, payload: item.payload }))] };
+    if (opts.receipt) {
+      if (opts["local-only"] || opts["html-only"]) throw new Error("only a full Discord dry-run can authorize delivery");
+      writeJson(path.resolve(opts.receipt), { ...result, schema: "PREMIUM_FULL_VALIDATION_V1", validatedAt: new Date().toISOString(),
+        inputSha256: sha256(inputBytes), runtime: runtimeFingerprints(), ownership: batchOwnership(state, reports) });
+    }
+    console.log(JSON.stringify(result, null, 2));
+    return;
+  }
+  const webhookUrl = requiredEnv("DISCORD_PREMIUM_WEBHOOK_URL");
+  const botToken = env("DISCORD_PREMIUM_BOT_TOKEN") || env("DISCORD_BOT_TOKEN") || env("DISCORD_TOKEN");
+  const channelId = env("DISCORD_PREMIUM_CHANNEL_ID") || await resolveWebhookChannelId(webhookUrl);
+  if (!botToken || !channelId) throw new Error("Premium delivery requires the existing bot and channel for active scan buttons");
+  const journal = createSendJournal({ statePath, channelId });
+  // Check the entire batch before even the first send. Pending/unknown outcomes require reconciliation.
+  for (const item of prepared.ready) journal.assertCanSend(item.report.alertId, item.claim.claimId);
+  await replayPendingLogEvents_(state, statePath);
   const results = [];
   const postLogEvents = [];
   try {
-    for (const report of reports) {
-      const claim = state.claims[report.alertId] || null;
-      const skipReason = getPostSkipReason(report.alertId, state, claim);
-      if (skipReason) {
-        results.push({ alertId: report.alertId, skipped: true, reason: skipReason });
-        continue;
-      }
-
-      const reportForPost = {
-        ...report,
-        symbolName: String(report.symbolName || "").trim() || String(claim?.symbolName || "").trim()
-      };
-      await assertNoNewerIrbankDisclosureMiss(reportForPost, claim);
-      await resolveIrbankPdfDisclosureLinks(reportForPost);
-      const embed = buildEmbed(reportForPost);
-      const payload = {
-        username: env("DISCORD_PREMIUM_USERNAME") || "天底極致 Premium Report",
-        allowed_mentions: { parse: [] },
-        embeds: [embed],
-        components: buildPremiumScanComponents(reportForPost, claim)
-      };
-
-      if (dryRun) {
-        results.push({ alertId: report.alertId, dryRun: true, payload });
-        continue;
-      }
-
-      const discordMessage = await postPremiumDiscord(payload, webhookUrl);
+    results.push(...prepared.skipped);
+    for (const { report, claim, payload } of prepared.ready) {
+      const reportForPost = report;
+      const embed = payload.embeds[0];
+      const discordMessage = await journal.send(report.alertId, claim.claimId, () =>
+        postDiscordBot(channelId, botToken, toBotMessagePayload(payload)), buildDiscordMessageUrl);
       const discordMessageUrl = buildDiscordMessageUrl(discordMessage);
       const symbolCode = String(report.symbolCode || claim.symbolCode || extractSymbolCodeFromUrl(embed.url) || "").trim();
       state.posted[report.alertId] = {
@@ -224,6 +250,106 @@ async function post(opts) {
   }
 
   console.log(JSON.stringify({ ok: true, posted: results.filter(r => r.posted).length, results }, null, 2));
+  } finally { release(); }
+}
+
+function sha256(bytes) { return crypto.createHash("sha256").update(bytes).digest("hex"); }
+
+function runtimeFingerprints() {
+  return Object.fromEntries([fileURLToPath(import.meta.url), path.join(WORKER_DIR, "delivery-guard.mjs"),
+    path.join(WORKER_DIR, "verified-untimed-disclosures.json")].filter(file => fs.existsSync(file))
+    .map(file => [path.basename(file), sha256(fs.readFileSync(file))]));
+}
+
+function payloadIdentity(payload) {
+  const copy = structuredClone(payload);
+  for (const embed of copy.embeds || []) delete embed.timestamp;
+  return JSON.stringify(copy);
+}
+
+function batchOwnership(state, reports) {
+  return Object.fromEntries(reports.filter(r => !state.posted?.[r.alertId] && state.claims?.[r.alertId])
+    .map(r => [r.alertId, state.claims[r.alertId]]));
+}
+
+export function assertValidationReceipt(receipt, inputBytes, state, reports, now = Date.now()) {
+  const age = now - Date.parse(receipt.validatedAt);
+  if (receipt.schema !== "PREMIUM_FULL_VALIDATION_V1" || receipt.ok !== true || receipt.localOnly || receipt.htmlOnly ||
+      !Number.isFinite(age) || age < 0 || age > 300_000 || receipt.inputSha256 !== sha256(inputBytes) ||
+      JSON.stringify(receipt.runtime) !== JSON.stringify(runtimeFingerprints()) ||
+      JSON.stringify(receipt.ownership) !== JSON.stringify(batchOwnership(state, reports))) {
+    throw new Error("validation receipt is stale or input/runtime/ownership changed; repeat the full dry-run");
+  }
+}
+
+export async function prepareReportBatch(reports, state, { localOnly = false, htmlOnly = false,
+  requireComplete = false, checkFreshness = assertNoNewerIrbankDisclosureMiss, checkUrls = verifyDisclosureUrls } = {}) {
+  const ready = [], skipped = [], repairTargets = [];
+  if (requireComplete) {
+    const owners = new Set(reports.map(r => state.claims?.[r.alertId]?.claimId).filter(Boolean));
+    for (const [alertId, claim] of Object.entries(state.claims || {})) {
+      if (owners.has(claim.claimId) && !state.posted?.[alertId] && !reports.some(r => r.alertId === alertId)) {
+        repairTargets.push({ alertId, symbolCode: claim.symbolCode, issues: [{ rule: "batchCoverage", message: "owned unposted report is missing from the full batch" }] });
+      }
+    }
+  }
+  const seen = new Set();
+  const urlCache = new Map();
+  for (const original of reports) {
+    const claim = state.claims?.[original.alertId];
+    const skipReason = getPostSkipReason(original.alertId, state, claim);
+    if (skipReason) { skipped.push({ alertId: original.alertId, skipped: true, reason: skipReason }); continue; }
+    const report = structuredClone(original);
+    report.symbolName = String(report.symbolName || "").trim() || String(claim.symbolName || "").trim();
+    const issues = [];
+    if (seen.has(report.alertId)) issues.push({ rule: "identity", message: "duplicate alertId in batch" });
+    seen.add(report.alertId);
+    if (claim.symbolCode && String(claim.symbolCode) !== String(report.symbolCode)) issues.push({ rule: "identity", message: "report/claim symbolCode differs" });
+    if (claim.symbolName && report.symbolName !== claim.symbolName) issues.push({ rule: "identity", message: "report/claim symbolName differs" });
+    let embed;
+    try { embed = buildEmbed(report, { htmlOnly }); }
+    catch (error) { issues.push(...(error.issues || [{ rule: "format", message: error.message }])); }
+    // Fragment `validate` is local; the final full dry-run also checks every source and URL.
+    if (!localOnly) {
+      try { await checkFreshness(report, claim, { analysisCutoff: htmlOnly ? report.analysisCutoff : null }); }
+      catch (error) { issues.push({ rule: "freshness", message: error.message }); }
+      try { await checkUrls(report, { cache: urlCache }); }
+      catch (error) { issues.push(...(error.issues || [{ rule: "directUrls", message: error.message }])); }
+    }
+    if (issues.length) repairTargets.push({ alertId: report.alertId, symbolCode: report.symbolCode, issues });
+    else ready.push({ report, claim, payload: {
+      username: env("DISCORD_PREMIUM_USERNAME") || "天底極致 Premium Report", allowed_mentions: { parse: [] },
+      embeds: [embed], components: buildPremiumScanComponents(report, claim)
+    } });
+  }
+  if (repairTargets.length) {
+    const error = new Error(`batch validation failed for ${repairTargets.length} report(s)`);
+    error.repairTargets = repairTargets;
+    error.validAlertIds = ready.map(item => item.report.alertId);
+    throw error;
+  }
+  return { ready, skipped };
+}
+
+export async function verifyDisclosureUrls(report, { cache = new Map(), fetchImpl = fetch } = {}) {
+  const value = (report.fields || []).find(f => f.name === "開示リンク")?.value || "";
+  const urls = [...new Set([...String(value).matchAll(/\]\((https?:\/\/[^)]+)\)/g)].map(m => m[1]))];
+  const issues = [];
+  for (const url of urls) {
+    if (!cache.has(url)) cache.set(url, (async () => {
+      try {
+        const parsed = new URL(url);
+        if (parsed.protocol !== "https:" || parsed.username || parsed.password) throw new Error("expected public HTTPS URL");
+        const response = await fetchImpl(url, { signal: AbortSignal.timeout(20_000), headers: { "User-Agent": "Mozilla/5.0" } });
+        try { if (!response.ok) throw new Error(`HTTP ${response.status}`); }
+        finally { await response.body?.cancel(); }
+        return null;
+      } catch (error) { return { rule: "directUrls", url, message: `disclosure URL is unreachable: ${error.message}` }; }
+    })());
+    const issue = await cache.get(url);
+    if (issue) issues.push(issue);
+  }
+  if (issues.length) { const error = new Error("unreachable disclosure URLs"); error.issues = issues; throw error; }
 }
 
 function getPostSkipReason(alertId, state, claim) {
@@ -494,11 +620,13 @@ function allowedSignalTypes() {
   return new Set(items.length ? items : [DEFAULT_SIGNAL_TYPES]);
 }
 
-function buildEmbed(report) {
+export function buildEmbed(report, { htmlOnly = false } = {}) {
   const alertId = String(report.alertId || "").trim();
   if (!alertId) throw new Error("report is missing alertId");
+  const issues = [];
+  const check = (rule, action) => { try { action(); } catch (error) { issues.push({ rule, message: error.message }); } };
   const textForPolicy = JSON.stringify(report);
-  assertNoInvestmentAdvice(textForPolicy);
+  check("investmentAdvice", () => assertNoInvestmentAdvice(textForPolicy));
 
   const fieldMap = new Map();
   for (const field of report.fields || []) {
@@ -517,26 +645,19 @@ function buildEmbed(report) {
     fieldMap.set("開示リンク", `${fieldMap.get("開示リンク")}\n開示リンク未確認`);
   }
   if (!hasUrl(fieldMap.get("Sources"))) {
-    throw new Error(`report ${alertId} must include at least one URL in Sources`);
+    issues.push({ rule: "sources", message: `report ${alertId} must include at least one URL in Sources` });
   }
   const dedupedDisclosureLinks = dedupeDisclosureLinkLines(fieldMap.get("開示リンク"));
   fieldMap.set("開示リンク", dedupedDisclosureLinks || "開示リンク未確認");
-  assertNoMojibakeText(alertId, report, fieldMap);
-  assertDisclosureLinksAreDirectDisclosures(alertId, fieldMap);
-  assertNoDuplicateDisclosureLinks(alertId, fieldMap);
-  assertSourceLinksAreReferencePages(alertId, fieldMap);
-  assertDescriptiveLinkLabels(alertId, fieldMap);
-  assertJapaneseNarrativeFields(alertId, fieldMap);
-  assertConciseMaterialNarrative(alertId, fieldMap);
-  assertNoGenericNarrativeTemplates(alertId, fieldMap);
-  assertNoProceduralAnalysisLanguage(alertId, fieldMap);
-  assertNoGenericBusinessOverview(alertId, fieldMap);
-  assertNoGenericFundamentalPoint(alertId, fieldMap);
-  assertNoUnsupportedDilutionBoilerplate(alertId, fieldMap);
-  assertNoNarrowDisclosureCaveat(alertId, fieldMap);
-  assertNoStaleSingleMaterialSummary(alertId, fieldMap);
-  assertNoStaleDisclosureProxyLabels(alertId, fieldMap);
-  assertMaterialImpact(alertId, fieldMap);
+  for (const validator of [assertNoMojibakeText, assertDisclosureLinksAreDirectDisclosures,
+    assertNoDuplicateDisclosureLinks, assertSourceLinksAreReferencePages, assertDescriptiveLinkLabels,
+    assertJapaneseNarrativeFields, assertConciseMaterialNarrative, assertNoGenericNarrativeTemplates,
+    assertNoProceduralAnalysisLanguage, assertNoGenericBusinessOverview, assertNoGenericFundamentalPoint,
+    assertNoUnsupportedDilutionBoilerplate, assertNoNarrowDisclosureCaveat,
+    assertNoStaleSingleMaterialSummary, assertNoStaleDisclosureProxyLabels, assertMaterialImpact]) {
+    check(validator.name, () => validator === assertNoMojibakeText
+      ? validator(alertId, report, fieldMap) : validator(alertId, fieldMap));
+  }
   const title = buildEmbedTitle(report);
 
   const fieldNames = [
@@ -545,9 +666,22 @@ function buildEmbed(report) {
   ];
   const fields = fieldNames.map(name => ({
     name,
-    value: truncate(formatEmbedFieldValue(name, fieldMap.get(name) || (name === "開示リンク" ? "開示リンク未確認" : "未確認")), 1024),
+    value: formatEmbedFieldValue(name, fieldMap.get(name) || (name === "開示リンク" ? "開示リンク未確認" : "未確認")),
     inline: false
   }));
+  if (!htmlOnly) {
+    for (const field of fields) if (field.value.length > 1024) {
+      issues.push({ rule: "discordLength", message: `report ${alertId} field ${field.name} exceeds 1024 characters; preserve evidence and shorten the prose` });
+    }
+    if (title.length + fields.reduce((n, f) => n + f.name.length + f.value.length, 0) + 64 > 6000) {
+      issues.push({ rule: "discordLength", message: `report ${alertId} embed exceeds the Discord 6000 character budget` });
+    }
+  }
+  if (issues.length) {
+    const error = new Error(issues.map(issue => issue.message).join("\n"));
+    error.issues = issues;
+    throw error;
+  }
 
   return {
     title,
@@ -1266,7 +1400,7 @@ function isUnavailableDisclosureStatus(status) {
   return [401, 403, 404, 410].includes(Number(status));
 }
 
-async function assertNoNewerIrbankDisclosureMiss(report, claim) {
+async function assertNoNewerIrbankDisclosureMiss(report, claim, { analysisCutoff = null } = {}) {
   const alertId = String(report.alertId || "").trim();
   const symbolCode = String(report.symbolCode || claim?.symbolCode || "").trim();
   if (!symbolCode) return;
@@ -1283,6 +1417,7 @@ async function assertNoNewerIrbankDisclosureMiss(report, claim) {
 
   const fundamentalCandidates = candidates
     .filter(item => item.disclosedAtMs >= cutoffMs)
+    .filter(item => !analysisCutoff || item.disclosedAtMs <= Date.parse(analysisCutoff))
     .filter(item => isFundamentalDisclosureTitle(item.title))
     .sort((a, b) => b.disclosedAtMs - a.disclosedAtMs);
 
@@ -1936,7 +2071,8 @@ async function postDiscordBot(channelId, botToken, payload) {
         "Content-Type": "application/json",
         "Authorization": `Bot ${botToken}`
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(45_000)
     });
     const body = await response.text();
     if (response.status >= 200 && response.status < 300) return body ? JSON.parse(body) : {};
@@ -1948,7 +2084,9 @@ async function postDiscordBot(channelId, botToken, payload) {
         continue;
       }
     }
-    throw new Error(`Discord bot post failed: HTTP ${response.status} ${body.slice(0, 500)}`);
+    const error = new Error(`Discord bot post failed: HTTP ${response.status} ${body.slice(0, 500)}`);
+    error.definitiveRejection = response.status >= 400 && response.status < 500;
+    throw error;
   }
 }
 
@@ -3183,7 +3321,9 @@ function restoreEnv(key, value) {
 function printHelp() {
   console.log(`Usage:
   node premium_worker/worker.mjs collect [--force]
-  node premium_worker/worker.mjs post --input <premium_reports.json> [--dry-run]
+  node premium_worker/worker.mjs validate --input <draft-fragment.json>
+  node premium_worker/worker.mjs post --input <premium_reports.json> --dry-run [--receipt <validation.json>]
+  node premium_worker/worker.mjs post --input <premium_reports.json> [--validation-receipt <validation.json>]
   node premium_worker/worker.mjs fail --alert-id <id> --reason <reason>
   node premium_worker/worker.mjs lock-before --date <yyyy-mm-dd>
   node premium_worker/worker.mjs status

@@ -679,6 +679,37 @@ class PresentationSuccessorReviewTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "fundamental batch successor differs from the exact reviewed source scope"):
                 review.review_member_release_source(self.repo, baseline, self.commit("Unrelated UI change"))
 
+    def test_fundamental_batch_with_entry_outcomes_is_exact_and_keeps_auth(self):
+        config = json.dumps(self.config, indent=2).encode().replace(
+            b'    "CLOUD_MEMBER_VIEW_ENABLED": "true",\n', review._ROLE_ONLY_CONFIG_LINE + review._TIERED_AUDIENCE_LINE)
+        self.write(review.CONFIG, config)
+        paths = review._FUNDAMENTAL_BATCH_ENTRY_PRODUCT_PATHS | review._SUCCESSOR_REVIEW_PATHS
+        for name in sorted(paths):
+            self.write(name, b"prior " + name.encode())
+        baseline = self.commit("Approved member generation")
+        for name in sorted(paths):
+            self.write(name, b"reviewed " + name.encode())
+        candidate = self.commit("Reviewed shared fundamental pipeline")
+        product_sha = review._product_digest(self.repo, candidate, review._FUNDAMENTAL_BATCH_ENTRY_PRODUCT_PATHS)
+        with (patch.object(review, "_FUNDAMENTAL_BATCH_BASELINE", baseline),
+              patch.object(review, "_FUNDAMENTAL_BATCH_ENTRY_PRODUCT_SHA256", product_sha)):
+            result = review.review_member_release_source(self.repo, baseline, candidate)
+            self.assertEqual(result["schema"], review.FUNDAMENTAL_BATCH_REVIEW_SCHEMA)
+            self.assertEqual(result["member_audience"], "tiered")
+            self.assertTrue(result["owner_only_gate_preserved"])
+            self.write(review.ENTRY, b"unreviewed authentication")
+            with self.assertRaisesRegex(ValueError, "existing Discord or owner authorization"):
+                review.review_member_release_source(self.repo, baseline, self.commit("Changed authentication"))
+            self.write(review.ENTRY, review.git(self.repo, "show", f"{candidate}:{review.ENTRY}"))
+            name = "scripts/windows/new-a-fundamental-stage.mjs"
+            self.write(name, b"unreviewed report bypass")
+            with self.assertRaisesRegex(ValueError, "fundamental batch successor differs from the reviewed bytes"):
+                review.review_member_release_source(self.repo, baseline, self.commit("Unreviewed validator change"))
+            self.write(name, review.git(self.repo, "show", f"{candidate}:{name}"))
+            self.write(review.PRESENTATION, b"unreviewed UI")
+            with self.assertRaisesRegex(ValueError, "fundamental batch successor differs from the reviewed bytes"):
+                review.review_member_release_source(self.repo, baseline, self.commit("Unrelated UI change"))
+
     def test_published_generation_rejects_unreviewed_scope_or_bytes_and_retains_auth(self):
         config = json.dumps(self.config, indent=2).encode().replace(
             b'    "CLOUD_MEMBER_VIEW_ENABLED": "true",\n', review._ROLE_ONLY_CONFIG_LINE + review._TIERED_AUDIENCE_LINE)

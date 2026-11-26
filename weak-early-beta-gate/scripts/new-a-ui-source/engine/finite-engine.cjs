@@ -32,6 +32,37 @@ function validatePreferences(p){
  return {...p};
 }
 function compare(a,b){return a.candidate_date.localeCompare(b.candidate_date)||b.priority_score-a.priority_score||a.symbol.localeCompare(b.symbol,'en')||a.episode_id-b.episode_id;}
+// The same admission checks serve the actual replay and the prior-evening plan.
+// Exits at the next open do not release admission slots in the existing model.
+function admissionStatus(e,{prefs,positions,free,admitted,unresolved,quotes,forcedRules,date}){
+ if(forcedRules.some(r=>r.symbol===e.symbol&&date>r.confirmed_on))return 'VERIFIED_RESTRICTED';
+ if(unresolved)return 'HALTED_UNRESOLVED';
+ if(prefs.price_cap_yen!==null&&!valid(quotes.get(e.symbol,e.candidate_date)))return 'SIGNAL_PRICE_UNVERIFIED';
+ if(prefs.price_cap_yen!==null&&quotes.get(e.symbol,e.candidate_date).actual_close>prefs.price_cap_yen)return 'PRICE_CAP';
+ if(positions.has(e.symbol))return 'DUPLICATE_HELD';
+ if(admitted>=free)return 'CAPACITY';
+ return null;
+}
+function planNextEntries({asOf,nextSession,intents,result,quotes,restrictionExits=[]},preferences,{trialPreset='profit'}={}){
+ const prefs=validatePreferences(preferences),trial=trialTerms(trialPreset);
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(asOf)||!/^\d{4}-\d{2}-\d{2}$/.test(nextSession)||nextSession<=asOf||!Array.isArray(intents))throw Error('entry_plan_context');
+ if(result?.resolved!==true||result.period?.at(-1)!==asOf)return {available:false,rows:[]};
+ const last=result.daily.at(-1),positions=new Set(Object.keys(result.open_positions)),free=Math.max(0,prefs.max_positions-positions.size);
+ if(last?.date!==asOf||!finite(last.cash)||last.cash<0)throw Error('entry_plan_cash');
+ const pending=intents.filter(e=>e.trigger_date===asOf).slice().sort(compare);
+ let admitted=0;
+ const rows=pending.map(e=>{
+  const reason=admissionStatus(e,{prefs,positions,free,admitted,unresolved:false,quotes,forcedRules:restrictionExits.filter(r=>r.confirmed_on<=asOf),date:nextSession});
+  if(!reason)admitted++;
+  const dailyStandby=!reason&&trial&&trial.daily_fill_cap!==null&&admitted>trial.daily_fill_cap;
+  // This is a limit, not a forecast of the unknown next opening price. Later
+  // candidates also depend on cash consumed by earlier successful entries.
+  const maxOpening=Math.floor(Math.min(prefs.per_order_cap_yen,last.cash/(1+prefs.cost_percent/100))*100/prefs.base_shares)/100;
+  const status=reason??(last.cash===0?'CASH_INSUFFICIENT':dailyStandby?'DAILY_CAP_STANDBY':'PLANNED_CONDITIONAL');
+  return {...e,status,max_opening_yen:status==='PLANNED_CONDITIONAL'||status==='DAILY_CAP_STANDBY'?maxOpening:null};
+ });
+ return {available:true,as_of:asOf,next_session:nextSession,open_slots:free,cash_yen:last.cash,rows};
+}
 function summarize(result,cash0){
  const {daily,orders,trades,open_positions,unresolved}=result;
  const last=daily.at(-1),resolved=!unresolved.length&&(!last||!last.unresolved&&finite(last.equity_diagnostic));
@@ -126,12 +157,8 @@ function replay({calendar,intents,quotes,restrictionExits=[]},preferences,{varia
   const dt=calendar[i],pending=[...(byday.get(i)||[])].sort(compare),admitted=[],free=prefs.max_positions-positions.size;
   for(const e of pending){
    const row={...e,order_date:dt,arm:'watch',status:null,entry_cost:null};delete row.trigger_date;
-   if(forcedRules.some(r=>r.symbol===e.symbol&&dt>r.confirmed_on))row.status='VERIFIED_RESTRICTED';
-   else if(unresolved.length)row.status='HALTED_UNRESOLVED';
-   else if(prefs.price_cap_yen!==null&&!valid(quotes.get(e.symbol,e.candidate_date)))row.status='SIGNAL_PRICE_UNVERIFIED';
-   else if(prefs.price_cap_yen!==null&&quotes.get(e.symbol,e.candidate_date).actual_close>prefs.price_cap_yen)row.status='PRICE_CAP';
-   else if(positions.has(e.symbol))row.status='DUPLICATE_HELD';
-   else if(admitted.length>=free)row.status='CAPACITY';else admitted.push(row);
+   row.status=admissionStatus(e,{prefs,positions,free,admitted:admitted.length,unresolved:!!unresolved.length,quotes,forcedRules,date:dt});
+   if(!row.status)admitted.push(row);
    if(row.status)orders.push(row);
   }
   if(trial&&unresolved.length){
@@ -196,4 +223,4 @@ function replay({calendar,intents,quotes,restrictionExits=[]},preferences,{varia
  }
  const result={daily,orders,trades,unresolved,open_positions:Object.fromEntries(positions),required_cash:prefs.initial_cash_yen-minimum},output={...result,...summarize(result,prefs.initial_cash_yen)};if(trial)output.trial_policy={...trial,purchase_day_is_one:true,timing:'OPEN',execution_status:'ANALYTICS_SIMULATION_ONLY'};else if(prefs.exit_endpoint==='d6_open'&&policy)output.exit_policy=policy;return output;
 }
-module.exports={valid,validatePreferences,compare,replay,summarize,exitTerms,validateExitPolicy,OPEN_EXIT_POLICY_VERSION,trialTerms,TRIAL_PRESETS};
+module.exports={valid,validatePreferences,compare,replay,summarize,exitTerms,validateExitPolicy,OPEN_EXIT_POLICY_VERSION,trialTerms,TRIAL_PRESETS,planNextEntries};

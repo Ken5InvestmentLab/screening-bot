@@ -40,7 +40,9 @@ def _attachment(date, chart_links, entries=None, openings=None):
         rows = [("監視開始", date, symbol, url) for symbol, url in chart_links]
         if entries is not None:
             label = "仮想保有開始候補" if "shared_order" in entries else "買付候補（未約定）"
-            rows.extend((label, entries["session"], symbol, "") for symbol in entries["symbols"])
+            plans = {row['symbol']: row for row in entries.get('entry_plan', {}).get('rows', [])}
+            rows.extend((label + (' · ' + _plan_label(plans[symbol]) if symbol in plans else ''),
+                         entries["session"], symbol, "") for symbol in entries["symbols"])
         if openings is not None:
             writer.writerow([*columns, "日足始値（円）"])
             writer.writerows((*row, "") for row in rows)
@@ -210,7 +212,47 @@ def _summary_details(root, snapshot):
             "shared_order": _shared_trial_order_rule(),
             "fixed_zero_cost": True,
         }
+        plan = _verified_entry_plan(root, snapshot, next_date)
+        if plan is not None:
+            if {row['symbol'] for row in plan['rows']} != {event['symbol'] for event in candidates}:
+                raise ValueError('entry plan candidates differ from the daily snapshot')
+            details["next_session_entries"]["entry_plan"] = plan
     return details
+
+
+def _verified_entry_plan(root, snapshot, next_date):
+    run = read(root / 'latest-run.json')
+    if 'bundle_directory' not in run:
+        return None  # Legacy staged messages retain their original contract.
+    repo = Path(__file__).resolve().parents[2]
+    config = repo / '.cache/weak_early_beta/daily-runner.config.json'
+    node = read(config)['nodePath'] if config.is_file() else 'node'
+    response = subprocess.run([
+        node, str(repo / 'weak-early-beta-gate/scripts/prepare-new-a-entry-plan.cjs'),
+        run['bundle_directory'], snapshot['as_of'], next_date, snapshot['payload_sha256'],
+    ], cwd=repo, check=True, capture_output=True, encoding='utf-8', timeout=60)
+    plan = json.loads(response.stdout)
+    if (plan.get('source_version') != run['source_version']
+            or plan.get('snapshot_sha256') != snapshot['payload_sha256']
+            or type(plan.get('available')) is not bool or not isinstance(plan.get('rows'), list)):
+        raise ValueError('entry plan generation differs')
+    if plan['available'] is False:
+        return None
+    return plan
+
+
+def _plan_label(row):
+    return {
+        'PLANNED_CONDITIONAL': '開始予定（始値などの条件つき）',
+        'DAILY_CAP_STANDBY': '補欠候補（先順位の判定次第）',
+        'CAPACITY': '見送り予定：保有枠不足',
+        'CASH_INSUFFICIENT': '見送り予定：資金不足',
+        'DUPLICATE_HELD': '見送り予定：同じ銘柄を保有中',
+        'PRICE_CAP': '見送り予定：株価上限超過',
+        'SIGNAL_PRICE_UNVERIFIED': '見送り予定：判定用株価未確認',
+        'VERIFIED_RESTRICTED': '見送り予定：取引対象外',
+        'HALTED_UNRESOLVED': '開始予定未確認：先行データ未確定',
+    }.get(row['status'], '開始予定未確認')
 
 
 def _format_opening_price(price):
@@ -264,7 +306,20 @@ def _company_names(root, run, snapshot):
 
 def _entry_field(entries, attached, names=None):
     symbols = entries["symbols"]
-    shown = "\n".join(_stock_link(symbol, names or {}) for symbol in (symbols[:3] if attached else symbols))
+    plan = entries.get('entry_plan')
+    if plan:
+        symbols = [row['symbol'] for row in plan['rows']]
+    plans = {row['symbol']: row for row in plan['rows']} if plan else {}
+    def planned_line(symbol):
+        label = _stock_link(symbol, names or {})
+        if symbol not in plans:
+            return label
+        row = plans[symbol]
+        label += '　' + _plan_label(row)
+        if row['status'] == 'PLANNED_CONDITIONAL':
+            label += f"／始値{_format_opening_price(row['max_opening_yen'])}円以下"
+        return label
+    shown = "\n".join(planned_line(symbol) for symbol in (symbols[:3] if attached else symbols))
     if attached:
         shown += f"（全{len(symbols)}銘柄は添付CSV）"
     if "shared_order" in entries:
@@ -290,7 +345,9 @@ def _entry_field(entries, attached, names=None):
                       f"{cash_rule}、同時保有枠（最大{max_positions:,}銘柄）に空きがあり、"
                       "同じ銘柄を仮想保有中でないこと\n"
                       "当日の有効な日足と正の出来高があり、高値と安値が異なること\n"
-                      f"{priority}"),
+                      f"{priority}"
+                      + ("\n利益優先の前日終了時点の予定です。当日終了分の保有枠は開始判定に再利用しません。"
+                         "後順位は先順位の開始後の残資金で判定します。" if plan else "")),
         }
     # Pending entries staged before the order rule retained their original text.
     return {

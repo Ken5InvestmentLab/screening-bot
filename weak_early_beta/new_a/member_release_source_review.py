@@ -527,6 +527,23 @@ _FUNDAMENTAL_BATCH_PRODUCT_PATHS = frozenset({
     "scripts/windows/test-new-a-fundamental-stage.mjs",
 })
 _FUNDAMENTAL_BATCH_PRODUCT_SHA256 = "080d5a4790e0dff34eaef7554400d75497ec43112d8e028f8f53da5c44232ba3"
+_FUNDAMENTAL_BATCH_ENTRY_PRODUCT_PATHS = _FUNDAMENTAL_BATCH_PRODUCT_PATHS | frozenset({
+    'weak-early-beta-gate/package.json',
+    'weak-early-beta-gate/scripts/new-a-ui-source/engine/finite-engine.cjs',
+    'weak-early-beta-gate/scripts/new-a-ui-source/assets/owner-loader.js',
+    'weak-early-beta-gate/scripts/new-a-ui-source/assets/member-presentation.js',
+    'weak-early-beta-gate/scripts/prepare-new-a-reference-view.cjs',
+    'weak-early-beta-gate/scripts/prepare-new-a-entry-plan.cjs',
+    'weak_early_beta/new_a/notifications.py',
+    'weak_early_beta/new_a/AGENTS.md',
+    'tests/new_a_entry_plan.test.cjs',
+    'tests/new_a_dashboard_details.test.cjs',
+    'tests/test_new_a_connection.py',
+})
+_FUNDAMENTAL_BATCH_ENTRY_ADDITIONS = frozenset({
+    'weak-early-beta-gate/scripts/prepare-new-a-entry-plan.cjs', 'tests/new_a_entry_plan.test.cjs',
+})
+_FUNDAMENTAL_BATCH_ENTRY_PRODUCT_SHA256 = 'd2cba522ed2166dbef632d0bd3d467ad211338db5610d1d0d56f5249b8d3a5a1'
 _HOLD_HEADING_PRODUCT_PATHS = frozenset({'weak-early-beta-gate/scripts/new-a-ui-source/assets/member-loader.js', 'tests/new_a_member_consistency.test.cjs'})
 _HOLD_HEADING_PRODUCT_SHA256 = '39b00c7ae2e494eb76dcbb00d10f44435bb213737b517d2a9909666c9c79707a'
 _SOURCE_BASELINE_BASELINE = "c88e8b0a67ac53579fbac54de8c7778f92467cd8"
@@ -662,10 +679,14 @@ def _check_role_only_successor(repo, candidate, paths):
 
 def _member_successor(repo, baseline, candidate):
     if baseline == _FUNDAMENTAL_BATCH_BASELINE:
-        paths = _successor_paths(repo, baseline, candidate)
-        if paths != _FUNDAMENTAL_BATCH_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
+        paths = _successor_paths(repo, baseline, candidate, allowed_additions=_FUNDAMENTAL_BATCH_ENTRY_ADDITIONS)
+        if paths == _FUNDAMENTAL_BATCH_ENTRY_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
+            product_paths, product_sha = _FUNDAMENTAL_BATCH_ENTRY_PRODUCT_PATHS, _FUNDAMENTAL_BATCH_ENTRY_PRODUCT_SHA256
+        elif paths == _FUNDAMENTAL_BATCH_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
+            product_paths, product_sha = _FUNDAMENTAL_BATCH_PRODUCT_PATHS, _FUNDAMENTAL_BATCH_PRODUCT_SHA256
+        else:
             raise ValueError("Cloud fundamental batch successor differs from the exact reviewed source scope")
-        if _product_digest(repo, candidate, _FUNDAMENTAL_BATCH_PRODUCT_PATHS) != _FUNDAMENTAL_BATCH_PRODUCT_SHA256:
+        if _product_digest(repo, candidate, product_paths) != product_sha:
             raise ValueError("Cloud fundamental batch successor differs from the reviewed bytes")
         schema = FUNDAMENTAL_BATCH_REVIEW_SCHEMA
     elif baseline == _MEMBER_READY_BASELINE:

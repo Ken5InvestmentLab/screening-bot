@@ -82,6 +82,7 @@
    ...Object.values(snapshot.monitor_state?.watches??{}).map(watch=>episodeKey(watch.episode)),
    ...(snapshot.monitor_state?.pending_references??[]).filter(ref=>ref.reference_entry_date===snapshot.as_of).map(episodeKey),
    ...(model?.trades??[]).filter(trade=>trade.entry_date===snapshot.as_of||trade.exit_date===snapshot.as_of).map(episodeKey),
+   ...(model?.orders??[]).filter(order=>order.order_date===snapshot.as_of).map(episodeKey),
    ...Object.entries(model?.open_positions??{}).map(([symbol,position])=>episodeKey({...position,symbol})),
   ]);
   const held=new Set(Object.keys(snapshot.held_symbols??{}));
@@ -97,10 +98,16 @@
   WATCH_STARTED:{label:'監視開始',tone:'watch-start'},
   WATCH_TERMINAL:{label:'監視終了',tone:'watch-end'},
   HOLD_STARTED:{label:'仮想保有開始',tone:'hold-start'},
+  HOLD_SKIPPED:{label:'仮想保有開始見送り',tone:'watch-end'},
   HOLD_ENDED:{label:'仮想保有終了',tone:'hold-end'},
   FORCED_EXIT:{label:'強制決済',tone:'forced-exit'},
  };
  const reasons={UP_ESCAPED:'上方離脱',DOWN_INVALIDATED:'下方無効',EXPIRED:'期限',TRIGGERED:'支持反発'};
+ const entryReasons={CAPACITY:'保有枠不足',CASH_INSUFFICIENT:'資金不足',DAILY_FILLED_CAP:'1日の開始上限',
+  LOT_EXCEEDS_ALLOCATION:'注文上限超過',DUPLICATE_HELD:'同じ銘柄を保有中',PRICE_CAP:'株価上限超過',
+  SIGNAL_PRICE_UNVERIFIED:'判定用株価未確認',UNFILLED:'有効な株価・出来高なし',
+  UNFILLED_UNCERTAIN_ONE_PRICE:'値幅がなく開始を確認できず',HALTED_UNRESOLVED:'先行データ未確定',
+  IDENTITY_UNVERIFIED:'銘柄情報未確認',VERIFIED_RESTRICTED:'取引対象外'};
  function dailyChanges(snapshot,model){
   const changes=new Map();
   const date=snapshot.as_of;
@@ -118,6 +125,9 @@
   }
   const holdingReady=model?.resolved===true&&model.period?.[1]===date;
   if(holdingReady){
+   for(const order of model.orders??[]){
+    if(order.order_date===date&&order.status!=='FILLED'&&Object.hasOwn(entryReasons,order.status))add(order,'HOLD_SKIPPED',entryReasons[order.status]);
+   }
    for(const trade of model.trades){
     if(trade.entry_date===date)add(trade,'HOLD_STARTED');
     if(trade.exit_date===date)add(trade,trade.forced_exit_reason?'FORCED_EXIT':'HOLD_ENDED',trade.forced_exit_reason);
@@ -196,7 +206,7 @@
   };
  }
 
- function currentMarkup(snapshots,rows=[],{adapter,model,watchSelection,preparedCloses,dashboardYear,modelPending=false}={}){
+ function currentMarkup(snapshots,rows=[],{adapter,model,watchSelection,preparedCloses,dashboardYear,modelPending=false,entryPlan}={}){
   if(!snapshots.length)return '<section class="panel"><h2>最新の監視状況</h2><p>監視状況を確認できません。</p></section>';
   if(snapshots.length!==1)throw Error('current_snapshot_count');
   const s=snapshots[0];
@@ -243,7 +253,7 @@
     profit='<div class="cloud-card-pnl"><small>評価損益</small>'+performanceFor(position,entry.symbol)+'</div>';
    }
    return {primary:(labels.has('HOLD_ENDED')||labels.has('FORCED_EXIT')),markup:'<article data-daily-change="'+esc(identity)
-    +'" data-reference-kind="'+(labels.has('FORCED_EXIT')?'FORCED_EXIT':labels.has('HOLD_ENDED')?'HOLD_ENDED':'OTHER')+'" data-reference-symbol="'+esc(entry.symbol)
+    +'" data-reference-kind="'+(labels.has('FORCED_EXIT')?'FORCED_EXIT':labels.has('HOLD_ENDED')?'HOLD_ENDED':labels.has('HOLD_SKIPPED')?'HOLD_SKIPPED':'OTHER')+'" data-reference-symbol="'+esc(entry.symbol)
     +'" data-reference-name="'+esc(names.get(entry.symbol)?.companyName||entry.symbol)+'">'
     +stock(entry.symbol)+'<div class="cloud-transition-list">'+badges+'</div>'+profit+detailFor(entry)+'</article>'};
   });
@@ -257,7 +267,11 @@
   const referenceRows=references.map(e=>{
    const close=confirmedClose(s,e.symbol,preparedCloses);
    const candidate=e.kind==='ENTRY_CANDIDATE';
+   const planned=entryPlan?.available===true?entryPlan.rows.find(row=>episodeKey(row)===episodeKey(e)):null;
+   const planText=planned?(planned.status==='PLANNED_CONDITIONAL'?'開始予定（始値などの条件つき）'
+    :planned.status==='DAILY_CAP_STANDBY'?'補欠候補（先順位の判定次第）':'見送り予定 · '+(entryReasons[planned.status]??'判定未確認')):'';
    const limit=candidate?'<p class="note">開始条件：次の営業日の始値で100株50万円以内</p>'
+    +(planText?'<p class="note" data-entry-plan="'+esc(planned.status)+'">'+esc(planText)+'</p>':'')
     +(close&&close.price>5000?'<span class="badge">現在の株価では注文上限超過</span>':''):'';
    return {primary:candidate,markup:'<article data-reference-kind="'+esc(e.kind)+'" data-reference-symbol="'+esc(e.symbol)
     +'" data-reference-name="'+esc(names.get(e.symbol)?.companyName||e.symbol)+'">'+stock(e.symbol)

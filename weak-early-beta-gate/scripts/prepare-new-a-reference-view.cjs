@@ -13,6 +13,7 @@ const {
   readBounded, safeHistory, sharedAnalytics, sharedChart,
 } = require('./prepare-new-a-member-projection.cjs');
 const { identityHold } = require('./new-a-ui-source/presentation-adapter.cjs');
+const { planNextEntries } = require('./new-a-ui-source/engine/finite-engine.cjs');
 function browserExport(name) {
   const filename = path.join(__dirname, 'new-a-ui-source/assets', name);
   const module = { exports: {} };
@@ -47,14 +48,14 @@ function dashboardAdapter(history) {
   };
 }
 
-function dashboardReferenceMarkup({ current, presentations, calendar, dashboardCloses, runtime, result, portfolio, adapter }) {
+function dashboardReferenceMarkup({ current, presentations, calendar, dashboardCloses, runtime, result, portfolio, adapter, entryPlan }) {
   assert(current && dashboardCloses?.date === current.as_of, 'Dashboard snapshot and quote date must match');
   const model = portfolio?.result ?? (result.period.at(-1) === current.as_of ? result : null);
   const dashboardYear = portfolio?.basis === 'LATEST_YEAR_STANDALONE' ? portfolio.result : null;
   const keys = ownerPresentation.dashboardIdentities(current, model, runtime.input.episodes);
   const rows = presentations.filter(row => keys.has(row.identity));
   const markup = ownerPresentation.currentMarkup([current], rows, {
-    adapter, model, dashboardYear, preparedCloses: dashboardCloses, watchSelection: result.watches,
+    adapter, model, dashboardYear, preparedCloses: dashboardCloses, watchSelection: result.watches, entryPlan,
   });
   const details = ownerPresentation.stockDetails(current, rows, adapter, model, dashboardCloses, dashboardYear);
   const performance = ownerPresentation.holdingPerformance(current, rows, adapter, dashboardCloses);
@@ -104,7 +105,14 @@ async function prepareNewAReferenceView({ bundle, readyProof, readyProofSha256 }
     models[preset] = result;
     const portfolio = data.runtime.currentPortfolio(preferences, source.as_of, { ...options, fullResult: result });
     const latestYear = result.resolved ? null : data.runtime.simulateLatestYear(preferences, options);
-    const render = { ...data, preferences, result, portfolio, adapter, preset, manifest, latestYear };
+    const nextDates = [...new Set(data.current.events.filter(e => e.kind === 'ENTRY_CANDIDATE'
+      && e.session === source.as_of).map(e => e.reference_entry_date))];
+    assert(nextDates.length <= 1, 'Entry plan has conflicting next sessions');
+    const entryPlan = nextDates.length ? planNextEntries({ asOf: source.as_of, nextSession: nextDates[0],
+      intents: data.runtime.input.intents, result: portfolio?.result ?? result, quotes: data.runtime.quotes,
+      restrictionExits: data.runtime.input.limits.restrictionExitActions ?? [],
+    }, preferences, { trialPreset }) : null;
+    const render = { ...data, preferences, result, portfolio, adapter, preset, manifest, latestYear, entryPlan };
     variants['dashboard.' + preset] = dashboardReferenceMarkup(render);
     variants['analytics.' + preset] = analyticsReferenceMarkup(render, finitePresentation);
     variants['data.chart.' + preset] = JSON.stringify(sharedChart(result, source.as_of));

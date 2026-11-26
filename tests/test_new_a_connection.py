@@ -335,6 +335,25 @@ class BatchedDiscord(unittest.TestCase):
         self.post.assert_not_called()
         self.assertFalse(self.receipts())
 
+    def test_evening_selection_and_rejection_are_persisted_and_not_recomputed_on_send(self):
+        from weak_early_beta.new_a import notifications
+        self.prepare_next_session()
+        plan = {'available': True, 'rows': [
+            {'symbol': '2345', 'status': 'PLANNED_CONDITIONAL', 'max_opening_yen': 5000},
+            {'symbol': '417A', 'status': 'CAPACITY', 'max_opening_yen': None},
+        ]}
+        with patch.object(notifications, '_verified_entry_plan', return_value=plan) as reader:
+            self.call(dry_run=True)
+            reader.assert_called_once()
+        with patch.object(notifications, '_verified_entry_plan', side_effect=AssertionError('do not change staged plan')):
+            self.call()
+        value=self.posts[0][0]['embeds'][0]['fields'][-1]['value']
+        self.assertIn('2345](https://jp.tradingview.com/chart/', value)
+        self.assertIn('開始予定（始値などの条件つき）／始値5,000円以下', value)
+        self.assertIn('見送り予定：保有枠不足', value)
+        self.assertIn('当日終了分の保有枠は開始判定に再利用しません', value)
+        self.assertEqual(self.call()['external_sends'], 0)
+
     def test_zero_watches_with_candidates_still_has_one_completion_batch(self):
         self.events(0)
         self.prepare_next_session(symbols=("2345",))

@@ -168,7 +168,7 @@ function holdingProfitTotal(values) {
 }
 function sortReferenceCards(cards, order) {
   const compare=(a,b)=>String(a??'').localeCompare(String(b??''),'ja',{numeric:true});
-  const labels=['ENTRY_CANDIDATE','FORCED_EXIT','HOLD_ENDED','HOLD_STARTED','WATCH_STARTED','WATCH_TERMINAL'];
+  const labels=['ENTRY_CANDIDATE','FORCED_EXIT','HOLD_ENDED','HOLD_STARTED','HOLD_SKIPPED','WATCH_STARTED','WATCH_TERMINAL'];
   const rank=kind=>labels.includes(kind)?labels.indexOf(kind):labels.length;
   return [...cards].sort((a,b)=>{
     const left=a.dataset,right=b.dataset;

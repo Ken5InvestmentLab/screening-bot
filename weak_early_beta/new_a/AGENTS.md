@@ -55,5 +55,7 @@
 
 ## Accepted source vintages and restriction exits
 
+- Evening entry plans use the same canonical intents, shared account, priority and admission checks as the virtual-holding replay, without reading the unknown next-session price. State selected entries as conditional plans and show capacity/duplicate/price restrictions explicitly. Keep each staged plan immutable on delivery retry. Target-day rejected orders appear on cards with their actual status reason; never infer a rejection from an absent holding. Preserve the existing decision order: next-session exits do not free new-entry slots that morning.
+
 - A reviewed source baseline may advance only the explicitly accepted, inactive symbol heads. Preserve prior events, quotes, run receipts and missing-session decisions; never replay a quarantine gap. Apply the metadata override only in New A, retain its exact private baseline bytes, and record each later source comparison. A new revision or unknown quality issue remains blocked.
 - Restriction exits are prospective from the first live observation of an official 整理銘柄 designation or a published delisting decision. Mere 監理 designation does not trigger an exit. Use the next verified market-session OPEN, preserve an earlier natural exit, prohibit new restricted entries, and pin the first verified settlement price. Missing or untradeable opens stay unresolved; never invent a price or move settlement to another session.

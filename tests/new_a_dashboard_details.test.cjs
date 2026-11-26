@@ -244,6 +244,27 @@ test('candidate, reset and exit schedule do not count as target-day transitions'
   assert.match(renderHoldings({ result: stale }, { asOf: date }), /対象日時点の仮想保有は未確定/);
 });
 
+test('today rejected candidates have their own card and explicit actual rejection reason', () => {
+  const order = { ...key, order_date: date, status: 'CAPACITY' };
+  const model = { resolved: true, period: [key.candidate_date,date], trades: [], open_positions: {}, orders: [order] };
+  const html = currentMarkup([snapshot], [row], { adapter, model });
+  assert.match(html, /仮想保有開始見送り<\/span><small>保有枠不足<\/small>/);
+  assert.match(html, /data-daily-change="1234\|2026-11-17\|1"/);
+  assert.match(html, /仮想保有開始見送り <b>1件/);
+  assert.doesNotMatch(currentMarkup([snapshot], [row], { model: {...model,resolved:false} }), /data-daily-change=/);
+  assert.doesNotMatch(currentMarkup([snapshot], [row], { model: {...model,orders:[{...order,order_date:key.candidate_date}]} }), /data-daily-change=/);
+});
+
+test('next-session candidate shows selected or excluded evening plan without claiming an execution', () => {
+  const daily = { ...snapshot, events: [{ ...key, kind:'ENTRY_CANDIDATE', session:date }] };
+  const model = {resolved:true,period:[key.candidate_date,date],trades:[],open_positions:{}};
+  const planned=currentMarkup([daily],[row],{model,entryPlan:{available:true,rows:[{...key,status:'PLANNED_CONDITIONAL'}]}});
+  assert.match(planned,/開始予定（始値などの条件つき）/);
+  const skipped=currentMarkup([daily],[row],{model,entryPlan:{available:true,rows:[{...key,status:'CAPACITY'}]}});
+  assert.match(skipped,/見送り予定 · 保有枠不足/);
+  assert.doesNotMatch(skipped,/仮想保有開始見送り<\/span>/);
+});
+
 test('data on hold is distinct from watching and virtual holding', () => {
   const watchSelection = [{ ...key, watch_status: 'WATCHING', selection_reason: null }];
   const html = currentMarkup([{ ...snapshot, held_symbols: { 1234: { reason: 'MISSING_SOURCE' } } }], [row], { watchSelection });

@@ -27,7 +27,7 @@ _MAX_PART = 196_608
 _MAX_FUNDAMENTAL = 16_384
 _FUNDAMENTAL_FIELDS = ("材料インパクト", "事業概要", "足元材料", "ファンダ要点", "注意点", "開示リンク", "Sources")
 _ANALYSIS_TIMESTAMP = re.compile(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,9})?(?:Z|[+-]\d\d:\d\d)")
-_BATCH_SIZE = 8
+_BATCH_SIZE = 32
 _SQL_STATEMENT_LIMIT = 90_000  # WranglerD1 serializes parameters into SQL.
 _MANIFEST = "SELECT digest,json FROM private_projection_manifest WHERE identity=?"
 _MARKER = "SELECT identity,digest FROM private_projection_ready WHERE singleton=1"

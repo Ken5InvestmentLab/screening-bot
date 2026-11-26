@@ -509,10 +509,11 @@ _MEMBER_READY_PRODUCT_PATHS = frozenset({
     'weak-early-beta-gate/src/new-a-member-current.ts',
     'weak-early-beta-gate/src/new-a-member-projection.ts',
     'weak-early-beta-gate/src/new-a-role-integration.ts',
+    'weak_early_beta/new_a/member_publisher.py',
     'tests/new_a_member_current.test.cjs',
     'tests/new_a_member_worker.test.cjs',
 })
-_MEMBER_READY_PRODUCT_SHA256 = '560e117b5c49a84414a90e33cd85fe407cad5cec7a217e30ae402a628235a6da'
+_MEMBER_READY_PRODUCT_SHA256 = '2fb177b5c12055f3975fcc2d45318ec23f63df033376e8b19d1e2812d87f440d'
 _HOLD_HEADING_PRODUCT_PATHS = frozenset({'weak-early-beta-gate/scripts/new-a-ui-source/assets/member-loader.js', 'tests/new_a_member_consistency.test.cjs'})
 _HOLD_HEADING_PRODUCT_SHA256 = '39b00c7ae2e494eb76dcbb00d10f44435bb213737b517d2a9909666c9c79707a'
 _SOURCE_BASELINE_BASELINE = "c88e8b0a67ac53579fbac54de8c7778f92467cd8"

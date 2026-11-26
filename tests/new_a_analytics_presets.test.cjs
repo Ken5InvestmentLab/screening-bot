@@ -731,3 +731,31 @@ test('pending account save holds the submitted draft until a verified receipt or
  assert.equal(c.state().dirty,false);
  assert.equal(c.state().message,'設定を保存しました。');
 });
+
+
+test('official delisting decision exits prospectively at the next market open with its reason',()=>{
+ const e={symbol:'1100',candidate_date:'2026-11-19',trigger_date:'2026-11-19',episode_id:1,priority_score:1};
+ const rule={symbol:'1100',confirmed_on:'2026-11-26',exit_date:'2026-11-27',reason:'整理銘柄入り'};
+ const run=(rules=[rule],get=quote)=>engine.replay({calendar,intents:[e],quotes:{get},restrictionExits:rules},prefs,{trialPreset:'profit'});
+ const before=run([]), forced=run();
+ assert.equal(before.trades.length,0);assert.equal(forced.trades.length,1);
+ assert.equal(forced.trades[0].exit_date,'2026-11-27');assert.equal(forced.trades[0].actual_exit_timing,'OPEN');
+ assert.equal(forced.trades[0].exit_price_nominal,quote('1100','2026-11-27').open);
+ assert.equal(forced.trades[0].forced_exit_reason,'整理銘柄入り');
+ assert.deepEqual(forced.daily.filter(r=>r.date<'2026-11-26'),before.daily.filter(r=>r.date<'2026-11-26'));
+ const unavailable=run([rule],(s,d)=>d==='2026-11-27'?null:quote(s,d));
+ assert.equal(unavailable.trades.length,0);assert(unavailable.unresolved.some(r=>r.reason==='UNRESOLVED_SCHEDULED_EXIT'));
+ const blocked=engine.replay({calendar,intents:[{...e,trigger_date:'2026-11-26'}],quotes:{get:quote},restrictionExits:[rule]},prefs,{trialPreset:'profit'});
+ assert.equal(blocked.counts.VERIFIED_RESTRICTED,1);assert.equal(blocked.counts.FILLED,undefined);
+ assert.throws(()=>run([{...rule,reason:'監理銘柄入り'}]),/restriction_exit_invalid/);
+});
+
+test('restriction forced exit uses market calendar across a weekend and preserves an earlier natural exit',()=>{
+ const e={symbol:'1100',candidate_date:'2026-11-19',trigger_date:'2026-11-19',episode_id:1,priority_score:1};
+ const rule={symbol:'1100',confirmed_on:'2026-11-27',exit_date:'2026-11-30',reason:'上場廃止決定'};
+ const r=engine.replay({calendar,intents:[e],quotes:{get:quote},restrictionExits:[rule]},prefs,{trialPreset:'profit'});
+ assert.equal(r.trades[0].exit_date,'2026-11-30');assert.equal(r.trades[0].forced_exit_reason,'上場廃止決定');
+ const old={...e,candidate_date:'2026-11-09',trigger_date:'2026-11-09'};
+ const unchanged=rules=>engine.replay({calendar,intents:[old],quotes:{get:quote},restrictionExits:rules},prefs,{trialPreset:'defensive'});
+ assert.deepEqual(unchanged([rule]),unchanged([]));
+});

@@ -16,9 +16,11 @@ function checkHelp(html){
  assert.match(popup,/株価や開示情報には誤りや遅れが生じる場合があります/);
  assert.match(popup,/過去の成績は将来の成果を保証しません/);
  assert.match(popup,/<section class="cloud-help-section" aria-labelledby="cloud-help-labels-title">\s*<h3 id="cloud-help-labels-title">ラベルの見方<\/h3>/);
+ assert.match(popup,/監理銘柄への指定だけでは強制決済しません/);
+ assert.doesNotMatch(popup,/データ保留/);
  const [labels,levels]=Array.from(popup.matchAll(/<dl class="cloud-help-labels">([\s\S]*?)<\/dl>/g), match=>match[1]);
- assert.deepEqual(Array.from(labels.matchAll(/<dt>([^<]+)<\/dt>/g), match=>match[1]),[
-  '監視開始・監視中','監視終了','仮想保有開始候補（仮想買付候補）','仮想保有開始・仮想保有終了','データ保留','試算対象',
+ assert.deepEqual(Array.from(labels.matchAll(/<dt>([\s\S]*?)<\/dt>/g), match=>match[1].replace(/<[^>]+>/g,'')),[
+  '監視開始・監視中','監視終了','仮想保有開始候補（仮想買付候補）','仮想保有開始・仮想保有終了','強制決済','試算対象',
  ]);
  for (const explanation of [
   'その前の20取引日の平均の<strong>1.3倍以上</strong>',

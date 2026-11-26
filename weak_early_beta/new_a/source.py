@@ -349,4 +349,8 @@ def acquire_and_validate(args):
     result = dict(frame=raw,daily_path=daily_path,source_hash=source_hash,company_names=company_names,restrictions=restrictions,source_quality=source_quality,source_revision=source_revision,acquisition_exclusions=acquisition_exclusions,quality_path=quality_path,acquisition_evidence=archive.info() if archive else None)
     if finite:
         result["fixed_input_reference"] = finite["reference"]
+    elif acquire:
+        evidence = json.loads(Path(args.restriction_snapshot).read_text(encoding='utf-8'))
+        if evidence.get('as_of') == tradability_date:
+            result['restriction_decisions'] = [*restrictions, *evidence.get('announced_delistings', [])]
     return result

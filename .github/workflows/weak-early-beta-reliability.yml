@@ -71,7 +71,7 @@ jobs:
           tests.test_weak_early_beta_reviewed_repair_releases tests.test_weak_early_beta_retained_off_session_actions
           tests.test_weak_early_beta_provider_restorations tests.test_endpoint_holds
           tests.test_new_a_delayed_recovery tests.test_new_a_delayed_progress
-          tests.test_new_a_continuing_acceptance tests.test_new_a_connection
+          tests.test_new_a_source_baseline tests.test_new_a_continuing_acceptance tests.test_new_a_connection
           tests.test_new_a_continuing_transition tests.test_new_a_finite_completion tests.test_new_a_fundamentals
           tests.test_new_a_planned_notice_delivery tests.test_new_a_lifecycle_notice_inputs
           tests.test_new_a_owner_notice_queue tests.test_new_a_owner_notice_producer tests.test_new_a_owner_notice_host

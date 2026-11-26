@@ -83,7 +83,7 @@ function createDatasetRuntime(input,quotes){
   });
   const identityKeys=new Set(watches.filter(w=>w.selection_reason==='IDENTITY_UNVERIFIED').map(w=>`${w.symbol}|${w.candidate_date}|${w.episode_id}`));
   const intents=input.intents.filter(e=>calendar.includes(e.candidate_date)&&calendar.includes(e.trigger_date)&&(preferences.year_scope==='all'||e.candidate_date.startsWith(preferences.year_scope))&&!identityKeys.has(`${e.symbol}|${e.candidate_date}|${e.episode_id}`));
-  const result={...replay({calendar,intents,quotes},preferences,{variableShares,exitPolicy,trialPreset}),simulation:true,execution_status:'SIMULATED_NOT_ACTUAL_TRADES',watches,period:[calendar[0],calendar.at(-1)],source_limits:input.limits,pending_next_open:intents.filter(e=>e.trigger_date===calendar.at(-1)).length,view_kind:identityScreen?'A_FINITE_IDENTITY_SCREENED_TRIAL_V1':'FROZEN_ORIGINAL_COHORT_FINITE_PROFILE_COMPARISON'};
+  const result={...replay({calendar,intents,quotes,restrictionExits:input.limits.restrictionExitActions??[]},preferences,{variableShares,exitPolicy,trialPreset}),simulation:true,execution_status:'SIMULATED_NOT_ACTUAL_TRADES',watches,period:[calendar[0],calendar.at(-1)],source_limits:input.limits,pending_next_open:intents.filter(e=>e.trigger_date===calendar.at(-1)).length,view_kind:identityScreen?'A_FINITE_IDENTITY_SCREENED_TRIAL_V1':'FROZEN_ORIGINAL_COHORT_FINITE_PROFILE_COMPARISON'};
   results.set(key,result);if(results.size>4)results.delete(results.keys().next().value);return structuredClone(result);
  }
  function simulate(preferences,options){

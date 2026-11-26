@@ -13,7 +13,7 @@ const visibleStatuses = new Set([
   'DATA_GAP', 'BASIS_CHANGED', 'IDENTITY_CHANGED', 'HOLD_ENDED', 'DAILY_FILLED_CAP', 'FILLED',
   'CAPACITY', 'LOT_EXCEEDS_ALLOCATION', 'CASH_INSUFFICIENT', 'DUPLICATE_HELD', 'PRICE_CAP',
   'SIGNAL_PRICE_UNVERIFIED', 'UNFILLED', 'UNFILLED_UNCERTAIN_ONE_PRICE', 'HALTED_UNRESOLVED',
-  'IDENTITY_UNVERIFIED',
+  'IDENTITY_UNVERIFIED', 'VERIFIED_RESTRICTED', 'FORCED_EXIT_RESTRICTED', 'FORCED_EXIT_DELISTING',
 ]);
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 const positive = value => Number.isFinite(value) && value > 0;
@@ -29,7 +29,7 @@ function projectReference(reference) {
 function projectLevel(record, fallback) {
   const { w, o, t, open } = record ?? {};
   const position = t ?? open;
-  const status = w?.selection_reason ?? o?.status ?? w?.watch_status ?? fallback;
+  const status = t?.forced_exit_reason ? (t.forced_exit_reason === '整理銘柄入り' ? 'FORCED_EXIT_RESTRICTED' : 'FORCED_EXIT_DELISTING') : w?.selection_reason ?? o?.status ?? w?.watch_status ?? fallback;
   assert(visibleStatuses.has(status), 'Invalid status in reference history');
   const selected = w?.selection_reason === null;
   let entry = null;

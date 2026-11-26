@@ -98,6 +98,7 @@
   WATCH_TERMINAL:{label:'監視終了',tone:'watch-end'},
   HOLD_STARTED:{label:'仮想保有開始',tone:'hold-start'},
   HOLD_ENDED:{label:'仮想保有終了',tone:'hold-end'},
+  FORCED_EXIT:{label:'強制決済',tone:'forced-exit'},
  };
  const reasons={UP_ESCAPED:'上方離脱',DOWN_INVALIDATED:'下方無効',EXPIRED:'期限',TRIGGERED:'支持反発'};
  function dailyChanges(snapshot,model){
@@ -109,7 +110,7 @@
    if(!changes.has(key))changes.set(key,{entry,labels:new Map()});
    const change=changes.get(key);
    if(!change.labels.has(kind)||reason)change.labels.set(kind,reason);
-   if(kind==='HOLD_ENDED')change.settlement=entry;
+   if(kind==='HOLD_ENDED'||kind==='FORCED_EXIT')change.settlement=entry;
   }
   for(const event of snapshot.events??[]){
    if(event.session!==date)continue;
@@ -119,7 +120,7 @@
   if(holdingReady){
    for(const trade of model.trades){
     if(trade.entry_date===date)add(trade,'HOLD_STARTED');
-    if(trade.exit_date===date)add(trade,'HOLD_ENDED');
+    if(trade.exit_date===date)add(trade,trade.forced_exit_reason?'FORCED_EXIT':'HOLD_ENDED',trade.forced_exit_reason);
    }
    for(const [symbol,position] of Object.entries(model.open_positions??{})){
     if(position.entry_date===date)add({...position,symbol},'HOLD_STARTED');
@@ -241,12 +242,12 @@
    }else if(position&&episodeKey({...position,symbol:entry.symbol})===identity){
     profit='<div class="cloud-card-pnl"><small>評価損益</small>'+performanceFor(position,entry.symbol)+'</div>';
    }
-   return {primary:labels.has('HOLD_ENDED'),markup:'<article data-daily-change="'+esc(identity)
-    +'" data-reference-kind="'+(labels.has('HOLD_ENDED')?'HOLD_ENDED':'OTHER')+'" data-reference-symbol="'+esc(entry.symbol)
+   return {primary:(labels.has('HOLD_ENDED')||labels.has('FORCED_EXIT')),markup:'<article data-daily-change="'+esc(identity)
+    +'" data-reference-kind="'+(labels.has('FORCED_EXIT')?'FORCED_EXIT':labels.has('HOLD_ENDED')?'HOLD_ENDED':'OTHER')+'" data-reference-symbol="'+esc(entry.symbol)
     +'" data-reference-name="'+esc(names.get(entry.symbol)?.companyName||entry.symbol)+'">'
     +stock(entry.symbol)+'<div class="cloud-transition-list">'+badges+'</div>'+profit+detailFor(entry)+'</article>'};
   });
-  const totals=Object.entries(transitions).map(([kind,{label}])=>{
+  const totals=Object.entries(transitions).filter(([kind])=>kind!=='FORCED_EXIT'||model?.source_limits?.restrictionExitActions?.length).map(([kind,{label}])=>{
    const total=kind.startsWith('HOLD_')&&!holdingReady?(modelPending?'計算中':'未確定'):counts[kind]+'件';
    return '<li>'+transitionBadge(kind,label+' <b>'+total+'</b>')+'</li>';
   }).join('');

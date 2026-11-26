@@ -21,13 +21,18 @@ def execute_packet(root,packet,*,files=None,manifest=None,company_names=None,set
  if not dry and packet.get('activation_verified') is not True:raise ValueError('activation proof required')
  pipeline=Pipeline(root/('daily-dry.sqlite' if dry else 'daily-live.sqlite'),seed,allow_live=not dry)
  try:
+  from .restriction_exits import observe
+  forced_exits=observe(pipeline,packet.get('restriction_decisions',[]),calendar,as_of,live=not dry)
+  restrictions={symbol:list(values) for symbol,values in packet.get('restrictions',{}).items()}
+  for rule in forced_exits:restrictions.setdefault(rule['symbol'],[]).append({'start':rule['confirmed_on'],'end':None,'reason':'VERIFIED_RESTRICTED'})
+  packet={**packet,'restrictions':restrictions}
   result=pipeline.run(as_of=as_of,observed_at=packet['observed_at'],calendar=calendar,rows_by_day=packet['rows_by_day'],source_hash=source_hash,quality_verified=True,universe=packet['universe'],restrictions=packet.get('restrictions'),dry_run=dry,resume_held=packet.get('resume_held',False),predecessor_source_hash=packet.get('predecessor_source_hash'),recovery_reference=packet.get('delayed_recovery'),freeze_missing_quotes=settlement_source is not None)
   result['source_revision_pending']=packet['source_revision_pending'];daily={**result,'events':[e for e in pipeline.all_events() if e['session']==as_of]};daily['new_live_signals']=sum(e.get('is_new_live_signal') is True for e in daily['events']);snapshot=build_snapshot(daily,allow_live=not dry,repo=root.parents[2]);snapshot['monitor_state']=pipeline.export_current();snapshot['payload_sha256']=digest({k:v for k,v in snapshot.items() if k!='payload_sha256'})
   target=root/'runs'/as_of/source_hash/('dry' if dry else 'live');target.mkdir(parents=True,exist_ok=True)
   snapshot_file=target/'snapshot.json'
   if snapshot_file.exists() and read(snapshot_file)!=snapshot:raise ValueError('immutable daily snapshot conflict')
   if not snapshot_file.exists():atomic_write(snapshot_file,snapshot)
-  bundle=prepare_bundle(files,pipeline,snapshot,calendar,target/'bundle',company_names,settlement_source=settlement_source,restrictions=packet.get('restrictions'))
+  bundle=prepare_bundle(files,pipeline,snapshot,calendar,target/'bundle',company_names,settlement_source=settlement_source,restrictions=packet.get('restrictions'),forced_exits=forced_exits)
   receipt={'identity':'NEW_A_CLOUD_DAILY_V1','strategy':'A_BASE','entry':ENTRY,'latest_session':as_of,'selector_rows_latest':result['new_live_signals'],'detection_executed':True,'status':result['status'],'tail_rows_latest':result['processed_symbol_sessions'],'held_symbols':len(result['held']),'event_count':result['event_count'],'new_events':result['new_event_count'],'same_run_replay':result.get('same_run_replay',False),'source_sha256':source_hash,'source_version':bundle['source_version'],'snapshot_sha256':snapshot['payload_sha256'],'snapshot_file':str(snapshot_file),'bundle_directory':str(target/'bundle'),'dry_run':dry,'notifications_sent':0,'published':False,'old_logic_called':False,'old_ledger_written':False,'fundamentals':'NOT_REQUESTED'}
   if 'scheduled_exit_prices' in bundle:receipt['scheduled_exit_prices']=bundle['scheduled_exit_prices']
   if result.get('delayed_recovery'):receipt.update(delayed_recovery=result['delayed_recovery'],selector_rows_latest=result['delayed_scheduled_signals'],selector_semantics='DELAYED_TARGET_SESSION_SIGNALS_NOT_REALTIME')
@@ -58,6 +63,8 @@ def command_daily(args,*,source_provider=None,root=None):
   atomic_write(root/'latest-run.json',receipt);print(json.dumps(receipt));return receipt
  seed=read(files['seed']);calendar=read(files['calendar']);dbfile=root/('daily-dry.sqlite' if isolated else 'daily-live.sqlite');pipeline=Pipeline(dbfile,seed,allow_live=not isolated)
  try:
+  from .source_baseline import apply as apply_source_baseline
+  source=apply_source_baseline(source,pipeline,as_of)
   heads=pipeline.export_current()['heads']
   missing_quote_days=pipeline.missing_quote_days() if not recovery_reference else ()
  finally:pipeline.close()

@@ -498,3 +498,14 @@ test('maintenance control asset is normal owner-only, only on approved dashboard
  assert.equal((await f.app.fetch(normalOwnerRequest('/new-a-assets/owner-loader.js'),f.env)).status,200);
  assert.equal((await f.app.fetch(normalOwnerRequest('/new-a-assets/owner-loader.js',OTHER),f.env)).status,403);
 });
+
+
+test('forced settlement card shows a separate colored label and official reason beside it',()=>{
+ const c={module:{exports:{}}};vm.createContext(c);vm.runInContext(fs.readFileSync(path.join(gate,'scripts/new-a-ui-source/assets/owner-loader.js'),'utf8'),c);
+ const entry={symbol:'1111',candidate_date:'2026-11-19',episode_id:1,entry_date:'2026-11-20',exit_date:'2026-11-27',profit:100,return:.01,forced_exit_reason:'整理銘柄入り'};
+ const s={schema:'NEW_A_OWNER_DAILY_DISPLAY_V1',audience:'EXISTING_CLOUD_OWNER_ONLY',as_of:'2026-11-27',events:[],held_symbols:{},monitor_state:{watches:{}}};
+ const model={resolved:true,period:['2026-11-19','2026-11-27'],trades:[entry],open_positions:{},source_limits:{restrictionExitActions:[{}]}};
+ const html=c.module.exports.currentMarkup([s],[],{model});
+ assert.match(html,/cloud-transition--forced-exit[^>]*>強制決済<\/span><small>整理銘柄入り<\/small>/);
+ assert.match(html,/data-reference-kind="FORCED_EXIT"/);
+});

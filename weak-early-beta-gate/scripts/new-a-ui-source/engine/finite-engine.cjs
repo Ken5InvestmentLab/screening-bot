@@ -51,9 +51,11 @@ function summarize(result,cash0){
  }
  return {resolved,counts,yearly,metrics:{initialCash:cash0,endEquity:resolved?end:null,netProfit:resolved?end-cash0:null,realizedProfit:resolved?realized:null,unrealizedProfit:resolved?end-cash0-realized:null,maxDrawdown:resolved?dd:null,requiredCash:resolved?result.required_cash:null,fills:counts.FILLED||0,closed:trades.length,open:Object.keys(open_positions).length,unresolvedCount:unresolved.length,winRate:resolved&&trades.length?wins.length/trades.length:null,meanReturnPct:resolved?average(trades,'return')===null?null:average(trades,'return')*100:null,medianReturnPct:resolved&&returns.length?(returns[Math.floor((returns.length-1)/2)]+returns[Math.floor(returns.length/2)])/2:null,averageWinYen:resolved?average(wins,'profit'):null,averageLossYen:resolved?average(losses,'profit'):null,totalWinYen:resolved?sum(wins,'profit'):null,totalLossYen:resolved?sum(losses,'profit'):null}};
 }
-function replay({calendar,intents,quotes},preferences,{variableShares=false,exitPolicy=null,trialPreset=null}={}){
+function replay({calendar,intents,quotes,restrictionExits=[]},preferences,{variableShares=false,exitPolicy=null,trialPreset=null}={}){
  const prefs=validatePreferences(preferences),policy=validateExitPolicy(exitPolicy),trial=trialTerms(trialPreset),timing=trial?'OPEN':prefs.exit_endpoint==='d6_open'?'OPEN':'CLOSE';
  if(!Array.isArray(calendar)||!calendar.length||new Set(calendar).size!==calendar.length||calendar.some((d,i)=>!/^\d{4}-\d{2}-\d{2}$/.test(d)||(i&&d<=calendar[i-1])))throw Error('calendar_invalid');
+ if(!Array.isArray(restrictionExits)||restrictionExits.some(r=>!r||!/^[0-9A-Z]{4}$/.test(r.symbol)||!/^\d{4}-\d{2}-\d{2}$/.test(r.confirmed_on)||!/^\d{4}-\d{2}-\d{2}$/.test(r.exit_date)||r.exit_date<=r.confirmed_on||!['整理銘柄入り','上場廃止決定'].includes(r.reason)))throw Error('restriction_exit_invalid');
+ const forcedRules=restrictionExits.slice().sort((a,b)=>a.confirmed_on.localeCompare(b.confirmed_on));
  const byday=new Map(),index=new Map(calendar.map((d,i)=>[d,i]));
  for(const e of intents){if(!e.symbol||!finite(e.priority_score)||!Number.isSafeInteger(e.episode_id)||!index.has(e.trigger_date)||!index.has(e.candidate_date)||e.candidate_date>e.trigger_date)throw Error('intent_invalid');const ti=index.get(e.trigger_date)+1;if(ti<calendar.length){if(!byday.has(ti))byday.set(ti,[]);byday.get(ti).push(e);}}
  let cash=prefs.initial_cash_yen,minimum=cash;const positions=new Map(),daily=[],orders=[],trades=[],unresolved=[];
@@ -83,12 +85,12 @@ function replay({calendar,intents,quotes},preferences,{variableShares=false,exit
   const date=calendar[position.exit_i];
   const proceeds=position.shares*price*(1-prefs.cost_percent/100);
   cash+=proceeds;
-  trades.push({symbol,...position,scheduled_exit_date:date,actual_exit_timing:timing,delay_market_sessions:0,exit_price_nominal:price,exit_date:date,proceeds,profit:proceeds-position.entry_cost,return:proceeds/position.entry_cost-1,odd_lot_exit:Math.abs(position.shares/100-Math.round(position.shares/100))>1e-8,...details});
+  trades.push({symbol,...position,scheduled_exit_date:date,actual_exit_timing:position.forced_exit_reason?'OPEN':timing,delay_market_sessions:0,exit_price_nominal:price,exit_date:date,proceeds,profit:proceeds-position.entry_cost,return:proceeds/position.entry_cost-1,odd_lot_exit:Math.abs(position.shares/100-Math.round(position.shares/100))>1e-8,...details});
   positions.delete(symbol);
  }
  function handleScheduledExit(symbol,position,date,quote){
   if(valid(quote,true)&&quote.high!==quote.low){
-   const price=timing==='OPEN'?quote.open*quote.actual_close/quote.close:quote.actual_close;
+   const price=(position.forced_exit_reason||timing==='OPEN')?quote.open*quote.actual_close/quote.close:quote.actual_close;
    settle(symbol,position,price);
    return true;
   }
@@ -124,7 +126,8 @@ function replay({calendar,intents,quotes},preferences,{variableShares=false,exit
   const dt=calendar[i],pending=[...(byday.get(i)||[])].sort(compare),admitted=[],free=prefs.max_positions-positions.size;
   for(const e of pending){
    const row={...e,order_date:dt,arm:'watch',status:null,entry_cost:null};delete row.trigger_date;
-   if(unresolved.length)row.status='HALTED_UNRESOLVED';
+   if(forcedRules.some(r=>r.symbol===e.symbol&&dt>r.confirmed_on))row.status='VERIFIED_RESTRICTED';
+   else if(unresolved.length)row.status='HALTED_UNRESOLVED';
    else if(prefs.price_cap_yen!==null&&!valid(quotes.get(e.symbol,e.candidate_date)))row.status='SIGNAL_PRICE_UNVERIFIED';
    else if(prefs.price_cap_yen!==null&&quotes.get(e.symbol,e.candidate_date).actual_close>prefs.price_cap_yen)row.status='PRICE_CAP';
    else if(positions.has(e.symbol))row.status='DUPLICATE_HELD';
@@ -163,6 +166,15 @@ function replay({calendar,intents,quotes},preferences,{variableShares=false,exit
     else{row.status='FILLED';filledToday++;cash-=cost;minimum=Math.min(minimum,cash);const exit=trial?{sessions:trial.exit_sessions,timing:'OPEN',endpoint:'trial_open'}:exitTerms(prefs.exit_endpoint,dt,policy),position={shares:qty,factor:r.close/r.actual_close,entry_cost:cost,entry_date:dt,entry_price_nominal:price,entry_i:i,exit_i:i+exit.sessions-1,candidate_date:row.candidate_date,episode_id:row.episode_id,actions:0,last_mark:cost};if(!trial&&prefs.exit_endpoint==='d6_open'&&exit.endpoint==='d5_open')Object.assign(position,{exit_endpoint:'d5_open',exit_policy_version:OPEN_EXIT_POLICY_VERSION});positions.set(s,position);}
    }
    orders.push(row);
+  }
+  for(const [symbol,position] of positions){
+   const rule=forcedRules.find(r=>r.symbol===symbol&&r.confirmed_on<=dt&&r.confirmed_on>=position.entry_date);
+   if(!rule)continue;
+   const due=index.get(rule.confirmed_on)+1;
+   if(index.has(rule.confirmed_on)&&due<=position.exit_i){
+    if(due<calendar.length&&calendar[due]!==rule.exit_date)throw Error('restriction_exit_calendar_mismatch');
+    position.exit_i=due;position.exit_reason='RESTRICTED_FORCED_EXIT';position.forced_exit_reason=rule.reason;position.restriction_confirmed_on=rule.confirmed_on;
+   }
   }
   let holdings=0,stale=0,skippedMark=false;
   for(const [s,p]of [...positions]){

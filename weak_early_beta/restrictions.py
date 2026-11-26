@@ -155,6 +155,7 @@ def fetch_jpx_restricted_symbols(
     rows = sorted(combined_rows + pending, key=lambda row: (row["designation_date"], row["code"]))
     payload = {
         "version": 2,
+        "announced_delistings": parse_jpx_delisted_symbols(current, '2262-01-01'),
         "as_of": f"{pd.Timestamp(as_of):%Y-%m-%d}",
         "fetched_at": pd.Timestamp.now(tz="Asia/Tokyo").isoformat(),
         "source_url": JPX_RESTRICTIONS_URL,

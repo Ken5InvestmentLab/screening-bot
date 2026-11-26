@@ -5,7 +5,7 @@ from .files import encode,digest,read,atomic_write
 FIELDS=['open','high','low','close','volume','actual_close','actual_volume','split_factor','source_usable']
 def key(row):return f"{row['symbol']}|{row['candidate_date']}|{row['episode_id']}"
 def valid(row):return bool(row) and all(isinstance(row.get(k),(int,float)) and math.isfinite(row[k]) and row[k]>0 for k in ['open','high','low','close','actual_close']) and row.get('source_usable') in [True,1,'true','1'] and row['low']<=min(row['open'],row['close'])<=max(row['open'],row['close'])<=row['high'] and row.get('volume',0)>0 and row.get('actual_volume',0)>0
-def prepare_bundle(files,pipeline,snapshot,full_calendar,folder,company_names=None,*,settlement_source=None,restrictions=None):
+def prepare_bundle(files,pipeline,snapshot,full_calendar,folder,company_names=None,*,settlement_source=None,restrictions=None,forced_exits=None):
  old=read(files['history_input']);presentation=read(files['presentation']);frozen_end=old['calendar'][-1];as_of=snapshot['as_of'];calendar=[d for d in full_calendar if d<=as_of]
  if calendar[:len(old['calendar'])]!=old['calendar']:raise ValueError('historical calendar changed')
  episodes={key(e):copy.deepcopy(e) for e in old['episodes']};watches={key(w):copy.deepcopy(w) for w in old['watches']};intents={key(i):copy.deepcopy(i) for i in old['intents']}
@@ -26,6 +26,9 @@ def prepare_bundle(files,pipeline,snapshot,full_calendar,folder,company_names=No
    watches[k].update(watch_status=e['reason'],terminal_date=e['session'])
  # 過去経済値を上書きせず、未来の確認済み価格だけ別の連続basisで追加。
  observed=pipeline.observed_quotes()
+ if forced_exits:
+  from .restriction_exits import settlement_quotes
+  observed.update(settlement_quotes(pipeline,settlement_source,forced_exits,full_calendar,as_of,snapshot['source_sha256']))
  # 新universe構成員のwarmupは過去の検証価格/検出へ混ぜない。
  observed={k:v for k,v in observed.items() if k[1]>frozen_end}
  db=sqlite3.connect(Path(files['quotes']).resolve().as_uri()+'?mode=ro',uri=True);db.row_factory=sqlite3.Row;cache={}
@@ -85,7 +88,9 @@ def prepare_bundle(files,pipeline,snapshot,full_calendar,folder,company_names=No
   row['chartAllowed']=not(e['symbol'] in old['limits']['identityUnverifiedBefore'] and e['candidate_date']<old['limits']['identityUnverifiedBefore'][e['symbol']])
  def sort(e):return(e['candidate_date'],-e['priority_score'],e['symbol'],e['episode_id'])
  limits={**old['limits'],'completeThrough':as_of,'latestUnverified':None,'partialSource':bool(snapshot['held_symbols']),'heldSymbols':snapshot['held_symbols'],'nextPlannedSession':next((d for d in full_calendar if d>as_of),None),'nextOpenConfirmed':False}
+ if forced_exits:limits['restrictionExitActions']=forced_exits
  version_inputs={'historySourceVersion':old['source_version'],'sourceSHA256':snapshot['source_sha256'],'dailySnapshotSHA256':snapshot['payload_sha256'],'asOf':as_of}
+ if forced_exits:version_inputs['restrictionExitSHA256']=digest(forced_exits)
  if settlement:
   version_inputs['scheduledExitEvidenceSHA256']=digest([[*k,v] for k,v in sorted(settlement.items())])
  if skipped:

@@ -120,8 +120,27 @@
       }
     }
     if (!aggregatesOnly && markup.includes('data-reference-cards')) expandStockCards(template.content);
-    if (!aggregatesOnly) addHoldingProfitTotal(template.content);
+    if (!aggregatesOnly) {addHoldingProfitTotal(template.content);acknowledgeSourceHolds(template.content,asOf);}
     return { fragment: template.content, items };
+  }
+
+  function acknowledgeSourceHolds(fragment) {
+    const watch=fragment.querySelector('[aria-labelledby="new-a-watch-heading"]');
+    const details=watch?.querySelector('details.cloud-table-details');
+    const excluded=new Set();
+    const codeOf=row=>Array.from(row.cells[0]?.querySelectorAll('small')??[],e=>e.textContent.trim()).find(v=>/^[0-9A-Z]{4}$/.test(v))??(/^[0-9A-Z]{4}$/.test(row.cells[0]?.textContent.trim()??'')?row.cells[0].textContent.trim():null);
+    for(const row of details?.querySelectorAll('tbody tr')??[]){
+      if(/上場廃止|取引制限/.test(row.cells[1]?.textContent??'')){const code=codeOf(row);if(code)excluded.add(code);}
+    }
+    // Acknowledging a hold never promotes an excluded security into monitoring.
+    for(const row of watch?.querySelectorAll('tr[data-current-watch]')??[]){
+      if(excluded.has(codeOf(row)))row.remove();
+    }
+    if(details?.querySelector('summary')?.textContent?.startsWith('データ保留 '))details.remove();
+    for(const badge of fragment.querySelectorAll('#new-a-current .badge')){
+      if((badge.textContent??'').startsWith('データ保留 '))badge.remove();
+    }
+    for(const badge of watch?.querySelectorAll('.cloud-status-held')??[])badge.remove();
   }
 
   function addHoldingProfitTotal(fragment) {
@@ -160,7 +179,7 @@
       }
       if (card.dataset.referenceKind === 'OTHER') {
         const labels = Array.from(card.querySelectorAll('.cloud-transition')).map(label => label.textContent.trim());
-        const known = [['HOLD_ENDED','仮想保有終了'],['HOLD_STARTED','仮想保有開始'],
+        const known = [['FORCED_EXIT','強制決済'],['HOLD_ENDED','仮想保有終了'],['HOLD_STARTED','仮想保有開始'],
           ['WATCH_STARTED','監視開始'],['WATCH_TERMINAL','監視終了']];
         card.dataset.referenceKind = known.find(([, label]) => labels.includes(label))?.[0] ?? 'OTHER';
       }

@@ -71,7 +71,7 @@ const historyStates = {
   DAILY_FILLED_CAP:'1日新規上限', FILLED:'約定', CAPACITY:'保有上限', LOT_EXCEEDS_ALLOCATION:'注文上限超過',
   CASH_INSUFFICIENT:'資金不足', DUPLICATE_HELD:'保有中', PRICE_CAP:'株価上限', SIGNAL_PRICE_UNVERIFIED:'株価未確認',
   UNFILLED:'未約定', UNFILLED_UNCERTAIN_ONE_PRICE:'一値・約定未確認', HALTED_UNRESOLVED:'未解決で停止',
-  IDENTITY_UNVERIFIED:'銘柄対応未確認',
+  IDENTITY_UNVERIFIED:'銘柄対応未確認', VERIFIED_RESTRICTED:'取引対象外',FORCED_EXIT_RESTRICTED:'強制決済 · 整理銘柄入り',FORCED_EXIT_DELISTING:'強制決済 · 上場廃止決定',
 };
 const positive = value => Number.isFinite(value) && value > 0;
 const tuple = (value, length) => Array.isArray(value) && value.length === length;
@@ -168,7 +168,7 @@ function holdingProfitTotal(values) {
 }
 function sortReferenceCards(cards, order) {
   const compare=(a,b)=>String(a??'').localeCompare(String(b??''),'ja',{numeric:true});
-  const labels=['ENTRY_CANDIDATE','HOLD_ENDED','HOLD_STARTED','WATCH_STARTED','WATCH_TERMINAL'];
+  const labels=['ENTRY_CANDIDATE','FORCED_EXIT','HOLD_ENDED','HOLD_STARTED','WATCH_STARTED','WATCH_TERMINAL'];
   const rank=kind=>labels.includes(kind)?labels.indexOf(kind):labels.length;
   return [...cards].sort((a,b)=>{
     const left=a.dataset,right=b.dataset;
@@ -261,7 +261,7 @@ function referenceHistoryTable(rows, preset) {
       + '<div class="history-company"><strong><span class="symbol">' + esc(row.symbol) + '</span>'
       + (row.companyName === null ? '' : ' ' + esc(row.companyName)) + '</strong><small>検出日終値 ' + close + '</small>'
       + identification + '</div><div data-label="試算条件"><small>' + trial + '</small></div>'
-      + '<div data-label="状況"><span class="status pending">' + status + '</span></div>'
+      + '<div data-label="状況"><span class="status '+(state.startsWith('FORCED_EXIT_')?'cloud-transition--forced-exit':'pending')+'">' + status + '</span></div>'
       + '<div data-label="試算開始日・始値">' + details + '</div>'
       + '<div data-label="5営業日後 終値">' + historyReferenceCell(row.d5) + '</div>'
       + '<div data-label="6営業日後 始値">' + historyReferenceCell(row.d6) + '</div>'

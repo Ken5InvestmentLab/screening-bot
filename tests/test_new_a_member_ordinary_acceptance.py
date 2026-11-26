@@ -384,6 +384,8 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
         self.assertEqual(transition.ordinary_runtime_release(self.repo)['activation_sha256'], result['after_sha256'])
 
     def test_fundamental_popup_successor_binds_new_assets_to_the_existing_exact_role_policy(self):
+        self.assertEqual(member.MEMBER_SUCCESSORS[member.SETTLED_HISTORY_REVIEW_SCHEMA],member.SOURCE_BASELINE_REVIEW_SCHEMA)
+
         schema = FUNDAMENTAL_POPUP_REVIEW_SCHEMA
         self.assertEqual(member.MEMBER_SUCCESSORS[JOURNAL_REVIEW_SCHEMA], schema)
         previous = dict(self.deployment, source_commit=self.old_source,

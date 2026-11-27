@@ -3,12 +3,12 @@
 <section class="cloud-help-section" aria-labelledby="cloud-help-labels-title">
 <h3 id="cloud-help-labels-title">ラベルの見方</h3>
 <dl class="cloud-help-labels">
-<div><dt>監視開始・監視中</dt><dd>株価がもみ合う中、直近5取引日の平均売買代金が、その前の20取引日の平均の<strong>1.3倍以上</strong>になると、監視入りを判定します。</dd></div>
-<div><dt>監視終了</dt><dd>終値が支持線を下回るか抵抗線を上回り、その差が<strong>2%超</strong>になると終了します。開始候補にならないまま<strong>20取引日後</strong>を迎えたときも終了します。</dd></div>
-<div><dt>仮想保有開始候補（仮想買付候補）</dt><dd>支持線付近で反発し、終値が支持線より<strong>3%以上</strong>高くなると候補に進みます。次の取引日の始値で仮想保有を始めるか判定します。</dd></div>
-<div><dt>仮想保有開始・仮想保有終了</dt><dd>運用レベルごとに決まった取引日の始値で終了します。履歴では「仮想保有中」「仮想決済済」と表示します。</dd></div>
+<div><dt><span class="cloud-transition cloud-transition--watch-start">監視開始・監視中</span></dt><dd>株価がもみ合う中、直近5取引日の平均売買代金が、その前の20取引日の平均の<strong>1.3倍以上</strong>になると、監視入りを判定します。</dd></div>
+<div><dt><span class="cloud-transition cloud-transition--watch-end">監視終了</span></dt><dd>終値が支持線を下回るか抵抗線を上回り、その差が<strong>2%超</strong>になると終了します。開始候補にならないまま<strong>20取引日後</strong>を迎えたときも終了します。</dd></div>
+<div><dt><span class="cloud-transition cloud-transition--entry-candidate">仮想保有開始候補（仮想買付候補）</span></dt><dd>支持線付近で反発し、終値が支持線より<strong>3%以上</strong>高くなると候補に進みます。次の取引日の始値で仮想保有を始めるか判定します。</dd></div>
+<div><dt><span class="cloud-transition cloud-transition--hold-start">仮想保有開始</span>・<span class="cloud-transition cloud-transition--hold-end">仮想保有終了</span></dt><dd>運用レベルごとに決まった取引日の始値で終了します。履歴では「仮想保有中」「仮想決済済」と表示します。</dd></div>
 <div><dt><span class="cloud-transition cloud-transition--forced-exit">強制決済</span></dt><dd>整理銘柄入り、または上場廃止決定の公表を確認した場合、次の取引日の始値で終了します。ラベルの隣に理由を表示します。監理銘柄への指定だけでは強制決済しません。</dd></div>
-<div><dt>試算対象</dt><dd>選択中の運用レベルの試算に含めた銘柄です。</dd></div>
+<div><dt><span class="cloud-transition cloud-transition--watch-start">試算対象</span></dt><dd>選択中の運用レベルの試算に含めた銘柄です。</dd></div>
 </dl>
 </section>
 <section class="cloud-help-section" aria-labelledby="cloud-help-levels-title">

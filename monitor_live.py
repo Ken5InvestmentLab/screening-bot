@@ -38,10 +38,7 @@ VM_PATH  = "/home/ubuntu/screening-bot"
 # ── 設定 ─────────────────────────────────────────────────────────────
 MIN_CONFIRMED_S6      = 10   # live_log の確定★6が最低これ以上ないと判定保留
 BREACH_REQUIRED_DAYS  = 2    # 連続何日 CI 下限割れで自動ロールバック
-DISCORD_WEBHOOK_URL   = (
-    "https://discord.com/api/webhooks/1479431524674965729/"
-    "sRCEG2lmoBLpEtZCdbf5N4kg2zEI7LHjtxxHm9g2Y1rFXPwoFSPDxpnOjsP0HAObSdyZ"
-)
+DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "").strip()
 
 
 def _utc_now():
@@ -87,6 +84,9 @@ def compute_live_wr(live_log):
 
 def notify_discord(message: str):
     """Discord Webhook に通知を送る。"""
+    if not DISCORD_WEBHOOK_URL:
+        print("  [skip] DISCORD_WEBHOOK_URL is not configured")
+        return False
     import urllib.request
     payload = json.dumps({"content": message}).encode("utf-8")
     req = urllib.request.Request(
@@ -100,9 +100,10 @@ def notify_discord(message: str):
     )
     try:
         with urllib.request.urlopen(req, timeout=10):
-            pass
+            return True
     except Exception as e:
-        print(f"  ⚠ Discord 通知失敗: {e}")
+        print(f"  ⚠ Discord 通知失敗: {type(e).__name__}")
+        return False
 
 
 def rollback_to_prev_champion(champion_state, dry_run=False):

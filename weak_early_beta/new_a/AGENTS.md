@@ -14,6 +14,10 @@
 - A model preflight or research failure holds only fundamentals and preserves
   the claim/drafts while the verified detection/publication sequence continues.
   Ownership, immutable input and import-integrity failures still stop the run.
+- Follow the selected Premium guide's full-batch repair loop without a fixed
+  retry-count cutoff. Retain good reports and repair only named IDs. Byte-identical
+  drafts with identical errors need source review and retained evidence; they
+  never establish source absence or authorize a stub, skipped report or resend.
 - Missing research is not issuer dilution risk. Do not add generic unverified
   dilution language or choose a mixed impact label solely because research is
   incomplete. Verify actual issued instruments; report known amounts with their

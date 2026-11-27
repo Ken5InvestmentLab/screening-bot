@@ -306,5 +306,29 @@
     "verificationNote": "Actual issuer IR news date and PDF identity verified; preserve date-only precision and do not invent a clock. Annual filing is a dated companion, not a substitute for current material.",
     "contentSha256": "ee902409e5f6789427b3bfc2b25ed68053e89a43f76e330428d401f265042599",
     "reviewedOn": "2026-11-25"
+  },
+  {
+    "symbolCode": "4584",
+    "label": "2026-11-13 半期報告書－第27期(2026/04/01－2027/03/31)(時刻記載なし)",
+    "url": "https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100ZHQX.pdf",
+    "kind": "issuer-file",
+    "publicationDateVerified": true,
+    "sourceUrl": "https://www.kidswellbio.com/ir/",
+    "verificationNote": "会社IRの2026-11-13掲載とEDINET原本表紙の日付・資料名を照合。取得可能な公式掲載と原本に公開時刻の表示がないため時刻は付さない。",
+    "contentSha256": "7cac1367b14a8edcb760a5b195cfdc61fff8d7a0e57d1ff6aecdb4790ea5b44a",
+    "reviewedOn": "2026-11-27"
+  },
+  {
+    "symbolCode": "156A",
+    "label": "2026-11-24 2026年8月期 有価証券報告書(16:48)",
+    "url": "https://ssl4.eir-parts.net/doc/156A/yuho_pdf/S100ZJMQ/00.pdf",
+    "kind": "issuer-file",
+    "publicationDateVerified": true,
+    "publicationTimeVerified": true,
+    "sourceUrl": "https://materialgroup.jp/ir/library/securities/",
+    "publicationTimeSourceUrl": "https://irbank.net/E39473/S100ZJMQ",
+    "verificationNote": "公式IR配信データの資料ID・11/24掲載日、原本表紙の会社/事業年度/提出日とEDINET提出記録16:48を照合。原本25頁の新株予約権による潜在株式1,180,371株/発行済9,877,197株/11.95%と113頁の期末未行使残高を確認。最新材料の代替ではなく、発行済権利と公表基準日の残高を説明する資本資料としてのみ使用する。公式IRデータの00:00は公表時刻に使わない。",
+    "contentSha256": "4c073991ab4aa9847dda43a954e8eeb5ac8e4cb32777e1e5023c280893cbfc64",
+    "reviewedOn": "2026-11-27"
   }
 ]

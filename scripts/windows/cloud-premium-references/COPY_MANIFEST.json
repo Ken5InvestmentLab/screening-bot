@@ -1,12 +1,12 @@
 {
   "schema": "CLOUD_PREMIUM_EXACT_RESEARCH_COPY_V1",
   "source_repository": "Ken5InvestmentLab/weekly_report_gas",
-  "source_commit": "e3963778a5559f09ccd4aee011d9a5ec60441570",
+  "source_commit": "729cd5e33037dea879593217c8587f3c19bd6985",
   "source_branch": "experiment/fundamental-scoring-test",
   "files": {
     "PREMIUM_CLOUD_WORKER.mjs": {
       "source_path": "premium_worker/worker.mjs",
-      "sha256": "5cfe4152365d419891115e7c4f0249855b3b4ab64ae5f3698e7f55ec172a19f0"
+      "sha256": "39f992b1b57984b068e8284595d3d9c01adf46b443d7279f27ebd7d04eb855c3"
     },
     "AUTOMATION_PROMPT.md": {
       "source_path": "premium_worker/AUTOMATION_PROMPT.md",
@@ -18,7 +18,7 @@
     },
     "verified-untimed-disclosures.json": {
       "source_path": "premium_worker/verified-untimed-disclosures.json",
-      "sha256": "a2316766f691fffe25c48846872ab3017eed57404c9e830331b588364ac7e2b8"
+      "sha256": "a0eb42bbf1b92e16988776c632699cc41ead025ff77f7967744ff41b48848492"
     }
   },
   "saved_task_id": "premium-alert-snapshot-worker-1540",

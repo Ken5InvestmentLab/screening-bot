@@ -43,13 +43,13 @@ CARD_EDITORIAL_REVIEW_SCHEMA = "NEW_A_MEMBER_CARD_EDITORIAL_SUCCESSOR_SOURCE_REV
 HOLD_HEADING_REVIEW_SCHEMA = "NEW_A_MEMBER_HOLD_HEADING_SUCCESSOR_SOURCE_REVIEW_V1"
 MEMBER_READY_REVIEW_SCHEMA = "NEW_A_MEMBER_PUBLISHED_GENERATION_SUCCESSOR_SOURCE_REVIEW_V1"
 FUNDAMENTAL_BATCH_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_BATCH_SUCCESSOR_SOURCE_REVIEW_V1"
-HELP_TERMS_REVIEW_SCHEMA = "NEW_A_MEMBER_HELP_TERMS_SUCCESSOR_SOURCE_REVIEW_V1"
+FUNDAMENTAL_CONTINUATION_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_CONTINUATION_SUCCESSOR_SOURCE_REVIEW_V1"
 HELP_LABEL_REVIEW_SCHEMA = "NEW_A_MEMBER_HELP_LABEL_SUCCESSOR_SOURCE_REVIEW_V1"
 PUBLICATION_FIRST_REVIEW_SCHEMA = "NEW_A_MEMBER_PUBLICATION_FIRST_SUCCESSOR_SOURCE_REVIEW_V1"
 SOURCE_BASELINE_REVIEW_SCHEMA = "NEW_A_MEMBER_SOURCE_BASELINE_SUCCESSOR_SOURCE_REVIEW_V1"
 SETTLED_HISTORY_REVIEW_SCHEMA = "NEW_A_MEMBER_SETTLED_HISTORY_SUCCESSOR_SOURCE_REVIEW_V1"
 TIERED_SUCCESSOR_SCHEMAS = frozenset({
-    HELP_TERMS_REVIEW_SCHEMA,
+    FUNDAMENTAL_CONTINUATION_REVIEW_SCHEMA,
     HELP_LABEL_REVIEW_SCHEMA,
     PUBLICATION_FIRST_REVIEW_SCHEMA,
     FUNDAMENTAL_BATCH_REVIEW_SCHEMA,
@@ -522,9 +522,9 @@ _MEMBER_READY_PRODUCT_PATHS = frozenset({
     'tests/new_a_member_worker.test.cjs',
 })
 _MEMBER_READY_PRODUCT_SHA256 = '2fb177b5c12055f3975fcc2d45318ec23f63df033376e8b19d1e2812d87f440d'
-_HELP_TERMS_BASELINE = "b8757da8834b5aef7769511a8f485a231ba0279f"
-_HELP_TERMS_PRODUCT_PATHS = frozenset({'tests/cloud_bundle_sync.test.cjs', 'weak-early-beta-gate/scripts/new-a-ui-source/guide-body.html'})
-_HELP_TERMS_PRODUCT_SHA256 = "dc2f97a79ef5df40c6b7b6d17e6296e1ae269e8a5a43b7648de05ea4fe9b74ac"
+_FUNDAMENTAL_CONTINUATION_BASELINE = "b8757da8834b5aef7769511a8f485a231ba0279f"
+_FUNDAMENTAL_CONTINUATION_PRODUCT_PATHS = frozenset({'scripts/windows/cloud-premium-references/verified-untimed-disclosures.json', 'scripts/windows/cloud-premium-references/PREMIUM_CLOUD_WORKER.mjs', 'scripts/windows/test-new-a-fundamental-stage.mjs', 'weak_early_beta/new_a/AGENTS.md', 'tests/cloud_bundle_sync.test.cjs', 'scripts/windows/new-a-fundamental-stage.mjs', 'scripts/windows/cloud-premium-references/COPY_MANIFEST.json', 'scripts/windows/cloud-premium-references/SOURCE_COMPANION_REVIEW.md', 'weak-early-beta-gate/scripts/new-a-ui-source/guide-body.html'})
+_FUNDAMENTAL_CONTINUATION_PRODUCT_SHA256 = "2bc14b11e84e8f48bd6300af16cae9904f059d1954e341e9e6a18b57fe31bd37"
 _HELP_LABEL_BASELINE = "94b3b19fb952d054b9caa0a783f0b268dde3aff0"
 _HELP_LABEL_PRODUCT_PATHS = frozenset({'weak-early-beta-gate/scripts/new-a-ui-source/guide-body.html'})
 _HELP_LABEL_PRODUCT_SHA256 = "8cdc15f3bcd36285c7b90dd7ca50de81766a4849608b3d42191bfd700262ba88"
@@ -697,13 +697,13 @@ def _check_role_only_successor(repo, candidate, paths):
 
 
 def _member_successor(repo, baseline, candidate):
-    if baseline == _HELP_TERMS_BASELINE:
+    if baseline == _FUNDAMENTAL_CONTINUATION_BASELINE:
         paths = _successor_paths(repo, baseline, candidate)
-        if paths != _HELP_TERMS_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
-            raise ValueError("Cloud help-terms successor differs from the exact reviewed source scope")
-        if _product_digest(repo, candidate, _HELP_TERMS_PRODUCT_PATHS) != _HELP_TERMS_PRODUCT_SHA256:
-            raise ValueError("Cloud help-terms successor differs from the reviewed bytes")
-        schema = HELP_TERMS_REVIEW_SCHEMA
+        if paths != _FUNDAMENTAL_CONTINUATION_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
+            raise ValueError("Cloud fundamental-continuation successor differs from the exact reviewed source scope")
+        if _product_digest(repo, candidate, _FUNDAMENTAL_CONTINUATION_PRODUCT_PATHS) != _FUNDAMENTAL_CONTINUATION_PRODUCT_SHA256:
+            raise ValueError("Cloud fundamental-continuation successor differs from the reviewed bytes")
+        schema = FUNDAMENTAL_CONTINUATION_REVIEW_SCHEMA
     elif baseline == _HELP_LABEL_BASELINE:
         paths = _successor_paths(repo, baseline, candidate)
         if paths != _HELP_LABEL_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
@@ -984,7 +984,7 @@ def review_member_release_source(repo, baseline, candidate):
             raise ValueError("Version-bound member successor requires the existing role-only audience")
         if (baseline in {_SETTLED_PRICE_BASELINE, _APPROVAL_TIMEOUT_BASELINE, _PREMIUM_LEGACY_BASELINE,
                          _FUNDAMENTAL_RETENTION_BASELINE, _PREMIUM_RUNTIME_BASELINE, _CARD_DISPLAY_BASELINE,
-                         _PUBLICATION_RECOVERY_BASELINE, _CARD_EDITORIAL_BASELINE, _SETTLED_HISTORY_BASELINE, _SOURCE_BASELINE_BASELINE, _HOLD_HEADING_BASELINE, _MEMBER_READY_BASELINE, _FUNDAMENTAL_BATCH_BASELINE, _PUBLICATION_FIRST_BASELINE, _HELP_LABEL_BASELINE, _HELP_TERMS_BASELINE}
+                         _PUBLICATION_RECOVERY_BASELINE, _CARD_EDITORIAL_BASELINE, _SETTLED_HISTORY_BASELINE, _SOURCE_BASELINE_BASELINE, _HOLD_HEADING_BASELINE, _MEMBER_READY_BASELINE, _FUNDAMENTAL_BATCH_BASELINE, _PUBLICATION_FIRST_BASELINE, _HELP_LABEL_BASELINE, _FUNDAMENTAL_CONTINUATION_BASELINE}
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "tiered"):
             raise ValueError("Cloud successor requires the existing tiered audience")
         return _member_successor(repo, baseline, candidate)

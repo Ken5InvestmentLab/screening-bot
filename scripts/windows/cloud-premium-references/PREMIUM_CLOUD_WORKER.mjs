@@ -2842,7 +2842,7 @@ function selfTest() {
       assert.equal(isTimestampedDisclosureLabel(item.label, item.url), true);
       assert.equal(isVerifiedUntimedDisclosure(normalizeDisclosureLabelForDisplay(item.label), `${item.url}?unverified=1`), false);
       assert.equal(isVerifiedUntimedDisclosure(normalizeDisclosureLabelForDisplay(item.label).replace(/^\d{4}-\d{2}-\d{2}/, "2000-01-01"), item.url), false);
-      assert.equal(isVerifiedUntimedDisclosure(normalizeDisclosureLabelForDisplay(item.label).replace("時刻記載なし", "未確認資料"), item.url), false);
+      assert.equal(isVerifiedUntimedDisclosure(normalizeDisclosureLabelForDisplay(item.label).replace(/時刻記載なし|\d{2}:\d{2}(?: JST)?/, "未確認資料"), item.url), false);
       if (item.kind === "issuer-detail") assert.equal(isAllowedDisclosureDetailPageUrl(item.url), true);
       if (/有価証券報告書/.test(item.label)) {
         const links = `[${item.label}](${item.url})`;

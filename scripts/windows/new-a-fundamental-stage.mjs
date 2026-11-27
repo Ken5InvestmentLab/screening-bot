@@ -8,18 +8,17 @@ import {
   FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT,
 } from './weak-early-beta-fundamental-runner.mjs';
 const REFERENCE_FILES = {
-  'COPY_MANIFEST.json': '6bd82aaf3928c2f4e5ddfb5366b1d69da9b3af60d8caff0205a1ed20efd6e6db',
-  'verified-untimed-disclosures.json': 'a2316766f691fffe25c48846872ab3017eed57404c9e830331b588364ac7e2b8',
+  'COPY_MANIFEST.json': 'fdb40850b0df46e4315953403d7d0c07cd930199b2af5c4b49dbfa1c8c5aed4c',
+  'verified-untimed-disclosures.json': 'a0eb42bbf1b92e16988776c632699cc41ead025ff77f7967744ff41b48848492',
   'PREMIUM_PM_SAVED_PROMPT.txt': 'af31b0175e968a8fe17354339a899e2f988ecf6c37dbc30958037b25f493c317',
   'AUTOMATION_PROMPT.md': 'a5da617d30b3f0ea0c40a0cf4bb07d94c81d70945c0f98669478aa1e05dff1c7',
   'FUNDAMENTAL_EXAMPLES.md': 'c49243cc7ee6685d3dedf2789fc452ce4d610f463edcc54b48001487a39d77fb',
   'PREMIUM_LEGACY_WORKER.mjs': '98edbc6921dfcad6b853660a1d1bc6e508ef684f71d29732960330a53cb80dc3',
-  'PREMIUM_CLOUD_WORKER.mjs': '5cfe4152365d419891115e7c4f0249855b3b4ab64ae5f3698e7f55ec172a19f0',
-  'SOURCE_COMPANION_REVIEW.md': '110e80ccaee9fe0ea433e42ec1a206145ea1596bac4d53a9c25dd8edfd11c28a',
+  'PREMIUM_CLOUD_WORKER.mjs': '39f992b1b57984b068e8284595d3d9c01adf46b443d7279f27ebd7d04eb855c3',
+  'SOURCE_COMPANION_REVIEW.md': 'b88cf8e9e434c7056324df2acd974baa7c9851a65ab86bbd42b92cc42c7a2541',
   'PREMIUM_NO_SEND_PRELOAD.mjs': '2121ad3d3301524762efe3e10970006ce1e2fa792c7caa47ba0f61aa1b2ee5e0',
   'report_quality.md': '6df031fabe3d309b0f2c7c317734920ba1450926c344987491e0fc14b5c7a6fb',
 };
-const MAX_REPAIR_PASSES = 2;
 const MODEL_FILE_BYTES = 8 * 1024 * 1024;
 const SECRET_KEY = /(?:TOKEN|SECRET|PASSWORD|API_KEY|PRIVATE_KEY|CREDENTIAL|WEBHOOK|COOKIE|SESSION_KEY)/i;
 const PYTHON_DRAFT_CHECK = `
@@ -354,13 +353,18 @@ export async function runPremiumResearch({ claim, claimPath, reportPath, config,
     return failures;
   };
   let failures = await validateBatch(0);
-  for (let pass = 1; failures.length && pass <= MAX_REPAIR_PASSES; pass++) {
+  // Follow the shared Premium guide until the full batch passes. A retry count
+  // does not establish source insufficiency or authorize abandoning a report.
+  for (let pass = 1; failures.length; pass++) {
+    const previousDraft = sha256(readOwnedBytes(pendingFile));
+    const previousFailures = failures;
     const targets = claim.alerts.filter(alert => failures.some(item => item.alertId === alert.alertId));
     await draft(`repair-${pass}`, targets, failures);
     failures = await validateBatch(pass);
-  }
-  if (failures.length) {
-    throw new Error('Cloud fundamental full validation blocked: ' + failures.map(item => item.symbolCode).join(', '));
+    if (failures.length && previousDraft === sha256(readOwnedBytes(pendingFile)) &&
+        isDeepStrictEqual(failures, previousFailures)) {
+      throw new Error('Cloud fundamental repair made no change to the retained draft or validation errors; retain claim and evidence for source review');
+    }
   }
   assertClaim();
   saveBatch(claim, reports, reportPath);

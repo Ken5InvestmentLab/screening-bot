@@ -1,8 +1,8 @@
 # Exact selected Premium source
 
 The executed `PREMIUM_CLOUD_WORKER.mjs` is byte-identical to the selected
-Premium worker from `e3963778a5559f09ccd4aee011d9a5ec60441570`. Worker SHA-256:
-`5cfe4152365d419891115e7c4f0249855b3b4ab64ae5f3698e7f55ec172a19f0`. The prompt, quality examples and
+Premium worker from `729cd5e33037dea879593217c8587f3c19bd6985`. Worker SHA-256:
+`39f992b1b57984b068e8284595d3d9c01adf46b443d7279f27ebd7d04eb855c3`. The prompt, quality examples and
 reviewed untimed-disclosure inventory are copied from the same working source;
 `COPY_MANIFEST.json` records their exact hashes. The original November 2
 `PREMIUM_LEGACY_WORKER.mjs` remains unchanged as historical provenance.
@@ -32,3 +32,9 @@ retry cascade or separate duplicate URL pass is used. The shared worker checks
 every direct URL without dropping failed links; HTML evidence is not truncated.
 Discord delivery/receipts remain Premium-only. Cloud keeps cutoff, no-send,
 claim ownership and HTML import gates.
+
+The November 27 source includes the individually reviewed 156A annual filing as
+a dated capital companion, with exact URL, publication identity and document hash.
+Cloud follows the same full-batch repair-until-valid procedure without a fixed
+retry count. Unchanged drafts and identical errors retain a source-review checkpoint;
+operational failures retain ownership rather than inventing a stub.

@@ -10,7 +10,7 @@ test('selected Premium copy manifest matches every executed reference without co
   const base = path.join(import.meta.dirname, 'cloud-premium-references');
   const manifest = JSON.parse(fs.readFileSync(path.join(base, 'COPY_MANIFEST.json'), 'utf8'));
   assert.equal(manifest.schema, 'CLOUD_PREMIUM_EXACT_RESEARCH_COPY_V1');
-  assert.equal(manifest.source_commit, 'e3963778a5559f09ccd4aee011d9a5ec60441570');
+  assert.equal(manifest.source_commit, '729cd5e33037dea879593217c8587f3c19bd6985');
   for (const [name, entry] of Object.entries(manifest.files)) {
     assert.equal(createHash('sha256').update(fs.readFileSync(path.join(base, name))).digest('hex'), entry.sha256);
   }
@@ -36,7 +36,7 @@ test('batch diagnostics preserve every company and rule without per-company fall
   assert.throws(() => premiumBatchRepairTargets(error, directory, 0, alerts), /owned Cloud reports/);
 });
 
-test('Cloud copies the completed legacy workflow, repairs named reports, validates the full batch without posting', async t => {
+test('Cloud retains good reports, continues beyond two repairs and holds unchanged failed drafts without posting', async t => {
   const repo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'new-a-fundamental-stage-')));
   t.after(() => fs.rmSync(repo, { recursive: true, force: true }));
   const today = '2026-11-18';
@@ -77,6 +77,7 @@ test('Cloud copies the completed legacy workflow, repairs named reports, validat
   const secondReport = { ...report, ...secondAlert };
   const calls = [];
   let repaired = false;
+  let repairs = 0;
   const options = {
     config: { pythonPath: 'synthetic-python', nodePath: 'synthetic-node', fundamentalConfigPath: configPath },
     repo, runtime, today, startedAt: today + 'T08:00:00Z', runDir, env: { TEST_API_TOKEN: 'PARENT_SECRET_FIXTURE' }, expectedCount: 2,
@@ -90,7 +91,7 @@ test('Cloud copies the completed legacy workflow, repairs named reports, validat
         assert.equal(args[args.indexOf('--reports-sha256') + 1],
           createHash('sha256').update(fs.readFileSync(reportsPath)).digest('hex'));
         assert.deepEqual(JSON.parse(fs.readFileSync(reportsPath, 'utf8')),
-          { claimId, reports: [report, { ...secondReport, repaired: true }] });
+          { claimId, reports: [report, { ...secondReport, repaired: true, repairPass: 3 }] });
         return { stdout: JSON.stringify({ ok: true, imported: 2, posted: 0, status: 'COMPLETE' }) };
       }
       if (args.includes('-c')) {
@@ -153,12 +154,13 @@ test('Cloud copies the completed legacy workflow, repairs named reports, validat
         calls.push('model-draft-all');
         fs.writeFileSync(output, JSON.stringify({ claimId, reports: [report, secondReport] }));
       } else {
-        assert(stage.startsWith('repair-1-'));
+        assert(/^repair-[1-3]-/.test(stage));
         calls.push('model-repair-one');
         assert.match(options.input, /執筆対象のalertId: \["second-owned-event"\]/);
         assert.match(options.input, /company-specific KPI is missing/);
-        repaired = true;
-        fs.writeFileSync(output, JSON.stringify({ claimId, reports: [{ ...secondReport, repaired: true }] }));
+        repairs++;
+        repaired = repairs === 3;
+        fs.writeFileSync(output, JSON.stringify({ claimId, reports: [{ ...secondReport, repaired, repairPass: repairs }] }));
       }
       return 0;
     },
@@ -167,12 +169,15 @@ test('Cloud copies the completed legacy workflow, repairs named reports, validat
       assert(reports.length === 1 || reports.length === 2);
     },
   };
+  const initialInvoke = options.invokeAnalysis;
   const received = await runNewAFundamentalStage(options);
   assert.deepEqual(calls, [
     'prepare', 'model-draft-all', 'python-check-all', 'audited-html-only:1234', 'audited-html-only:2345',
     'legacy:1234,2345',
     'model-repair-one', 'python-check-all', 'audited-html-only:2345',
-    'legacy:1234,2345', 'finish',
+    'legacy:1234,2345',
+    'model-repair-one', 'python-check-all', 'audited-html-only:2345', 'legacy:1234,2345',
+    'model-repair-one', 'python-check-all', 'audited-html-only:2345', 'legacy:1234,2345', 'finish',
   ]);
   assert.equal(received.imported, 2);
 
@@ -185,6 +190,20 @@ test('Cloud copies the completed legacy workflow, repairs named reports, validat
   fs.unlinkSync(retained);
   fs.unlinkSync(path.join(claimDir, 'pending-reports.json'));
   fs.unlinkSync(reportsPath);
+  calls.length = 0;
+  repaired = false;
+  const unchangedDraft = { claimId, reports: [report, secondReport] };
+  fs.writeFileSync(path.join(claimDir, 'pending-reports.json'), JSON.stringify(unchangedDraft, null, 2) + '\n');
+  options.invokeAnalysis = async (exe, args, options) => {
+    if (options.input.includes('実行環境の読み書き確認だけ')) return initialInvoke(exe, args, options);
+    const output = options.input.match(/今回の書き込み先は (.+) のみです。$/u)[1];
+    fs.writeFileSync(output, JSON.stringify({ claimId, reports: [secondReport] }));
+    return 0;
+  };
+  await assert.rejects(runNewAFundamentalStage(options), error =>
+    error.cloudFundamentalHeld === true && /made no change/.test(error.cause?.message));
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(claimDir, 'pending-reports.json'))), unchangedDraft);
+  assert(!calls.includes('finish'));
   calls.length = 0;
   options.invokeAnalysis = async () => 1;
   await assert.rejects(runNewAFundamentalStage(options), error => error.cloudFundamentalHeld === true);

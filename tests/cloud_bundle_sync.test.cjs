@@ -20,7 +20,7 @@ function checkHelp(html){
  assert.doesNotMatch(popup,/データ保留/);
  const [labels,levels]=Array.from(popup.matchAll(/<dl class="cloud-help-labels">([\s\S]*?)<\/dl>/g), match=>match[1]);
  assert.deepEqual(Array.from(labels.matchAll(/<dt>([\s\S]*?)<\/dt>/g), match=>match[1].replace(/<[^>]+>/g,'')),[
-  '監視開始・監視中','監視終了','仮想保有開始候補（仮想買付候補）','仮想保有開始・仮想保有終了','強制決済','試算対象',
+  '監視開始','監視終了','仮想保有開始候補','仮想保有開始・仮想保有終了','強制決済','試算対象',
  ]);
  for (const explanation of [
   'その前の20取引日の平均の<strong>1.3倍以上</strong>',

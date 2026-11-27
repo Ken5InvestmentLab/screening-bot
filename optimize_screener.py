@@ -233,9 +233,9 @@ STRICT_WR  = False  # 勝率フロアは >= (同一勝率でも他指標で勝�
 WR_FLOOR   = 0.0    # 勝率絶対下限 (0.0=無効)
 
 # 更新通知先Discord Webhook
-DISCORD_WEBHOOK_URL  = "https://discord.com/api/webhooks/1479431524674965729/sRCEG2lmoBLpEtZCdbf5N4kg2zEI7LHjtxxHm9g2Y1rFXPwoFSPDxpnOjsP0HAObSdyZ"
+DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "").strip()
 # 承認リクエスト送信先Discord Webhook（管理者チャンネル）
-APPROVAL_WEBHOOK_URL = "https://discord.com/api/webhooks/1480211740007600351/OWog6gutSvvUfJN6vbZgzI3AsJjMeIdcw_ho0pEGqwHVd_RRMnstqvMg8WGaLnK5jHwO"
+APPROVAL_WEBHOOK_URL = os.environ.get("DISCORD_APPROVAL_WEBHOOK_URL", "").strip()
 
 # ══════════════════════════════════════════════════════════════
 # 現行ロジック永続化
@@ -4581,6 +4581,9 @@ def build_logic_comparison_attachment(title, specs, filename_prefix):
     }
 
 def _post_discord_webhook(webhook_url, payload, attachment=None, label="Discord"):
+    if not webhook_url:
+        print(f"  [skip] {label} webhook is not configured")
+        return False
     import json as _json
     import urllib.error
     import urllib.request
@@ -4631,18 +4634,19 @@ def _post_discord_webhook(webhook_url, payload, attachment=None, label="Discord"
             if resp.status in (200, 204):
                 print(f"  [ok] {label} notification sent")
                 return True
-            body = resp.read().decode("utf-8", errors="replace")
-            print(f"  [warn] {label} notification returned HTTP {resp.status}: {body[:300]}")
+            print(f"  [warn] {label} notification returned HTTP {resp.status}")
     except urllib.error.HTTPError as exc:
-        body = exc.read().decode("utf-8", errors="replace")
-        print(f"  [warn] {label} notification failed: HTTP {exc.code}: {body[:300]}")
+        print(f"  [warn] {label} notification failed: HTTP {exc.code}")
     except Exception as exc:
-        print(f"  [warn] {label} notification failed: {exc}")
+        print(f"  [warn] {label} notification failed: {type(exc).__name__}")
     return False
 
 
 def _queue_or_post_discord_approval(payload, attachment=None, label="Discord approval"):
     """Queue approval requests during optimizer runs, or post immediately outside CI."""
+    if not APPROVAL_WEBHOOK_URL:
+        print("[approval-notices] DISCORD_APPROVAL_WEBHOOK_URL is not configured; skipping")
+        return False
     import base64
 
     outbox_dir = os.environ.get("DISCORD_APPROVAL_NOTICE_DIR", "").strip()
@@ -4685,6 +4689,9 @@ def _queue_or_post_discord_approval(payload, attachment=None, label="Discord app
 
 def flush_discord_approval_notices(outbox_dir=None):
     """Send every queued approval request after the workflow has pushed pending files."""
+    if not APPROVAL_WEBHOOK_URL:
+        print("[approval-notices] DISCORD_APPROVAL_WEBHOOK_URL is not configured; skipping")
+        return 0
     import base64
 
     outbox_dir = (outbox_dir or os.environ.get("DISCORD_APPROVAL_NOTICE_DIR", "")).strip()
@@ -4975,16 +4982,14 @@ def notify_discord_update(best_method, best_combo, st6, st5, st4, base, n_total,
     )
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
-            body = resp.read().decode("utf-8", errors="replace")
             if resp.status in (200, 204):
                 print("  ✅ Discord通知送信完了")
             else:
-                print(f"  ⚠ Discord通知: HTTP {resp.status} / {body[:200]}")
+                print(f"  ⚠ Discord通知: HTTP {resp.status}")
     except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8", errors="replace")
-        print(f"  ⚠ Discord通知失敗: HTTP {e.code} / headers={dict(e.headers)} / body={body[:300]}")
+        print(f"  ⚠ Discord通知失敗: HTTP {e.code}")
     except Exception as e:
-        print(f"  ⚠ Discord通知失敗: {e}")
+        print(f"  ⚠ Discord通知失敗: {type(e).__name__}")
 
 
 def notify_discord_approval(best_method, best_combo, best_stats, baseline, thresholds,
@@ -5114,7 +5119,7 @@ def notify_discord_approval(best_method, best_combo, best_stats, baseline, thres
             if resp.status not in (200, 204):
                 print(f"  ⚠ Discord承認通知失敗: HTTP {resp.status}")
     except Exception as e:
-        print(f"  ⚠ Discord承認通知失敗: {e}")
+        print(f"  ⚠ Discord承認通知失敗: {type(e).__name__}")
 
 
 def notify_discord_rescue_no_candidate(current_stats, current_validation_stats,
@@ -5193,7 +5198,7 @@ def notify_discord_rescue_no_candidate(current_stats, current_validation_stats,
             else:
                 print("  ✅ Discord rescue通知送信完了")
     except Exception as e:
-        print(f"  ⚠ Discord rescue通知失敗: {e}")
+        print(f"  ⚠ Discord rescue通知失敗: {type(e).__name__}")
 
 
 def notify_discord_sniper_rescue_no_candidate(refreshed_stats, live_stats,
@@ -5267,7 +5272,7 @@ def notify_discord_sniper_rescue_no_candidate(refreshed_stats, live_stats,
             else:
                 print("  ✅ Discord Sniper rescue通知送信完了")
     except Exception as e:
-        print(f"  ⚠ Discord Sniper rescue通知失敗: {e}")
+        print(f"  ⚠ Discord Sniper rescue通知失敗: {type(e).__name__}")
 
 
 def notify_discord_sniper_approval(conditions, stats, baseline_wr, thresholds,
@@ -5354,7 +5359,7 @@ def notify_discord_sniper_approval(conditions, stats, baseline_wr, thresholds,
             if resp.status not in (200, 204):
                 print(f"  ⚠ Discord Sniper承認通知失敗: HTTP {resp.status}")
     except Exception as e:
-        print(f"  ⚠ Discord Sniper承認通知失敗: {e}")
+        print(f"  ⚠ Discord Sniper承認通知失敗: {type(e).__name__}")
 
 
 def notify_discord_mega_approval(proposals, comparison_attachment=None):
@@ -5428,7 +5433,7 @@ def notify_discord_mega_approval(proposals, comparison_attachment=None):
             if resp.status not in (200, 204):
                 print(f"  ⚠ Discord Mega承認通知失敗: HTTP {resp.status}")
     except Exception as e:
-        print(f"  ⚠ Discord Mega承認通知失敗: {e}")
+        print(f"  ⚠ Discord Mega承認通知失敗: {type(e).__name__}")
 
 
 def notify_discord_mega_update(applied_details):
@@ -5571,7 +5576,7 @@ def notify_discord_sniper_update(conditions, stats, thresholds, simulation_stats
             else:
                 print(f"  ⚠ Discord Sniper更新通知失敗: HTTP {resp.status}")
     except Exception as e:
-        print(f"  ⚠ Discord Sniper更新通知失敗: {e}")
+        print(f"  ⚠ Discord Sniper更新通知失敗: {type(e).__name__}")
 
 
 def apply_sniper_pending():

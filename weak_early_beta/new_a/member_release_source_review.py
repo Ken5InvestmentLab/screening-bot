@@ -43,9 +43,11 @@ CARD_EDITORIAL_REVIEW_SCHEMA = "NEW_A_MEMBER_CARD_EDITORIAL_SUCCESSOR_SOURCE_REV
 HOLD_HEADING_REVIEW_SCHEMA = "NEW_A_MEMBER_HOLD_HEADING_SUCCESSOR_SOURCE_REVIEW_V1"
 MEMBER_READY_REVIEW_SCHEMA = "NEW_A_MEMBER_PUBLISHED_GENERATION_SUCCESSOR_SOURCE_REVIEW_V1"
 FUNDAMENTAL_BATCH_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_BATCH_SUCCESSOR_SOURCE_REVIEW_V1"
+PUBLICATION_FIRST_REVIEW_SCHEMA = "NEW_A_MEMBER_PUBLICATION_FIRST_SUCCESSOR_SOURCE_REVIEW_V1"
 SOURCE_BASELINE_REVIEW_SCHEMA = "NEW_A_MEMBER_SOURCE_BASELINE_SUCCESSOR_SOURCE_REVIEW_V1"
 SETTLED_HISTORY_REVIEW_SCHEMA = "NEW_A_MEMBER_SETTLED_HISTORY_SUCCESSOR_SOURCE_REVIEW_V1"
 TIERED_SUCCESSOR_SCHEMAS = frozenset({
+    PUBLICATION_FIRST_REVIEW_SCHEMA,
     FUNDAMENTAL_BATCH_REVIEW_SCHEMA,
     MEMBER_READY_REVIEW_SCHEMA,
     HOLD_HEADING_REVIEW_SCHEMA,
@@ -516,6 +518,13 @@ _MEMBER_READY_PRODUCT_PATHS = frozenset({
     'tests/new_a_member_worker.test.cjs',
 })
 _MEMBER_READY_PRODUCT_SHA256 = '2fb177b5c12055f3975fcc2d45318ec23f63df033376e8b19d1e2812d87f440d'
+_PUBLICATION_FIRST_BASELINE = "a993db6d5cab8f9f907a36fdf0767d9fa8189602"
+_PUBLICATION_FIRST_PRODUCT_PATHS = frozenset({
+    "scripts/windows/weak-early-beta-daily-runner.mjs",
+    "scripts/windows/test-new-a-runner.mjs",
+    "scripts/windows/AGENTS.md",
+})
+_PUBLICATION_FIRST_PRODUCT_SHA256 = "d199ea8c8a3eddbb245b611a210993371c954ea12180fe99fe76a98d2b5326f4"
 _FUNDAMENTAL_BATCH_BASELINE = "a3a3896e11152e3d07555df8e5eef29c8231ce21"
 _FUNDAMENTAL_BATCH_PRODUCT_PATHS = frozenset({
     "scripts/windows/cloud-premium-references/AGENTS.md",
@@ -678,7 +687,14 @@ def _check_role_only_successor(repo, candidate, paths):
 
 
 def _member_successor(repo, baseline, candidate):
-    if baseline == _FUNDAMENTAL_BATCH_BASELINE:
+    if baseline == _PUBLICATION_FIRST_BASELINE:
+        paths = _successor_paths(repo, baseline, candidate)
+        if paths != _PUBLICATION_FIRST_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
+            raise ValueError("Cloud publication-first successor differs from the exact reviewed source scope")
+        if _product_digest(repo, candidate, _PUBLICATION_FIRST_PRODUCT_PATHS) != _PUBLICATION_FIRST_PRODUCT_SHA256:
+            raise ValueError("Cloud publication-first successor differs from the reviewed bytes")
+        schema = PUBLICATION_FIRST_REVIEW_SCHEMA
+    elif baseline == _FUNDAMENTAL_BATCH_BASELINE:
         paths = _successor_paths(repo, baseline, candidate, allowed_additions=_FUNDAMENTAL_BATCH_ENTRY_ADDITIONS)
         if paths == _FUNDAMENTAL_BATCH_ENTRY_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
             product_paths, product_sha = _FUNDAMENTAL_BATCH_ENTRY_PRODUCT_PATHS, _FUNDAMENTAL_BATCH_ENTRY_PRODUCT_SHA256
@@ -944,7 +960,7 @@ def review_member_release_source(repo, baseline, candidate):
             raise ValueError("Version-bound member successor requires the existing role-only audience")
         if (baseline in {_SETTLED_PRICE_BASELINE, _APPROVAL_TIMEOUT_BASELINE, _PREMIUM_LEGACY_BASELINE,
                          _FUNDAMENTAL_RETENTION_BASELINE, _PREMIUM_RUNTIME_BASELINE, _CARD_DISPLAY_BASELINE,
-                         _PUBLICATION_RECOVERY_BASELINE, _CARD_EDITORIAL_BASELINE, _SETTLED_HISTORY_BASELINE, _SOURCE_BASELINE_BASELINE, _HOLD_HEADING_BASELINE, _MEMBER_READY_BASELINE, _FUNDAMENTAL_BATCH_BASELINE}
+                         _PUBLICATION_RECOVERY_BASELINE, _CARD_EDITORIAL_BASELINE, _SETTLED_HISTORY_BASELINE, _SOURCE_BASELINE_BASELINE, _HOLD_HEADING_BASELINE, _MEMBER_READY_BASELINE, _FUNDAMENTAL_BATCH_BASELINE, _PUBLICATION_FIRST_BASELINE}
                 and common_config["vars"].get("CLOUD_MEMBER_AUDIENCE") != "tiered"):
             raise ValueError("Cloud successor requires the existing tiered audience")
         return _member_successor(repo, baseline, candidate)

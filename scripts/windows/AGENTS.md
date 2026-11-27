@@ -41,3 +41,5 @@
 - Preserve versioned capital-risk and long-term-material review requirements in new Cloud claim state and enforce them before saving, including output-reuse retries. Legacy validated imports keep their original contract. After changing these checks, run the corresponding capital-risk/long-term-material Node tests together with the analysis-cutoff and point-in-time-post tests.
 
 - Generated-file commits select tracked changes from Git-normalized diff plus audited untracked leaves. Windows LF rewrites may match HEAD after autocrlf normalization; keep exact allowlists, staged/status race checks, and no-op cleanliness checks rather than treating disappeared line-ending-only paths as an unexplained staging race.
+
+- With the member view enabled, complete and verify the matching READY member publication before notification preview, staging or send. A failed/mismatched member publication must leave the run failed with no result notification; reconcile only the retained publication stage and notification receipts before sending once. Never treat owner-only publication or a logged notification as proof that the member dashboard is current.

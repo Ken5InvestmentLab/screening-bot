@@ -29,7 +29,7 @@ const ordinaryFixture = (head = 'f'.repeat(40)) => ({
  activation_sha256: '1'.repeat(64), build_input_sha256: '2'.repeat(64), policy_sha256: '3'.repeat(64),
  tag: 'cloud-deploy-transition-fixture', ci_run_id: 1234,
 });
-export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nativeInspector=null,dateOverride=null,detected=0,fundamentalOK=true,modelOK=true,fundamentalInvariant=false,approvedWorker=null,failApprovedAt=null,noticeConfigured=false,noticeHost=null,memberEnabled=false,memberDrift=false,detectFailure=null}={}){
+export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nativeInspector=null,dateOverride=null,detected=0,fundamentalOK=true,modelOK=true,fundamentalInvariant=false,approvedWorker=null,failApprovedAt=null,noticeConfigured=false,noticeHost=null,memberEnabled=false,memberDrift=false,memberFailure=false,memberReceiptChange=null,detectFailure=null}={}){
  const {repo,runtime}=fixture(),today=dateOverride||'2026-11-13',head='f'.repeat(40),calls=[];let sent=false;
  const config={repoPath:repo,runtimeDir:runtime,nodePath:'FAKE_NODE_NO_EXEC',pythonPath:'FAKE_PYTHON_NO_EXEC',npmPath:'FAKE_NPM_NO_EXEC',ghPath:'FAKE_GH_NO_EXEC',date:today};
  if(memberEnabled)write(path.join(repo,'weak-early-beta-gate/wrangler.jsonc'),{
@@ -104,13 +104,16 @@ export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nati
    }
    if(args[2]==='weak_early_beta.new_a.cli'&&args[3]==='publish-member'){
     assert(memberEnabled&&args.includes('--remote'));
+    if(memberFailure)throw Error('synthetic member publication process failed');
     const owner=JSON.parse(fs.readFileSync(path.join(local,'latest-publication.json'),'utf8'));
     const source={
-     dataset_id:owner.dataset_id,revision:memberDrift?owner.revision+1:owner.revision,
+     status:'READY',dataset_id:owner.dataset_id,revision:memberDrift?owner.revision+1:owner.revision,
      as_of:owner.as_of,source_version:owner.source_version,
     };
-    return{code:0,stdout:JSON.stringify({schema:'NEW_A_MEMBER_PUBLICATION_V1',published:true,
-     active_readback_verified:true,worker_version_id:approvedWorker.version_id,source}),stderr:''};
+    const receipt={schema:'NEW_A_MEMBER_PUBLICATION_V1',published:true,projection_sha256:'7'.repeat(64),parts:4,
+     active_readback_verified:true,worker_version_id:approvedWorker.version_id,source};
+    memberReceiptChange?.(receipt);
+    return{code:0,stdout:JSON.stringify(receipt),stderr:''};
    }
    if(args[1]==='weak_early_beta.new_a.cli'&&args[2]==='notify'){
     const dry=args.includes('--dry-run'),n=sent?0:pending;if(!dry)sent=true;return{code:0,stdout:JSON.stringify({date:today,dry_run:dry,signal_notifications:n,completion_notifications:n?1:0,pending_discord_messages:dry&&n?1:0,external_sends:!dry&&n?1:0,synthetic:true}),stderr:''};
@@ -180,7 +183,8 @@ test('Role-limited daily publishes only the matching owner generation to the mem
  assert.equal(result.memberPublication.source.dataset_id,result.new_a.dataset_id);
  const notify=f.calls.findIndex(({args})=>args.includes('notify')&&!args.includes('--dry-run'));
  const member=f.calls.findIndex(({args})=>args.includes('publish-member'));
- assert(notify>=0&&notify<member);
+ const previews=f.calls.flatMap(({args},i)=>args.includes('notify')?[i]:[]);
+ assert(member>=0&&member<notify&&previews.every(i=>i>member));
 });
 
 test('Role-limited daily cannot enter detection without an exact approved Worker',async()=>{
@@ -191,17 +195,43 @@ test('Role-limited daily cannot enter detection without an exact approved Worker
  assert(!f.calls.some(({args})=>args.includes('daily')||args.includes('publish')||args.includes('publish-member')));
 });
 
-test('Member generation mismatch is held for reconciliation without replaying owner work',async()=>{
+test('Member generation mismatch prevents preview and send and never replays owner work',async()=>{
  const f=runnerFixture({approvedWorker:ordinaryFixture(),memberEnabled:true,memberDrift:true,pending:1});
  const result=await f.run();
- assert.equal(result.ok,true);
+ assert.equal(result.ok,false);
+ assert.equal(result.stage,'member-data-publication');
  assert.equal(result.new_a.owner_publication_verified,true);
  assert.equal(result.memberPublication.status,'reconcile-required');
- assert.equal(f.calls.filter(({args})=>args.includes('notify')&&!args.includes('--dry-run')).length,1);
- const count=f.calls.length;
+ assert.match(result.error,/member publication readback mismatch/);
+ assert(!f.calls.some(({args})=>args.includes('notify')));
+ assert.equal(f.calls.filter(({args})=>args.includes('system-log')&&args.includes('error')).length,1);
+ const count=f.calls.length,terminal=fs.readFileSync(path.join(f.runtime,'daily-latest.json'),'utf8');
  await f.run();
- assert.equal(f.calls.length,count);
+ assert(f.calls.slice(count).every(({args})=>args.includes('system-log')&&args.includes('error')));
+ assert.equal(fs.readFileSync(path.join(f.runtime,'daily-latest.json'),'utf8'),terminal);
 });
+
+test('Member publication process failure announces neither success nor a stale dashboard',async()=>{
+ const f=runnerFixture({approvedWorker:ordinaryFixture(),memberEnabled:true,memberFailure:true,pending:1});
+ const result=await f.run();
+ assert.equal(result.ok,false);assert.equal(result.stage,'member-data-publication');
+ assert.equal(result.memberPublication.status,'reconcile-required');
+ assert(!f.calls.some(({args})=>args.includes('notify')));
+ assert.equal(f.calls.filter(({args})=>args.includes('daily')&&args.includes('--strategy')).length,1);
+});
+
+test('Member publication must be current, confirmed, READY and bound to the accepted Worker',async()=>{
+ const changes=[r=>r.published=false,r=>r.active_readback_verified=false,r=>r.source.status='STAGING',
+  r=>r.source.as_of='2026-11-12',r=>r.source.source_version='9'.repeat(64),r=>r.source.dataset_id='another',
+  r=>r.worker_version_id='00000000-0000-4000-8000-000000000020',r=>r.projection_sha256='invalid',r=>r.parts=0];
+ for(const memberReceiptChange of changes){
+  const f=runnerFixture({approvedWorker:ordinaryFixture(),memberEnabled:true,memberReceiptChange,pending:1});
+  const result=await f.run();
+  assert.equal(result.ok,false);assert.equal(result.memberPublication.status,'reconcile-required');
+  assert(!f.calls.some(({args})=>args.includes('notify')));
+ }
+});
+
 
 function previousCacheOom(options) {
   write(options.log + '.process.json', {

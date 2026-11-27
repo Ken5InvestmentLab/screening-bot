@@ -388,6 +388,7 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
         self.assertEqual(member.MEMBER_SUCCESSORS[member.SOURCE_BASELINE_REVIEW_SCHEMA],member.HOLD_HEADING_REVIEW_SCHEMA)
         self.assertEqual(member.MEMBER_SUCCESSORS[member.HOLD_HEADING_REVIEW_SCHEMA],member.MEMBER_READY_REVIEW_SCHEMA)
         self.assertEqual(member.MEMBER_SUCCESSORS[member.MEMBER_READY_REVIEW_SCHEMA],member.FUNDAMENTAL_BATCH_REVIEW_SCHEMA)
+        self.assertEqual(member.MEMBER_SUCCESSORS[member.FUNDAMENTAL_BATCH_REVIEW_SCHEMA],member.PUBLICATION_FIRST_REVIEW_SCHEMA)
 
         schema = FUNDAMENTAL_POPUP_REVIEW_SCHEMA
         self.assertEqual(member.MEMBER_SUCCESSORS[JOURNAL_REVIEW_SCHEMA], schema)

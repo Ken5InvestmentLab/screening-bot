@@ -846,6 +846,30 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     const operational = published.operational_gate_continuity_verified === true && published.existing_owner_gate_verified === false && published.owner_http_observed === false && isDeepStrictEqual(published.operational_admission,activation.operational_admission);
     if (published.published !== true || published.active_readback_verified !== true || (published.existing_owner_gate_verified !== true && !operational) || published.snapshot_sha256 !== detected.snapshot_sha256 || published.source_version !== detected.source_version) throw new Error('New A publication readback mismatch');
     Object.assign(result.new_a, { owner_publication_verified: !operational, ...(operational?{operational_publication_verified:true,operational_scope:'FINITE_NOV17_NATIVE_ONCE',owner_http_observed:false}:{}), snapshot_sha256: published.snapshot_sha256, source_version: published.source_version, dataset_id: published.dataset_id });
+    // Confirm the member-facing generation before even staging a notification.
+    // A failed publication must not announce a link to yesterday's dashboard.
+    if (regularAnalysis && memberPublicationEnabled) {
+      saveProgress('member-data-publication');
+      try {
+        const member = await requireOk(python, ['-B', '-m', 'weak_early_beta.new_a.cli', 'publish-member', '--remote'],
+          { cwd: repo, env, log: path.join(runDir, 'new-a-member-publish'), capture: true, timeoutMs: 900_000 });
+        const receipt = JSON.parse(member.stdout.trim());
+        if (receipt.schema !== 'NEW_A_MEMBER_PUBLICATION_V1' || receipt.published !== true ||
+            receipt.active_readback_verified !== true || receipt.source?.status !== 'READY' || published.as_of !== today ||
+            !Number.isSafeInteger(receipt.source?.revision) || receipt.source.revision < 1 ||
+            !/^[a-f0-9]{64}$/.test(receipt.projection_sha256 || '') ||
+            !Number.isSafeInteger(receipt.parts) || receipt.parts < 1 || receipt.worker_version_id !== approvedRelease?.version_id ||
+            receipt.source?.dataset_id !== published.dataset_id || receipt.source?.revision !== published.revision ||
+            receipt.source?.as_of !== published.as_of || receipt.source?.source_version !== published.source_version) {
+          throw new Error('New A member publication readback mismatch');
+        }
+        saveProgress('member-data-publication', { memberPublication: receipt });
+      } catch (error) {
+        saveProgress('member-data-publication', { memberPublication: { status: 'reconcile-required' } });
+        throw error; // The outer handler records failure; no notification has been staged or sent.
+      }
+    }
+    // New-A outbox receipts remain private; never stage notification or price data in Git.
     saveProgress('notification');
     await reconcileNotifications({ date: today,
       preview: async phase => {
@@ -866,26 +890,7 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
         saveProgress('notification', { [key]: receipt });
       },
     });
-    // New-A outbox receipts remain private; never stage notification or price data in Git.
-    if (regularAnalysis && memberPublicationEnabled) {
-      saveProgress('member-data-publication');
-      try {
-        const member = await requireOk(python, ['-B', '-m', 'weak_early_beta.new_a.cli', 'publish-member', '--remote'],
-          { cwd: repo, env, log: path.join(runDir, 'new-a-member-publish'), capture: true, timeoutMs: 900_000 });
-        const receipt = JSON.parse(member.stdout.trim());
-        if (receipt.schema !== 'NEW_A_MEMBER_PUBLICATION_V1' || receipt.published !== true ||
-            receipt.active_readback_verified !== true || receipt.worker_version_id !== approvedRelease?.version_id ||
-            receipt.source?.dataset_id !== published.dataset_id || receipt.source?.revision !== published.revision ||
-            receipt.source?.as_of !== published.as_of || receipt.source?.source_version !== published.source_version) {
-          throw new Error('New A member publication readback mismatch');
-        }
-        saveProgress('member-data-publication', { memberPublication: receipt });
-      } catch {
-        saveProgress('member-data-publication', { memberPublication: { status: 'reconcile-required' } });
-        await sendSystemLog('error', ['--stage', 'member-data-publication', '--detail',
-          'Member projection publication needs separate reconciliation']);
-      }
-    }
+
 
     result.ok = true;
   } catch (error) {

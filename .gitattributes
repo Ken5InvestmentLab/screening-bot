@@ -12,3 +12,6 @@ weak_early_beta/state/reviewed_repair_releases.json -text
 
 weak_early_beta/state/reviewed_forward_4052_20260930.csv -text whitespace=cr-at-eol
 weak_early_beta/state/reviewed_forward_4052_20260930.json -text whitespace=cr-at-eol
+
+# Execute the shared Premium references byte-for-byte on Windows and CI.
+scripts/windows/cloud-premium-references/* -text

@@ -523,8 +523,8 @@ _MEMBER_READY_PRODUCT_PATHS = frozenset({
 })
 _MEMBER_READY_PRODUCT_SHA256 = '2fb177b5c12055f3975fcc2d45318ec23f63df033376e8b19d1e2812d87f440d'
 _FUNDAMENTAL_CONTINUATION_BASELINE = "b8757da8834b5aef7769511a8f485a231ba0279f"
-_FUNDAMENTAL_CONTINUATION_PRODUCT_PATHS = frozenset({'scripts/windows/cloud-premium-references/verified-untimed-disclosures.json', 'scripts/windows/cloud-premium-references/PREMIUM_CLOUD_WORKER.mjs', 'scripts/windows/test-new-a-fundamental-stage.mjs', 'weak_early_beta/new_a/AGENTS.md', 'tests/cloud_bundle_sync.test.cjs', 'scripts/windows/new-a-fundamental-stage.mjs', 'scripts/windows/cloud-premium-references/COPY_MANIFEST.json', 'scripts/windows/cloud-premium-references/SOURCE_COMPANION_REVIEW.md', 'weak-early-beta-gate/scripts/new-a-ui-source/guide-body.html'})
-_FUNDAMENTAL_CONTINUATION_PRODUCT_SHA256 = "4de59cb7412fe360fd1464b0839cce5486517e9e717585c434054f7e250c2f2c"
+_FUNDAMENTAL_CONTINUATION_PRODUCT_PATHS = frozenset({'.gitattributes', 'scripts/windows/cloud-premium-references/verified-untimed-disclosures.json', 'scripts/windows/cloud-premium-references/PREMIUM_CLOUD_WORKER.mjs', 'scripts/windows/test-new-a-fundamental-stage.mjs', 'weak_early_beta/new_a/AGENTS.md', 'tests/cloud_bundle_sync.test.cjs', 'scripts/windows/new-a-fundamental-stage.mjs', 'scripts/windows/cloud-premium-references/COPY_MANIFEST.json', 'scripts/windows/cloud-premium-references/SOURCE_COMPANION_REVIEW.md', 'weak-early-beta-gate/scripts/new-a-ui-source/guide-body.html'})
+_FUNDAMENTAL_CONTINUATION_PRODUCT_SHA256 = "5a54fab4f60aff295b6d53ca75e4cbe55109810cfad5110246b843dc9f868127"
 _HELP_LABEL_BASELINE = "94b3b19fb952d054b9caa0a783f0b268dde3aff0"
 _HELP_LABEL_PRODUCT_PATHS = frozenset({'weak-early-beta-gate/scripts/new-a-ui-source/guide-body.html'})
 _HELP_LABEL_PRODUCT_SHA256 = "8cdc15f3bcd36285c7b90dd7ca50de81766a4849608b3d42191bfd700262ba88"

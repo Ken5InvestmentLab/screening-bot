@@ -461,6 +461,16 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
                                   source_review_schema=member.APPROVAL_TIMEOUT_REVIEW_SCHEMA)
         same_build = {**deployment, 'build_input_sha256': previous['build_input_sha256']}
         self.assertEqual(member._effective_off(effective_off, MEMBER_BINDING['database_id'], same_build, handover,
+                                               source_review_schema=member.PUBLICATION_FIRST_REVIEW_SCHEMA), row)
+        with self.assertRaisesRegex(ValueError, 'successor deployment'):
+            member._effective_off(effective_off, MEMBER_BINDING['database_id'], deployment, handover,
+                                  source_review_schema=member.PUBLICATION_FIRST_REVIEW_SCHEMA)
+        reused_version = dict(same_build, version_id=previous['version_id'])
+        with self.assertRaisesRegex(ValueError, 'successor deployment'):
+            member._effective_off(dict(effective_off, worker_version_id=previous['version_id']),
+                                  MEMBER_BINDING['database_id'], reused_version, handover,
+                                  source_review_schema=member.PUBLICATION_FIRST_REVIEW_SCHEMA)
+        self.assertEqual(member._effective_off(effective_off, MEMBER_BINDING['database_id'], same_build, handover,
                                                source_review_schema=member.APPROVAL_TIMEOUT_REVIEW_SCHEMA), row)
         tiered_plan = {**self.plan, 'predecessor_member_policy': incumbent}
         for tiered_schema in (FREE_COMPLETED_ANALYTICS_REVIEW_SCHEMA, member.SETTLED_PRICE_REVIEW_SCHEMA,
